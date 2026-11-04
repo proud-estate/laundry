@@ -81,7 +81,8 @@ input,select{font:inherit;color:var(--fg);background:var(--surface);border:1px s
 .row-end{display:flex;align-items:center;gap:8px;justify-content:flex-end;flex-wrap:wrap}
 .row-end .hint{flex:1;min-width:140px}
 .exp-list{display:flex;flex-direction:column;gap:8px}
-.exp{display:grid;grid-template-columns:1fr 110px 36px;gap:6px;align-items:center}
+.exp{display:grid;grid-template-columns:1fr 100px 96px 36px;gap:6px;align-items:center}
+@media (max-width:480px){.exp{grid-template-columns:1fr 1fr 36px}.exp select:first-child{grid-column:1/-1}}
 .exp .det{grid-column:1/-1;width:100%}
 .exp select,.exp input{width:100%}
 .exp input.amt{text-align:right;font-family:var(--mono)}
@@ -200,6 +201,12 @@ button.front-link{background:transparent;font:inherit;font-size:13px;font-weight
 .soap-ro{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .soap-ro div{background:var(--sunk);border-radius:10px;padding:8px 10px;font-size:13px}
 .soap-ro b{display:block;font-family:var(--mono);font-size:17px}
+.flt-list{display:flex;flex-direction:column;gap:8px}
+.flt{display:grid;grid-template-columns:1.4fr 1fr 34px;gap:6px;align-items:end}
+.flt .field{padding:6px 8px}
+.flt input{width:100%}
+.flt .mono{text-align:right;font-family:var(--mono)}
+
 .coin-in{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .coin-in .field{flex:1;min-width:200px}
 .coin-in .field input{font-size:24px}
@@ -430,15 +437,32 @@ img{max-width:100%}
     <div class="grid" id="g-chg"></div>
   </section>
   <section class="card">
-    <h2><span class="h-ic"><span class="icbox coin"><svg class="ic"><use href="#i-safe"/></svg></span>เงินสำรองในตู้</span> <span class="tot coin num" id="t-res">0</span></h2>
-    <p class="hint">นับหลังจากเติมเงินกลับเข้าตู้แลกเหรียญเรียบร้อยแล้ว · ใส่จำนวนใบ/เหรียญ · ยอดนี้ไม่นับเป็นรายรับ</p>
-    <div class="grid" id="g-res"></div>
-    <div class="sum" id="resDiff"></div>
+    <h2><span class="h-ic"><span class="icbox coin"><svg class="ic"><use href="#i-coin"/></svg></span>เงินใส่คืนตู้แลกเหรียญ</span> <span class="tot coin num" id="t-refill">0</span></h2>
+    <p class="hint">จำนวนเหรียญ 10 บาทที่เติมกลับเข้าตู้แลกเหรียญวันนี้ · ย้ายเงินภายในร้าน ไม่นับเป็นรายรับหรือค่าใช้จ่าย</p>
+    <div class="coin-in">
+      <div class="field"><label for="fRefill"><svg class="ic coin"><use href="#i-coin"/></svg>เหรียญ 10 บาทที่เติมเข้าตู้</label>
+        <div class="row"><span class="coinmark">10</span><input id="fRefill" type="number" inputmode="numeric" min="0" step="1" placeholder="0"><span class="unit">เหรียญ</span></div>
+        <div class="baht" id="fRefillBaht">= 0 บาท</div></div>
+    </div>
+  </section>
+  <section class="card">
+    <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-users"/></svg></span>เงินสดให้พนักงานแลก</span> <span class="tot num" id="t-float">0</span></h2>
+    <p class="hint">เงินสดที่หยิบจากเงินสำรองให้พนักงานไว้แลกให้ลูกค้า ใส่ยอดที่ให้ไป · ระบบหักออกจากยอดที่ควรเหลือในตู้</p>
+    <div class="flt-list" id="fltList"></div>
+    <button class="ghost" id="addFlt"><svg class="ic"><use href="#i-plus"/></svg>เพิ่มรายการให้พนักงาน</button>
+    <div class="sum" id="fltSum"></div>
   </section>
   <section class="card">
     <h2><span class="h-ic"><span class="icbox bad"><svg class="ic"><use href="#i-exp"/></svg></span>ค่าใช้จ่ายวันนี้</span> <span class="tot num neg" id="t-exp">0</span></h2>
     <div class="exp-list" id="expList"></div>
+    <p class="hint" id="expSplit"></p>
     <button class="ghost" id="addExp"><svg class="ic"><use href="#i-plus"/></svg>เพิ่มรายการค่าใช้จ่าย</button>
+  </section>
+  <section class="card">
+    <h2><span class="h-ic"><span class="icbox coin"><svg class="ic"><use href="#i-safe"/></svg></span>เงินสำรองในตู้</span> <span class="tot coin num" id="t-res">0</span></h2>
+    <p class="hint">นับหลังจากเติมเงินกลับเข้าตู้แลกเหรียญเรียบร้อยแล้ว · ใส่จำนวนใบ/เหรียญ · ยอดนี้ไม่นับเป็นรายรับ</p>
+    <div class="grid" id="g-res"></div>
+    <div class="sum" id="resDiff"></div>
   </section>
   <section class="card">
     <div class="art"><img class="mascot md" src="img/money.webp" alt="" width="720" height="415"></div>
@@ -707,6 +731,7 @@ img{max-width:100%}
 </div>
 
 <datalist id="memList"></datalist>
+<datalist id="staffNames"></datalist>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -724,7 +749,7 @@ const RES=[["r1000","แบงก์ 1,000",1000],["r500","แบงก์ 500",
   ["rc10","เหรียญ 10",10],["rc5","เหรียญ 5",5],["rc2","เหรียญ 2",2],["rc1","เหรียญ 1",1]];
 const resTotal=r=>RES.reduce((t,[k,,p])=>t+int(r&&r[k])*p,0);
 const hasRes=r=>!!r&&RES.some(([k])=>r[k]!=null);
-const CATS=["ค่าไฟ","ค่าน้ำ","ค่าแก๊ส","ค่าถุง","ซื้อน้ำยา","ค่าแรง","ค่าเช่า","ซ่อมเครื่อง","เติมเหรียญตู้แลก","อื่น ๆ (ระบุเอง)"];
+const CATS=["ค่าไฟ","ค่าน้ำ","ค่าแก๊ส","ค่าถุง","ซื้อน้ำยา","ค่าแรง","ค่าเช่า","ซ่อมเครื่อง","อื่น ๆ (ระบุเอง)"];
 const OTHER="อื่น ๆ (ระบุเอง)";
 // label used in summaries: the typed description for a custom expense
 const expLabel=e=>(e.n===OTHER||e.n==="อื่น ๆ")?(String(e.d||"").trim()||"อื่น ๆ"):e.n;
@@ -865,6 +890,8 @@ function renderForm(){
   r.coins=coinCount(r);delete r.wash;delete r.dry;
   $("fCoins").value=r.coins||"";$("fCoinsBaht").textContent="= "+fmt(r.coins*10)+" บาท";$("fScan").value=r.scan||"";
   fill("g-chg",NOTES.map(([k,l,p])=>numField(I("note")+l,r[k],x=>r[k]=x,"ใบ",false,x=>x*p)));
+  $("fRefill").value=int(r.refill)||"";$("fRefillBaht").textContent="= "+fmt(int(r.refill)*10)+" บาท";
+  if(!Array.isArray(r.floats))r.floats=[];renderFloats();
   fill("g-res",RES.map(([k,l,p])=>{const coin=k.startsWith("rc");return numField(I(coin?"coin":"note",coin?"coin":"")+l,r[k],x=>r[k]=x,coin?"เหรียญ":"ใบ",false,x=>x*p)}));
   renderExp();$("note").value=r.note||"";updateTotals();
 }
@@ -872,6 +899,32 @@ $("fCoins").addEventListener("input",()=>{cur.coins=int($("fCoins").value);$("fC
 $("fCoins").addEventListener("focus",()=>$("fCoins").select());
 $("fScan").addEventListener("input",()=>{cur.scan=Math.max(0,parseFloat($("fScan").value)||0);touch()});
 $("fScan").addEventListener("focus",()=>$("fScan").select());
+$("fRefill").addEventListener("input",()=>{cur.refill=int($("fRefill").value);$("fRefillBaht").textContent="= "+fmt(cur.refill*10)+" บาท";touch()});
+$("fRefill").addEventListener("focus",()=>$("fRefill").select());
+// cash float handed to staff: who, how much given, how much came back at close
+function renderFloats(){
+  const L=$("fltList");L.innerHTML="";
+  $("staffNames").innerHTML=Object.values(staffRoles||{}).filter(r=>r.role==="staff").map(r=>`<option value="${esc(r.name||"")}"></option>`).join("");
+  if(!cur.floats.length){L.innerHTML='<p class="hint">ยังไม่มีรายการของวันนี้</p>';updFloat();return}
+  cur.floats.forEach((f,i)=>{
+    const row=document.createElement("div");row.className="flt";
+    row.innerHTML=`<div class="field who-f"><label for="fn${i}">พนักงาน</label><input id="fn${i}" class="txt" list="staffNames" placeholder="ชื่อ" value="${esc(f.n||"")}"></div>
+      <div class="field"><label for="fg${i}">ให้ไป (บาท)</label><input id="fg${i}" class="mono" type="number" inputmode="numeric" min="0" placeholder="0" value="${f.g||""}"></div>
+      <button class="del" aria-label="ลบรายการ">✕</button>`;
+    row.querySelector("#fn"+i).oninput=e=>{f.n=e.target.value;touch()};
+    row.querySelector("#fg"+i).oninput=e=>{f.g=int(e.target.value);touch()};
+    row.querySelector(".del").onclick=()=>{cur.floats.splice(i,1);renderFloats();touch()};
+    L.append(row);
+  });
+  updFloat();
+}
+const floatTot=r=>{const fs=Array.isArray(r.floats)?r.floats:[];return {g:fs.reduce((t,f)=>t+int(f.g),0)}};
+function updFloat(){
+  const t=floatTot(cur);$("t-float").textContent=fmt(t.g)+" ฿";$("t-refill").textContent=fmt(int(cur.refill)*10)+" ฿";
+  const L=(a,b,cls="")=>`<div class="l ${cls}"><span>${a}</span><span>${b}</span></div>`;
+  $("fltSum").innerHTML=cur.floats.length?L("ให้พนักงานแลกรวมวันนี้",fmt(t.g)+" ฿","big"):"";
+}
+$("addFlt").onclick=()=>{cur.floats.push({n:"",g:0});renderFloats();touch();const x=$("fn"+(cur.floats.length-1));x&&x.focus()};
 function renderExp(){
   const L=$("expList");L.innerHTML="";
   if(!cur.expenses.length){L.innerHTML='<p class="hint">ยังไม่มีค่าใช้จ่ายของวันนี้</p>';return}
@@ -884,7 +937,10 @@ function renderExp(){
     sel.onchange=()=>{e.n=sel.value;touch()};
     amt.oninput=()=>{e.a=Math.max(0,parseFloat(amt.value)||0);touch()};
     d.onclick=()=>{cur.expenses.splice(i,1);renderExp();touch()};
-    row.append(sel,amt,d);
+    const pay=document.createElement("select");pay.id="ep"+i;pay.setAttribute("aria-label","จ่ายโดย");
+    [["cash","💵 เงินสด"],["transfer","📱 โอน"]].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;o.selected=(e.p||"cash")===v;pay.append(o)});
+    pay.onchange=()=>{e.p=pay.value;touch()};
+    row.append(sel,amt,pay,d);
     if(e.n===OTHER||e.n==="อื่น ๆ"){
       const det=document.createElement("input");Object.assign(det,{id:"ed"+i,className:"det",placeholder:"ระบุว่าเป็นค่าอะไร เช่น ค่าน้ำมันรถ",value:e.d||""});det.setAttribute("aria-label","รายละเอียดค่าใช้จ่าย");
       det.oninput=()=>{e.d=det.value;touch()};row.append(det);
@@ -894,6 +950,14 @@ function renderExp(){
   });
 }
 // sachet counts always come from what staff saved, never from the owner's open form
+// cash that went into / out of the reserve box on one day (scan payments and transfer-paid expenses never touch the box)
+function cashFlow(r){
+  if(!r)return {inn:0,out:0,refill:0,exp:0,flt:0};
+  const c=calcDay(r), refill=int(r.refill)*10,
+    exp=(r.expenses||[]).filter(e=>(e.p||"cash")==="cash").reduce((t,e)=>t+(+e.a||0),0);
+  const flt=floatTot(r).g;
+  return {inn:c.coin+c.chg+c.soap,out:refill+exp+flt,refill,exp,flt};
+}
 const soapOf=r=>{const o={};SOAP.forEach(([k])=>o[k]=int(r&&r[k]));return o};
 function updateTotals(){
   const live=Object.assign({},cur,soapOf(S.soap[cur.date]));
@@ -902,8 +966,25 @@ function updateTotals(){
   const res=resTotal(cur);$("t-res").textContent=fmt(res)+" ฿";
   const prevDs=Object.keys(S.days).filter(d=>d<cur.date&&hasRes(S.days[d])).sort().pop();
   const Lr=(a,b,cls="")=>`<div class="l ${cls}"><span>${a}</span><span>${b}</span></div>`;
-  $("resDiff").innerHTML=Lr("รวมเงินสำรอง",fmt(res)+" ฿","big")+(prevDs?Lr("ครั้งก่อน ("+thaiDate(prevDs)+")",fmt(resTotal(S.days[prevDs]))+" ฿","sub")+Lr("เปลี่ยนแปลง",((res-resTotal(S.days[prevDs]))>0?"+":"")+fmt(res-resTotal(S.days[prevDs]))+" ฿","sub"):"");
+  let resHtml=Lr("นับได้จริง",fmt(res)+" ฿","big");
+  if(prevDs){
+    // every day from the day after the last count up to today: cash in, minus cash taken out of the box
+    const days=[];for(let d=shift(prevDs,1);d<=cur.date;d=shift(d,1))days.push(d);
+    const flow=days.map(d=>cashFlow(d===cur.date?live:D(d))).reduce((a,b)=>{for(const k in b)a[k]=(a[k]||0)+b[k];return a},{});
+    const expect=resTotal(S.days[prevDs])+flow.inn-flow.out, diff=res-expect;
+    resHtml=Lr("เงินสำรองครั้งก่อน ("+thaiDate(prevDs)+")",fmt(resTotal(S.days[prevDs]))+" ฿","sub")
+      +Lr("+ เหรียญตู้ซัก/อบ + แบงก์ตู้แลก + ค่าน้ำยา"+(days.length>1?" ("+days.length+" วัน)":""),fmt(flow.inn)+" ฿","sub")
+      +Lr("− เติมเหรียญคืนตู้แลก",fmt(flow.refill)+" ฿","sub")
+      +Lr("− ค่าใช้จ่ายเงินสด",fmt(flow.exp)+" ฿","sub")
+      +Lr("− เงินสดให้พนักงานแลก",fmt(flow.flt)+" ฿","sub")
+      +Lr("ยอดที่ควรเหลือ",fmt(expect)+" ฿","top")
+      +resHtml
+      +(hasRes(cur)||res?Lr(diff===0?"เงินตรง ✓":diff<0?"เงินขาด":"เงินเกิน",`<span class="${diff===0?"pos":diff<0?"neg":"coin"}">${diff===0?"0":(diff>0?"+":"−")+fmt(Math.abs(diff))} ฿</span>`,"big"):"");
+  } else resHtml+='<p class="hint">ยังไม่มีเงินสำรองครั้งก่อน · ยอดที่นับวันนี้จะใช้เป็นยอดตั้งต้น ครั้งถัดไประบบจะคำนวณยอดที่ควรเหลือให้</p>';
+  $("resDiff").innerHTML=resHtml;
   $("t-soap").textContent=fmt(c.soap)+" ฿";$("t-chg").textContent=fmt(c.chg)+" ฿";$("t-exp").textContent=fmt(c.exp)+" ฿";
+  const expT=(cur.expenses||[]).filter(e=>e.p==="transfer").reduce((t,e)=>t+(+e.a||0),0);
+  $("expSplit").textContent=cur.expenses&&cur.expenses.length?"เงินสดจากตู้ "+fmt(c.exp-expT)+" ฿ · โอนจ่าย "+fmt(expT)+" ฿":"";
   $("g-soap").innerHTML=SOAP.map(([k,l,p])=>`<div><svg class="ic"><use href="#i-soap"/></svg> ${l}<b>${live[k]} ซอง</b>${fmt(live[k]*p)} ฿</div>`).join("");
   const vs=visitsOn(cur.date).map(x=>x[1]);
   const heads=vs.length, mem=vs.filter(v=>v.memberId).length, keyed=vs.reduce((t,v)=>t+vTotal(v),0);
@@ -923,10 +1004,12 @@ L("หักค่าใช้จ่าย","−"+fmt(c.exp)+" ฿")+
     (config.countChanger?"":L("เงินตู้แลกเหรียญ (แยกไว้ ไม่รวมรายรับ)",fmt(c.chg)+" ฿","sub"))+
     L("เงินสดที่เก็บได้ทั้งหมด",fmt(c.cash)+" ฿","sub")+
     L("ยอดสแกนจ่าย (บันทึกไว้ดู ไม่นำไปคำนวณ)",fmt(c.scan)+" ฿","sub")+
+    L("เติมเหรียญคืนตู้แลก ("+fmt(int(cur.refill))+" เหรียญ)",fmt(int(cur.refill)*10)+" ฿","sub")+
+    (Array.isArray(cur.floats)&&cur.floats.length?L("− เงินสดให้พนักงานแลก",fmt(floatTot(cur).g)+" ฿","sub"):"")+
     L("เงินสำรองในตู้ (หลังเติมตู้แลกเหรียญ)",fmt(resTotal(cur))+" ฿","sub")+
     (heads&&box?L("ยอดคีย์รายคน เทียบ ยอดขาย",(diff>0?"+":"")+fmt(diff)+" ฿","sub"):"");
 }
-function touch(){dirty=true;updateTotals();$("save").disabled=false;$("saveSt").textContent="มีการแก้ไขที่ยังไม่บันทึก"}
+function touch(){dirty=true;updateTotals();updFloat();$("save").disabled=false;$("saveSt").textContent="มีการแก้ไขที่ยังไม่บันทึก"}
 function confirmLeave(){
   if(leaveArmed){leaveArmed=false;dirty=false;return true}
   leaveArmed=true;$("saveSt").innerHTML='<span class="neg">เงินสิ้นวันยังไม่ได้บันทึก กดอีกครั้งเพื่อทิ้งการแก้ไข</span>';
@@ -944,9 +1027,9 @@ function loadDay(ds,force){
 async function saveDay(){
   cur.note=$("note").value.trim();
   const rec=JSON.parse(JSON.stringify(cur));
-  rec.expenses=rec.expenses.filter(e=>e.a>0);rec.updatedAt=new Date().toISOString();
+  rec.expenses=rec.expenses.filter(e=>e.a>0).map(e=>Object.assign({},e,{p:e.p==="transfer"?"transfer":"cash"}));rec.updatedAt=new Date().toISOString();
   $("save").disabled=true;$("saveSt").textContent="กำลังบันทึก…";
-  const own={date:rec.date,coins:int(rec.coins),scan:Math.max(0,+rec.scan||0),...Object.fromEntries(RES.map(([k])=>[k,int(rec[k])])),b100:int(rec.b100),b50:int(rec.b50),b20:int(rec.b20),expenses:rec.expenses,note:rec.note||"",updatedAt:rec.updatedAt,cashBy:curStaff||"owner"};
+  const own={date:rec.date,coins:int(rec.coins),scan:Math.max(0,+rec.scan||0),...Object.fromEntries(RES.map(([k])=>[k,int(rec[k])])),b100:int(rec.b100),b50:int(rec.b50),b20:int(rec.b20),refill:int(rec.refill),floats:(rec.floats||[]).filter(f=>int(f.g)||String(f.n||"").trim()).map(f=>({n:String(f.n||"").trim(),g:int(f.g)})),expenses:rec.expenses,note:rec.note||"",updatedAt:rec.updatedAt,cashBy:curStaff||"owner"};
   try{await merge("days",rec.date,own);dirty=false;cur.expenses=rec.expenses;renderExp();
     $("saveSt").textContent="บันทึกแล้ว · "+thaiDate(rec.date);renderMonth()}
   catch(e){$("save").disabled=false;$("saveSt").innerHTML='<span class="neg">บันทึกไม่สำเร็จ ('+esc(e.code||"error")+') ลองกดอีกครั้ง</span>'}
@@ -1268,18 +1351,18 @@ function buildWorkbook(scope){
   const add=(name,rows,widths)=>{const ws=XLSX.utils.aoa_to_sheet(rows);ws["!cols"]=widths.map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws,name)};
   // daily
   const dHead=[L("วันที่","Date"),L("ลูกค้า (คน)","Customers"),L("เหรียญ 10 บาท ตู้ซัก+อบ (เหรียญ)","10฿ coins washers+dryers"),L("เงินเหรียญ (บาท)","Coins ฿"),L("ยอดสแกนจ่าย (บาท)","Scan/transfer ฿"),
-    ...SOAP.map(([,l])=>l+L(" (ซอง)"," (packs)")),L("ค่าน้ำยา","Soap ฿"),...NOTES.map(([,l])=>l+L(" (ใบ)"," (notes)")),L("ตู้แลกเหรียญ","Changer ฿"),
+    ...SOAP.map(([,l])=>l+L(" (ซอง)"," (packs)")),L("ค่าน้ำยา","Soap ฿"),...NOTES.map(([,l])=>l+L(" (ใบ)"," (notes)")),L("ตู้แลกเหรียญ","Changer ฿"),L("เติมเหรียญคืนตู้แลก (เหรียญ)","Refill coins"),L("เติมเหรียญคืนตู้แลก (บาท)","Refill ฿"),L("ให้พนักงานแลก (บาท)","Float given ฿"),
     L("รายรับ","Income"),L("ค่าใช้จ่าย","Expenses"),L("คงเหลือ","Balance"),L("คงเหลือสะสม","Running"),...RES.map(([,l])=>L("สำรอง ","Reserve ")+l),L("เงินสำรองรวม","Reserve total"),L("หมายเหตุ","Note")];
   let run=0;const T={heads:0,coins:0,coin:0,scan:0,soap:0,chg:0,inc:0,exp:0,net:0};
   const dRows=dates.map(ds=>{const r=D(ds)||blankDay(ds),c=calcDay(r),h=visitsOn(ds).length;run+=c.net;
     T.heads+=h;["coins","coin","scan","soap","chg","inc","exp","net"].forEach(k=>T[k]+=c[k]);
-    return [ds,h,c.coins,c.coin,c.scan,...SOAP.map(([k])=>+r[k]||0),c.soap,...NOTES.map(([k])=>+r[k]||0),c.chg,c.inc,c.exp,c.net,run,...RES.map(([k])=>hasRes(r)?int(r[k]):""),hasRes(r)?resTotal(r):"",r.note||""]});
+    return [ds,h,c.coins,c.coin,c.scan,...SOAP.map(([k])=>+r[k]||0),c.soap,...NOTES.map(([k])=>+r[k]||0),c.chg,int(r.refill),int(r.refill)*10,floatTot(r).g,c.inc,c.exp,c.net,run,...RES.map(([k])=>hasRes(r)?int(r[k]):""),hasRes(r)?resTotal(r):"",r.note||""]});
   // visits
   const vRows=Object.values(S.visits).filter(v=>inScope(v.date)).sort((a,b)=>(a.date+(a.at||"")).localeCompare(b.date+(b.at||"")))
     .map(v=>[v.date,hhmm(v.at),v.memberId?mname(v.memberId):L("ลูกค้าทั่วไป","Walk-in"),v.memberId||"",v.memberId?L("สมาชิก","Member"):L("ทั่วไป","Walk-in"),
       int(v.washLoads),+v.washAmt||0,int(v.dryLoads),+v.dryAmt||0,+v.soapAmt||0,vTotal(v),vPts(v),(v.by||L("พนักงาน","Staff"))+(v.source==="front"?L(" (ลูกค้าแจ้งจากหน้าบ้าน)"," (from customer screen)"):"")]);
   // expenses
-  const eRows=[];dates.forEach(ds=>{(S.days[ds]&&S.days[ds].expenses||[]).forEach(e=>eRows.push([ds,e.n===OTHER?"อื่น ๆ":e.n,e.n===OTHER||e.n==="อื่น ๆ"?String(e.d||"").trim():"",+e.a||0]))});
+  const eRows=[];dates.forEach(ds=>{(S.days[ds]&&S.days[ds].expenses||[]).forEach(e=>eRows.push([ds,e.n===OTHER?"อื่น ๆ":e.n,e.n===OTHER||e.n==="อื่น ๆ"?String(e.d||"").trim():"",+e.a||0,e.p==="transfer"?L("โอน","Transfer"):L("เงินสด","Cash")]))});
   // members
   const mRows=Object.keys(S.members).map(id=>{const s=memberStats(id),inV=s.vs.filter(v=>inScope(v.date));
     return [id,S.members[id].name,S.members[id].since||"",inV.length,inV.reduce((t,v)=>t+vPts(v),0),inV.reduce((t,v)=>t+vTotal(v),0),s.earned,s.used,s.balance,s.expiredPts,s.deadline||""]}).sort((a,b)=>b[5]-a[5]);
@@ -1292,9 +1375,9 @@ function buildWorkbook(scope){
     [L("ลูกค้า (หัว)","Customers"),T.heads],[L("เหรียญ 10 บาท ตู้ซัก+อบ (เหรียญ)","10฿ coins (count)"),T.coins],[L("เงินเหรียญตู้ซัก+อบ","Coins from machines"),T.coin],[L("ยอดสแกนจ่าย (บันทึกไว้ดู ไม่นำไปคำนวณ)","Scan payments (record only, not in totals)"),T.scan],[L("ค่าน้ำยา","Soap"),T.soap],
     [L("ตู้แลกเหรียญ","Changer")+(config.countChanger?"":L(" (ไม่นับเป็นรายรับ)"," (not in income)")),T.chg],[L("รายรับรวม","Total income"),T.inc],[L("ค่าใช้จ่ายรวม","Total expenses"),T.exp],[L("คงเหลือ","Balance"),T.net],
     [],[L("ยอดขายที่คีย์รายคน","Sales entered per customer"),vRows.reduce((t,r)=>t+r[10],0)],[L("สมาชิกที่มาใช้บริการ","Members who visited"),mRows.filter(r=>r[3]>0).length],[L("จำนวนครั้งที่แลกรางวัล","Rewards redeemed"),rRows.length],[L("ส่วนลดจากแต้มรวม (บาท)","Points discount total"),rRows.reduce((t,r)=>t+(+r[7]||0),0)],[L("ลูกค้าจ่ายเพิ่มตอนแลกรวม (บาท)","Extra paid on rewards"),rRows.reduce((t,r)=>t+(+r[8]||0),0)]],[32,18]);
-  add(L("รายวัน","Daily"),[dHead,...dRows,[L("รวม","Total"),T.heads,T.coins,T.coin,T.scan,...Array(SOAP.length).fill(""),T.soap,...Array(NOTES.length).fill(""),T.chg,T.inc,T.exp,T.net,"",...RES.map(()=>""),"",""]],[12,10,16,12,14,...Array(SOAP.length).fill(14),10,...Array(NOTES.length).fill(10),12,10,10,10,12,...RES.map(()=>12),14,28]);
+  add(L("รายวัน","Daily"),[dHead,...dRows,[L("รวม","Total"),T.heads,T.coins,T.coin,T.scan,...Array(SOAP.length).fill(""),T.soap,...Array(NOTES.length).fill(""),T.chg,dRows.reduce((t,x)=>t+x[3+2+SOAP.length+1+NOTES.length+1],0),dRows.reduce((t,x)=>t+x[3+2+SOAP.length+1+NOTES.length+2],0),dRows.reduce((t,x)=>t+x[3+2+SOAP.length+1+NOTES.length+3],0),T.inc,T.exp,T.net,"",...RES.map(()=>""),"",""]],[12,10,16,12,14,...Array(SOAP.length).fill(14),10,...Array(NOTES.length).fill(10),12,14,14,14,10,10,10,12,...RES.map(()=>12),14,28]);
   add(L("ลูกค้ารายคน","Per customer"),[[L("วันที่","Date"),L("เวลา","Time"),L("ชื่อ","Name"),L("เบอร์โทร","Phone"),L("ประเภท","Type"),L("ซัก (ถัง)","Wash loads"),L("ค่าซัก","Wash ฿"),L("อบ (ถัง)","Dry loads"),L("ค่าอบ","Dry ฿"),L("ค่าน้ำยา","Soap ฿"),L("รวม","Total"),L("แต้ม","Points"),L("บันทึกโดย","Entered by")],...vRows],[12,7,20,13,10,10,9,10,9,10,9,7,14]);
-  add(L("ค่าใช้จ่าย","Expenses"),[[L("วันที่","Date"),L("หมวด","Category"),L("รายละเอียด","Detail"),L("จำนวนเงิน","Amount")],...eRows,[L("รวม","Total"),"","",eRows.reduce((t,r)=>t+r[3],0)]],[12,18,26,12]);
+  add(L("ค่าใช้จ่าย","Expenses"),[[L("วันที่","Date"),L("หมวด","Category"),L("รายละเอียด","Detail"),L("จำนวนเงิน","Amount"),L("จ่ายโดย","Paid by")],...eRows,[L("รวม","Total"),"","",eRows.reduce((t,r)=>t+r[3],0),""]],[12,18,26,12,10]);
   add(L("สมาชิก","Members"),[[L("เบอร์โทร","Phone"),L("ชื่อ","Name"),L("สมาชิกตั้งแต่","Since"),L("มา (ครั้ง)","Visits"),L("ถังที่ใช้","Loads"),L("ยอดใช้จ่าย","Spent ฿"),L("แต้มสะสมทั้งหมด","Points earned"),L("แต้มที่แลกไป","Points used"),L("แต้มคงเหลือ","Points left"),L("แต้มหมดอายุ","Points expired"),L("ต้องแลกภายใน","Redeem by")],...mRows],[13,20,12,10,10,12,14,13,12,12,13]);
   const xRows=[];Object.keys(S.members).forEach(id=>memberStats(id).expired.forEach(x=>{if(inScope(x.date))xRows.push([x.date,mname(id),id,x.since,x.points])}));
   xRows.sort((a,b)=>a[0].localeCompare(b[0]));
@@ -1639,6 +1722,9 @@ const EN={
 "ออกจากระบบ":"Log out","ใบเสร็จ":"Receipt","ปริ้น":"Print","บันทึกรูป":"Save image","กำลังสร้างใบเสร็จ…":"Creating receipt…","ลูกค้าสแกน QR บนใบเสร็จหรือบนจอนี้ เพื่อดูแต้มล่าสุดได้ตลอด":"Customers scan the QR on the receipt or this screen to see their latest points","ลูกค้าทั่วไป ไม่มี QR สะสมแต้ม":"Walk-in customer, no points QR",
 "บัญชีพนักงาน":"Staff accounts","สร้างบัญชีพนักงาน":"Create staff account","ชื่อผู้ใช้ (ภาษาอังกฤษ)":"Username","รหัสผ่าน (อย่างน้อย 6 ตัว)":"Password (6+ characters)","ร้านและใบเสร็จ":"Shop & receipt","ชื่อร้าน (พิมพ์บนใบเสร็จ)":"Shop name (on receipt)","LINE ID ร้าน (พิมพ์บนใบเสร็จ)":"Shop LINE ID (on receipt)","กระดาษใบเสร็จ":"Receipt paper","ข้อความท้ายใบเสร็จ":"Receipt footer","รหัสออกจากหน้าบ้าน":"PIN to leave customer screen","ยังไม่มีบัญชีพนักงาน":"No staff accounts yet",
 "สมัครสมาชิกใหม่":"New member sign-up","ใส่ชื่อลูกค้า (จำเป็น)":"Customer name (required)","ใส่ชื่อแล้วกดบันทึก ระบบจะสมัครสมาชิกและสะสมแต้มครั้งนี้ให้เลย":"Enter a name and save: the member is created and earns points for this visit","เบอร์นี้ยังไม่เป็นสมาชิก":"This phone is not a member yet","เบอร์ใหม่ ใส่ชื่อลูกค้าเพื่อสมัครสมาชิกก่อน":"New phone: enter the customer's name first","พิมพ์เบอร์โทรลูกค้า (เว้นว่าง = ลูกค้าทั่วไป)":"Customer phone (empty = walk-in)","มาแล้ว":"visits:","แต้มครบ! แลกได้ถึง":"Points full! Redeem by","แต้ม แลกรางวัล":"pts to a reward","(ยังไม่มีชื่อ)":"(no name)","ชื่อ หรือชื่อเล่น (จำเป็น)":"Name (required)",
+"เงินใส่คืนตู้แลกเหรียญ":"Coins refilled into changer","เหรียญ 10 บาทที่เติมเข้าตู้":"10฿ coins refilled","เงินสดให้พนักงานแลก":"Change float for staff","เพิ่มรายการให้พนักงาน":"Add float","ให้ไป (บาท)":"Given (฿)","คืนมา (บาท)":"Returned (฿)","ให้ไปทั้งหมด":"Total given","คืนมาแล้ว":"Returned","ยังไม่คืน":"Not returned","คืนเกินมา":"Returned extra","คืนครบแล้ว":"All returned","ยังไม่มีรายการของวันนี้":"Nothing today","เติมเหรียญคืนตู้แลก":"Changer refill","พนักงาน":"Staff",
+"นับได้จริง":"Counted","เงินสำรองครั้งก่อน":"Last reserve","ยอดที่ควรเหลือ":"Should have","เงินตรง ✓":"Matches ✓","เงินขาด":"Short","เงินเกิน":"Over","ค่าใช้จ่ายเงินสด":"cash expenses","ให้พนักงานแลก (ยังไม่คืน)":"staff float not returned","เงินสดจากตู้":"Cash from box","โอนจ่าย":"Transfer","จ่ายโดย":"Paid by","เงินสด":"Cash","โอน":"Transfer",
+"ให้พนักงานแลกรวมวันนี้":"Float given today","เงินสดที่หยิบจากเงินสำรองให้พนักงานไว้แลกให้ลูกค้า ใส่ยอดที่ให้ไป · ระบบหักออกจากยอดที่ควรเหลือในตู้":"Cash taken from the reserve for staff to give change · enter the amount given · deducted from what the box should have","− เงินสดให้พนักงานแลก":"− staff float","เงินสดให้พนักงานแลก (บันทึกไว้ดู)":"Staff float (record only)",
 "บันทึก":"Save","เพิ่ม":"Add","ภาษา":"Language","แล้ว":"✓"
 };
 const EN_KEYS=Object.keys(EN).sort((a,b)=>b.length-a.length);
