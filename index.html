@@ -37,6 +37,7 @@
   --good:#7cc96e; --bad:#f08a72; --bad-soft:#3e1d16; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+.soapsum{width:100%}.soapsum td:first-child,.soapsum th:first-child{text-align:left}.soapsum .ic{width:18px;height:18px;vertical-align:-4px}.soapsum tr.zero td{opacity:.45}.soapday{width:100%;font-size:13px}.soapday th,.soapday td{padding:6px 4px}.soapday th small,.soapday td small{display:block;font-weight:400}
 body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.5}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
@@ -429,7 +430,7 @@ img{max-width:100%}
   <section class="card">
     <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-soap"/></svg></span>น้ำยาที่ขายได้</span> <span class="tot num" id="t-soap">0</span></h2>
     <p class="hint">พนักงานหน้าร้านเป็นคนบันทึก · ซองเล็ก 5 บาท · ซองใหญ่ 20 บาท</p>
-    <div class="soap-ro" id="g-soap"></div>
+    <div id="g-soap"></div>
   </section>
   <section class="card">
     <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-note"/></svg></span>ตู้แลกเหรียญ</span> <span class="tot num" id="t-chg">0</span></h2>
@@ -514,6 +515,7 @@ img{max-width:100%}
     <p class="hint">กด + ทุกครั้งที่ขายได้ 1 ซอง · บันทึกทันที</p>
     <div class="soapgrid" id="soapPad"></div>
     <p class="hint" id="soapMsg"></p>
+    <div id="soapSumStaff"></div>
   </section>
   </div>
 </main>
@@ -614,6 +616,13 @@ img{max-width:100%}
     <div class="tablewrap"><table class="wide">
       <thead><tr><th>วันที่</th><th>ลูกค้า</th><th>เหรียญตู้</th><th>สแกนจ่าย</th><th>น้ำยา</th><th>ตู้แลก</th><th>รายรับ</th><th>จ่าย</th><th>คงเหลือ</th><th>สะสม</th><th>เงินสำรอง</th></tr></thead>
       <tbody id="mBody"></tbody><tfoot id="mFoot"></tfoot>
+    </table></div>
+  </section>
+  <section class="card">
+    <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-soap"/></svg></span>ขายน้ำยารายวัน</span></h2>
+    <p class="hint">จำนวนซองที่พนักงานกด + ในแต่ละวัน · ใช้ชนยอดเงินค่าน้ำยา</p>
+    <div class="tablewrap"><table class="soapday">
+      <thead id="sdHead"></thead><tbody id="sdBody"></tbody><tfoot id="sdFoot"></tfoot>
     </table></div>
   </section>
   <section class="card"><h2>รายรับแยกตามแหล่ง</h2><div class="bars" id="srcBars"></div></section>
@@ -1017,7 +1026,7 @@ function updateTotals(){
   $("t-soap").textContent=fmt(c.soap)+" ฿";$("t-chg").textContent=fmt(c.chg)+" ฿";$("t-exp").textContent=fmt(c.exp)+" ฿";
   const expT=(cur.expenses||[]).filter(e=>e.p==="transfer").reduce((t,e)=>t+(+e.a||0),0);
   $("expSplit").textContent=cur.expenses&&cur.expenses.length?"เงินสดจากตู้ "+fmt(c.exp-expT)+" ฿ · โอนจ่าย "+fmt(expT)+" ฿":"";
-  $("g-soap").innerHTML=SOAP.map(([k,l,p])=>`<div><svg class="ic"><use href="#i-soap"/></svg> ${l}<b>${live[k]} ซอง</b>${fmt(live[k]*p)} ฿</div>`).join("");
+  $("g-soap").innerHTML=soapSummary(live,cur.date);
   const vs=visitsOn(cur.date).map(x=>x[1]);
   const heads=vs.length, mem=vs.filter(v=>v.memberId).length, keyed=vs.reduce((t,v)=>t+vTotal(v),0);
   const box=c.sales, diff=keyed-box;
@@ -1070,10 +1079,19 @@ async function saveDay(){
 /* ===== staff: sachet sales (tap +/−, saved right away, one write at a time) ===== */
 const sDate=()=>$("sdate").value||todayStr();
 let soapLocal=null, soapBusy=false, soapTimer=null;
+/* sachet summary: pieces and baht per item, day total, and a cross-check against soap keyed on customer rows */
+function soapSummary(counts,ds){
+  const n=SOAP.reduce((t,[k])=>t+int(counts[k]),0), tot=SOAP.reduce((t,[k,,p])=>t+int(counts[k])*p,0);
+  const keyed=visitsOn(ds).reduce((t,[,v])=>t+(+v.soapAmt||0),0), diff=keyed-tot;
+  return `<div class="tablewrap" style="margin-top:10px"><table class="soapsum"><thead><tr><th>รายการ</th><th>ราคา</th><th>ชิ้น</th><th>บาท</th></tr></thead><tbody>`
+    +SOAP.map(([k,l,p])=>`<tr class="${int(counts[k])?"":"zero"}"><td><svg class="ic"><use href="#i-${k.startsWith("soft")?"soft":"soap"}"/></svg> ${l}</td><td>${p}</td><td><b>${int(counts[k])}</b></td><td>${fmt(int(counts[k])*p)}</td></tr>`).join("")
+    +`</tbody><tfoot><tr><td>รวม ${thaiDate(ds)}</td><td></td><td>${n} ชิ้น</td><td>${fmt(tot)} ฿</td></tr></tfoot></table></div>`
+    +(keyed||tot?`<div class="sum" style="margin-top:8px"><div class="l sub"><span>น้ำยาที่คีย์ในรายการลูกค้า</span><span>${fmt(keyed)} ฿</span></div><div class="l"><span>${diff===0?"ตรงกับยอดขายซอง ✓":"ต่างจากยอดขายซอง"}</span><span class="${diff===0?"pos":"coin"}">${diff===0?"0":(diff>0?"+":"−")+fmt(Math.abs(diff))} ฿</span></div></div>`:"");
+}
 function renderSoapPad(){
   const ds=sDate(), base=soapLocal&&soapLocal.date===ds?soapLocal:Object.assign({date:ds},soapOf(S.soap[ds]));
   const tot=SOAP.reduce((t,[k,,p])=>t+base[k]*p,0);
-  $("t-ssoap").textContent=fmt(tot)+" ฿";
+  $("t-ssoap").textContent=fmt(tot)+" ฿";$("soapSumStaff").innerHTML=soapSummary(base,ds);
   $("soapPad").innerHTML=SOAP.map(([k,l,p])=>{const [kind,size]=l.split(" ");
     const ico=k.startsWith("soft")?"soft":"soap", big=k.endsWith("_l");
     return `<div class="sp"><div class="lab"><svg class="ic" style="${big?"width:38px;height:38px":"width:24px;height:24px"}"><use href="#i-${ico}"/></svg>${kind}</div><div class="size">${big?"▮▮":"▮"} ${size} · ${p} ฿</div>
@@ -1363,6 +1381,14 @@ function renderMonth(){
   $("mFoot").innerHTML=has?`<tr><td>รวม</td><td>${T.heads}</td><td>${fmt(T.coin)}<small>${fmt(T.coins)} เหรียญ</small></td><td>${fmt(T.scan)}</td><td>${fmt(T.soap)}</td><td>${fmt(T.chg)}</td><td>${fmt(T.inc)}</td><td>${fmt(T.exp)}</td><td>${fmt(T.net)}</td><td></td><td>${lastRes!=null?fmt(lastRes)+"<small>ล่าสุด</small>":"–"}</td></tr>`:"";
   $("m-inc").textContent=fmt(T.inc);$("m-exp").textContent=fmt(T.exp);
   $("m-net").textContent=fmt(T.net);$("m-net").className="v "+(T.net<0?"neg":"pos");$("m-heads").textContent=fmt(T.heads);
+  {const sc={};let sn=0,sb=0,sr="";
+    for(let d=1;d<=nDays;d++){const ds=m+"-"+pad(d),o=soapOf(S.soap[ds]),cnt=SOAP.reduce((t,[k])=>t+o[k],0);if(!cnt)continue;
+      const b=SOAP.reduce((t,[k,,p])=>t+o[k]*p,0);SOAP.forEach(([k])=>sc[k]=(sc[k]||0)+o[k]);sn+=cnt;sb+=b;
+      sr+=`<tr class="click" data-d="${ds}"><td>${THD[new Date(ds+"T00:00:00").getDay()]} ${d}</td>${SOAP.map(([k])=>`<td>${o[k]||"–"}</td>`).join("")}<td>${cnt}</td><td><b>${fmt(b)}</b></td></tr>`}
+    $("sdHead").innerHTML=`<tr><th>วันที่</th>${SOAP.map(([,l,p])=>`<th>${l.replace("น้ำยาซัก","ซัก").replace("ปรับผ้านุ่ม","นุ่ม").replace("ซอง","")}<small>${p} ฿</small></th>`).join("")}<th>ชิ้นรวม</th><th>บาท</th></tr>`;
+    $("sdBody").innerHTML=sr||`<tr><td colspan="${SOAP.length+3}"><div class="empty">ยังไม่มีการขายน้ำยาเดือนนี้</div></td></tr>`;
+    $("sdFoot").innerHTML=sr?`<tr><td>รวม</td>${SOAP.map(([k,,p])=>`<td>${sc[k]||0}<small>${fmt((sc[k]||0)*p)} ฿</small></td>`).join("")}<td>${sn}</td><td>${fmt(sb)}</td></tr>`:"";
+    $("sdBody").querySelectorAll("[data-d]").forEach(tr=>tr.onclick=()=>{if(loadDay(tr.dataset.d))showTab("day")});}
   bars($("srcBars"),has?[["เหรียญตู้ซัก+อบ",T.coin],["น้ำยาซัก",sp.det],["ปรับผ้านุ่ม",sp.soft],[config.countChanger?"ตู้แลก":"ตู้แลก (ไม่นับ)",T.chg]]:[]);
   bars($("topBars"),Object.entries(top).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([id,v])=>[dn(id),v]),"nt");
   bars($("expBars"),Object.entries(cat).sort((a,b)=>b[1]-a[1]),"bad");
@@ -1829,7 +1855,7 @@ const EN={
 "สมัครสมาชิกใหม่":"New member sign-up","ใส่ชื่อลูกค้า (จำเป็น)":"Customer name (required)","ใส่ชื่อแล้วกดบันทึก ระบบจะสมัครสมาชิกและสะสมแต้มครั้งนี้ให้เลย":"Enter a name and save: the member is created and earns points for this visit","เบอร์นี้ยังไม่เป็นสมาชิก":"This phone is not a member yet","เบอร์ใหม่ ใส่ชื่อลูกค้าเพื่อสมัครสมาชิกก่อน":"New phone: enter the customer's name first","พิมพ์เบอร์โทรลูกค้า (เว้นว่าง = ลูกค้าทั่วไป)":"Customer phone (empty = walk-in)","มาแล้ว":"visits:","แต้มครบ! แลกได้ถึง":"Points full! Redeem by","แต้ม แลกรางวัล":"pts to a reward","(ยังไม่มีชื่อ)":"(no name)","ชื่อ หรือชื่อเล่น (จำเป็น)":"Name (required)",
 "เงินใส่คืนตู้แลกเหรียญ":"Coins refilled into changer","เหรียญ 10 บาทที่เติมเข้าตู้":"10฿ coins refilled","เงินสดให้พนักงานแลก":"Change float for staff","เพิ่มรายการให้พนักงาน":"Add float","ให้ไป (บาท)":"Given (฿)","คืนมา (บาท)":"Returned (฿)","ให้ไปทั้งหมด":"Total given","คืนมาแล้ว":"Returned","ยังไม่คืน":"Not returned","คืนเกินมา":"Returned extra","คืนครบแล้ว":"All returned","ยังไม่มีรายการของวันนี้":"Nothing today","เติมเหรียญคืนตู้แลก":"Changer refill","พนักงาน":"Staff",
 "นับได้จริง":"Counted","เงินสำรองครั้งก่อน":"Last reserve","ยอดที่ควรเหลือ":"Should have","เงินตรง ✓":"Matches ✓","เงินขาด":"Short","เงินเกิน":"Over","ค่าใช้จ่ายเงินสด":"cash expenses","ให้พนักงานแลก (ยังไม่คืน)":"staff float not returned","เงินสดจากตู้":"Cash from box","โอนจ่าย":"Transfer","จ่ายโดย":"Paid by","เงินสด":"Cash","โอน":"Transfer",
-"ให้พนักงานแลกรวมวันนี้":"Float given today","QR พร้อมเพย์บนใบเสร็จ":"PromptPay QR on receipt","เบอร์พร้อมเพย์ / เลขบัตร 13 หลัก":"PromptPay phone / 13-digit ID","ชื่อบัญชี (ให้ลูกค้าตรวจก่อนโอน)":"Account name (for customers to check)","ใส่ยอดเงินใน QR":"Put the amount in the QR","เงินสดที่หยิบจากเงินสำรองให้พนักงานไว้แลกให้ลูกค้า ใส่ยอดที่ให้ไป · ระบบหักออกจากยอดที่ควรเหลือในตู้":"Cash taken from the reserve for staff to give change · enter the amount given · deducted from what the box should have","− เงินสดให้พนักงานแลก":"− staff float","เงินสดให้พนักงานแลก (บันทึกไว้ดู)":"Staff float (record only)",
+"ให้พนักงานแลกรวมวันนี้":"Float given today","น้ำยาที่คีย์ในรายการลูกค้า":"Soap keyed on customer rows","ตรงกับยอดขายซอง ✓":"Matches packet sales ✓","ต่างจากยอดขายซอง":"Differs from packet sales","ขายน้ำยารายวัน":"Daily soap sales","ชิ้นรวม":"Pieces","ชิ้น":"pcs","QR พร้อมเพย์บนใบเสร็จ":"PromptPay QR on receipt","เบอร์พร้อมเพย์ / เลขบัตร 13 หลัก":"PromptPay phone / 13-digit ID","ชื่อบัญชี (ให้ลูกค้าตรวจก่อนโอน)":"Account name (for customers to check)","ใส่ยอดเงินใน QR":"Put the amount in the QR","เงินสดที่หยิบจากเงินสำรองให้พนักงานไว้แลกให้ลูกค้า ใส่ยอดที่ให้ไป · ระบบหักออกจากยอดที่ควรเหลือในตู้":"Cash taken from the reserve for staff to give change · enter the amount given · deducted from what the box should have","− เงินสดให้พนักงานแลก":"− staff float","เงินสดให้พนักงานแลก (บันทึกไว้ดู)":"Staff float (record only)",
 "บันทึก":"Save","เพิ่ม":"Add","ภาษา":"Language","แล้ว":"✓"
 };
 const EN_KEYS=Object.keys(EN).sort((a,b)=>b.length-a.length);
