@@ -1397,12 +1397,13 @@ $("rcPrint").onclick=()=>{if(!rcCanvas)return;
 
 /* ===== settings ===== */
 /* staff accounts (owner only): each staff member signs in with their own username and password */
-let staffRoles={};
+let staffRoles={}, staffBusy=false;
 const userEmail=u=>{u=String(u||"").trim().toLowerCase();return u.includes("@")?u:u+"@laundry-shop.local"};
 const userName=email=>String(email||"").replace(/@laundry-shop\.local$/,"");
 function renderStaffAccounts(){
   const el=$("staffList");if(!el)return;
   if(mode!=="db"){el.innerHTML='<p class="hint">โหมดทดลอง: สร้างบัญชีพนักงานได้หลังจากเชื่อม Firebase ตามคู่มือ</p>';$("nsAdd").disabled=true;return}
+  if(!staffBusy)$("nsAdd").disabled=false; // connected: allow creating accounts again
   const rows=Object.entries(staffRoles).filter(([,r])=>r.role==="staff");
   el.innerHTML=rows.length?rows.map(([uid,r])=>`<div class="staff-row"><div><b class="nt">${esc(r.name||"")}</b><span>${esc(r.username||"")}</span></div><button class="del" data-rmuid="${uid}" aria-label="ปิดบัญชีพนักงาน">✕</button></div>`).join("")
     :'<p class="hint">ยังไม่มีบัญชีพนักงาน</p>';
@@ -1415,7 +1416,7 @@ $("nsAdd").onclick=async()=>{
   if(!name||!user){$("nsMsg").innerHTML='<span class="warn">ใส่ชื่อพนักงานและชื่อผู้ใช้</span>';return}
   if(!/^[a-z0-9._-]{3,30}$/.test(user)&&!user.includes("@")){$("nsMsg").innerHTML='<span class="warn">ชื่อผู้ใช้ใช้ได้แค่ a-z 0-9 . _ - อย่างน้อย 3 ตัว</span>';return}
   if(pass.length<6){$("nsMsg").innerHTML='<span class="warn">รหัสผ่านต้องมีอย่างน้อย 6 ตัว</span>';return}
-  $("nsAdd").disabled=true;$("nsMsg").textContent="กำลังสร้างบัญชี…";
+  staffBusy=true;$("nsAdd").disabled=true;$("nsMsg").textContent="กำลังสร้างบัญชี…";
   try{
     // a second app instance creates the account without signing the owner out
     const sec=firebase.apps.find(x=>x.name==="staffMaker")||firebase.initializeApp(FB,"staffMaker");
@@ -1424,7 +1425,7 @@ $("nsAdd").onclick=async()=>{
     await sec.auth().signOut();
     $("nsMsg").textContent="สร้างบัญชี "+name+" แล้ว · ชื่อผู้ใช้: "+user;["nsName","nsUser","nsPass"].forEach(k=>$(k).value="");
   }catch(e){$("nsMsg").innerHTML='<span class="warn">'+(e.code==="auth/email-already-in-use"?"ชื่อผู้ใช้นี้มีคนใช้แล้ว":e.code==="auth/weak-password"?"รหัสผ่านสั้นเกินไป":"สร้างไม่สำเร็จ ("+esc(e.code||"error")+")")+'</span>'}
-  $("nsAdd").disabled=false;
+  staffBusy=false;$("nsAdd").disabled=false;
 };
 let rwDraft=[];
 function renderRwEdit(){
