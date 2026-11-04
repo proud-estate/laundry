@@ -640,6 +640,15 @@ img{max-width:100%}
       <div class="field"><label for="sPaper">กระดาษใบเสร็จ</label><select id="sPaper"><option value="58">กระดาษความร้อน 58 มม.</option><option value="80">กระดาษความร้อน 80 มม.</option></select></div>
       <div class="field" style="grid-column:span 2"><label for="sFoot">ข้อความท้ายใบเสร็จ</label><input id="sFoot" class="txt" placeholder="ขอบคุณที่ใช้บริการ"></div>
     </div>
+    <h3 style="margin:16px 0 4px;font-size:15px">QR พร้อมเพย์บนใบเสร็จ</h3>
+    <p class="hint">ใส่เบอร์พร้อมเพย์หรือเลขบัตรประชาชนที่ผูกพร้อมเพย์ไว้ ใบเสร็จจะมี QR ให้ลูกค้าสแกนจ่ายได้ทันที · เว้นว่าง = ไม่พิมพ์ QR จ่ายเงิน</p>
+    <div class="vf">
+      <div class="field"><label for="sPP">เบอร์พร้อมเพย์ / เลขบัตร 13 หลัก</label><input id="sPP" class="txt" inputmode="numeric" placeholder="เช่น 0812345678"></div>
+      <div class="field"><label for="sPPName">ชื่อบัญชี (ให้ลูกค้าตรวจก่อนโอน)</label><input id="sPPName" class="txt" placeholder="เช่น นาง ก. ใจดี"></div>
+    </div>
+    <label class="toggle" style="margin-top:10px"><input type="checkbox" id="sPPAmt">
+      <span><b>ใส่ยอดเงินใน QR</b><br><span class="hint">ลูกค้าสแกนแล้วยอดเงินขึ้นในแอปธนาคารเอง ไม่ต้องพิมพ์ยอด</span></span></label>
+    <p class="hint" id="sPPMsg"></p>
   </section>
   <section class="card" id="staffAcct">
     <h2>บัญชีพนักงาน</h2>
@@ -664,6 +673,29 @@ img{max-width:100%}
     </label>
   </section>
   <div class="row-end"><span class="hint" id="sMsg"></span><button class="primary" id="sSave"><svg class="ic"><use href="#i-save"/></svg>บันทึกการตั้งค่า</button></div>
+  <section class="card" id="partCard" style="margin-top:28px">
+    <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-trash"/></svg></span>ลบข้อมูลบางรายการ</span></h2>
+    <p class="hint">เลือกช่วงวันที่และประเภทข้อมูลที่จะลบ สมาชิกยังอยู่ แต้มจะคำนวณใหม่ตามรายการที่เหลือ · ลบทีละรายการก็ได้: ลูกค้าหน้าร้านกด ✕ ท้ายแถว · สมาชิกกดชื่อแล้วกด "ลบสมาชิกคนนี้" · การแลกแต้มกด ✕ ในประวัติการแลก</p>
+    <div class="vf">
+      <div class="field"><label for="pFrom">ตั้งแต่วันที่</label><input id="pFrom" type="date"></div>
+      <div class="field"><label for="pTo">ถึงวันที่</label><input id="pTo" type="date"></div>
+    </div>
+    <div id="pKinds" style="display:grid;gap:8px;margin-top:10px">
+      <label class="toggle"><input type="checkbox" value="visits" checked><span><b>ลูกค้าหน้าร้าน</b> (ยอดซัก/อบ และแต้มที่ได้)</span></label>
+      <label class="toggle"><input type="checkbox" value="redeems" checked><span><b>การแลกแต้ม</b></span></label>
+      <label class="toggle"><input type="checkbox" value="claims" checked><span><b>แต้มรอยืนยันจากหน้าบ้าน</b></span></label>
+      <label class="toggle"><input type="checkbox" value="soap" checked><span><b>ขายน้ำยา</b></span></label>
+      <label class="toggle"><input type="checkbox" value="days" checked><span><b>เงินสิ้นวัน</b> (เหรียญ สแกน ตู้แลก ค่าใช้จ่าย เงินสำรอง)</span></label>
+    </div>
+    <p class="hint" id="pCount" style="margin-top:10px"></p>
+    <div class="row-end"><span class="hint" id="pMsg"></span><button class="del" id="pBtn" style="padding:10px 16px" disabled><svg class="ic"><use href="#i-trash"/></svg><span id="pBtnTxt">ลบรายการที่เลือก</span></button></div>
+  </section>
+  <section class="card" id="wipeCard" style="border-color:var(--neg,#c62828)">
+    <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-trash"/></svg></span>ล้างข้อมูลทั้งหมด</span></h2>
+    <p class="hint">ใช้ตอนลองกรอกเสร็จแล้ว ก่อนเริ่มใช้จริง · ลบลูกค้าหน้าร้าน แต้ม การแลกแต้ม น้ำยา เงินสิ้นวัน ค่าใช้จ่าย เงินสำรอง และสมาชิกทุกคน · <b>ลบแล้วกู้คืนไม่ได้</b> · บัญชีเจ้าของ บัญชีพนักงาน และการตั้งค่ายังอยู่</p>
+    <div class="vf"><div class="field" style="grid-column:span 2"><label for="wipeTxt">พิมพ์คำว่า <b>ลบทั้งหมด</b> เพื่อยืนยัน</label><input id="wipeTxt" class="txt" autocomplete="off"></div></div>
+    <div class="row-end"><span class="hint" id="wipeMsg"></span><button class="del" id="wipeBtn" style="padding:10px 16px" disabled><svg class="ic"><use href="#i-trash"/></svg>ล้างข้อมูลทั้งหมด</button></div>
+  </section>
 </main>
 
 <div class="savebar" id="savebar">
@@ -778,7 +810,7 @@ const COLS=["days","soap","members","visits","claims","redeems"];
 const S={days:{},soap:{},members:{},visits:{},claims:{},redeems:{}};
 // one day = owner's cash record + staff sachet counts
 const D=ds=>(S.days[ds]||S.soap[ds])?Object.assign({date:ds},S.days[ds]||{},soapOf(S.soap[ds])):null;
-let config={countChanger:false,rewards:[{name:"ซัก 1 ถัง",kind:"wash",pts:10,value:50},{name:"อบ 1 ถัง",kind:"dry",pts:10,value:50}],shopName:"",shopLine:"@919ahdge",paper:"58",receiptFoot:"ขอบคุณที่ใช้บริการ",kioskPin:""};
+let config={countChanger:false,rewards:[{name:"ซัก 1 ถัง",kind:"wash",pts:10,value:50},{name:"อบ 1 ถัง",kind:"dry",pts:10,value:50}],shopName:"",shopLine:"@919ahdge",paper:"58",receiptFoot:"ขอบคุณที่ใช้บริการ",kioskPin:"",ppId:"",ppName:"",ppAmt:true};
 // "ครบ 10 แต้ม แลกซัก 1 ถัง หรือ อบ 1 ถัง (ลดได้ 50 บาท)"
 function rwSummary(){const rs=rewards().filter(r=>+r.pts===minPts()), vals=[...new Set(rs.map(r=>+r.value||0))];
   return "แลก"+rs.map(r=>r.name).join(" หรือ ")+(vals.length===1&&vals[0]?" (ลดได้ "+vals[0]+" บาท)":"")}
@@ -1408,6 +1440,20 @@ function qrModules(text){
   qrcode.stringToBytes=s=>Array.from(new TextEncoder().encode(s)); // UTF-8, so Thai and URLs both work
   const q=qrcode(0,"M");q.addData(text,"Byte");q.make();return q;
 }
+/* PromptPay QR (Thai QR Payment / EMVCo): phone number or 13-digit ID, optional amount */
+const ppDigits=s=>String(s||"").replace(/\D/g,"");
+function ppMask(id){id=ppDigits(id);return id.length===10?id.slice(0,3)+"-xxx-"+id.slice(6):id.length===13?id.slice(0,1)+"-xxxx-xxxxx-"+id.slice(10,12)+"-"+id.slice(12):id}
+function crc16(s){let c=0xFFFF;for(let i=0;i<s.length;i++){c^=s.charCodeAt(i)<<8;for(let j=0;j<8;j++)c=c&0x8000?((c<<1)^0x1021)&0xFFFF:(c<<1)&0xFFFF}return c.toString(16).toUpperCase().padStart(4,"0")}
+function promptPayPayload(id,amount){
+  id=ppDigits(id);let sub;
+  if(id.length===10&&id[0]==="0")sub="01"+"13"+("0066"+id.slice(1));        // mobile number
+  else if(id.length===13)sub="02"+"13"+id;                                  // national ID / tax ID
+  else if(id.length===15)sub="03"+"15"+id;                                  // e-wallet ID
+  else return "";
+  const f=(t,v)=>t+String(v.length).padStart(2,"0")+v, amt=+amount>0?(+amount).toFixed(2):"";
+  let p=f("00","01")+f("01",amt?"12":"11")+f("29",f("00","A000000677010111")+sub)+f("53","764")+(amt?f("54",amt):"")+f("58","TH")+"6304";
+  return p+crc16(p);
+}
 async function drawReceipt(vid){
   const v=S.visits[vid];if(!v)return null;
   try{await document.fonts.load('600 24px "IBM Plex Sans Thai"');await document.fonts.load('500 20px "IBM Plex Mono"')}catch(e){}
@@ -1419,6 +1465,10 @@ async function drawReceipt(vid){
     const xx=x!=null?x:align==="center"?W/2:align==="right"?W-pad:pad;c.fillText(t,xx,y);};
   const line=(h)=>{y+=Math.round(h*big)};
   const row=(l,r,o={})=>{txt(l,Object.assign({},o,{align:"left"}));txt(r,Object.assign({},o,{align:"right",font:MO}));line(o.size?o.size+10:30)};
+  const drawQr=(q,sz)=>{const n=q.getModuleCount(),size=Math.min(W-2*pad,sz),cell=Math.floor(size/(n+8)),qs=cell*(n+8),qx=Math.round((W-qs)/2);
+    c.fillStyle="#fff";c.fillRect(qx,y,qs,qs);c.fillStyle="#000";
+    for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(q.isDark(r,k))c.fillRect(qx+(k+4)*cell,y+(r+4)*cell,cell,cell);
+    y+=qs;line(4)};
   const rule=()=>{c.save();c.setLineDash([6,5]);c.lineWidth=2;c.beginPath();c.moveTo(pad,y+6);c.lineTo(W-pad,y+6);c.stroke();c.restore();line(18)};
   // wrap long shop names
   const wrap=(t,size,weight)=>{c.font=`${weight} ${Math.round(size*big)}px ${TH}`;const words=String(t).split(/\s+/);let cur="";
@@ -1439,6 +1489,12 @@ async function drawReceipt(vid){
   if(+v.soapAmt)row("น้ำยา",fmt(v.soapAmt));
   rule();
   row("รวม",fmt(vTotal(v))+" บาท",{size:24,weight:700});
+  const pp=promptPayPayload(config.ppId,config.ppAmt!==false?vTotal(v):0), pq=pp&&qrModules(pp);
+  if(pq){rule();txt("สแกนจ่ายผ่านพร้อมเพย์",{size:19,weight:700,align:"center"});line(30);
+    drawQr(pq,Math.round(230*big));
+    if(config.ppAmt!==false&&vTotal(v)){txt("ยอด "+fmt(vTotal(v))+" บาท",{size:20,weight:700,align:"center"});line(30)}
+    if(config.ppName){txt(config.ppName,{size:17,align:"center"});line(26)}
+    txt("พร้อมเพย์ "+ppMask(config.ppId),{size:16,align:"center"});line(28)}
   let token=null;
   if(v.memberId&&S.members[v.memberId]){
     const st=memberStats(v.memberId);
@@ -1452,10 +1508,7 @@ async function drawReceipt(vid){
     token=await ensureToken(v.memberId);
     if(token){await publishMember(v.memberId);
       const q=qrModules(checkUrl(token));
-      if(q){const n=q.getModuleCount(),size=Math.min(W-2*pad,Math.round(220*big)),cell=Math.floor(size/(n+8)),qs=cell*(n+8),qx=Math.round((W-qs)/2);
-        line(10);c.fillStyle="#fff";c.fillRect(qx,y,qs,qs);c.fillStyle="#000";
-        for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(q.isDark(r,k))c.fillRect(qx+(k+4)*cell,y+(r+4)*cell,cell,cell);
-        y+=qs;line(4);txt("สแกนเพื่อดูแต้มและประวัติการใช้บริการ",{size:16,align:"center"});line(28)}}
+      if(q){line(10);drawQr(q,Math.round(220*big));txt("สแกนเพื่อดูแต้มและประวัติการใช้บริการ",{size:16,align:"center"});line(28)}}
   }
   rule();txt(config.receiptFoot||"ขอบคุณที่ใช้บริการ",{size:18,align:"center",weight:600});line(40);
   const out=document.createElement("canvas");out.width=W;out.height=Math.ceil(y+pad);out.getContext("2d").drawImage(cv,0,0);
@@ -1477,6 +1530,57 @@ $("rcPrint").onclick=()=>{if(!rcCanvas)return;
   $("printArea").innerHTML='<img alt="" src="'+rcCanvas.toDataURL("image/png")+'">';
   document.documentElement.style.setProperty("--paper",(config.paper==="80"?80:58)+"mm");
   setTimeout(()=>window.print(),150)};
+
+/* ===== delete selected kinds of records within a date range (owner only) ===== */
+const P_LABEL={visits:"ลูกค้าหน้าร้าน",redeems:"การแลกแต้ม",claims:"แต้มรอยืนยัน",soap:"ขายน้ำยา",days:"เงินสิ้นวัน"};
+let pArmed=false;
+function partTargets(){
+  const f=$("pFrom").value,t=$("pTo").value||f;if(!f)return null;
+  const lo=f<t?f:t,hi=f<t?t:f,kinds=[...$("pKinds").querySelectorAll("input:checked")].map(i=>i.value),out={};
+  kinds.forEach(k=>{out[k]=Object.entries(S[k]).filter(([id,r])=>{const d=(k==="soap"||k==="days")?((r&&r.date)||id):(r&&r.date);return d&&d>=lo&&d<=hi}).map(([id])=>id)});
+  return {lo,hi,out};
+}
+function renderPart(){
+  pArmed=false;$("pBtnTxt").textContent="ลบรายการที่เลือก";
+  const T=partTargets();if(!T){$("pCount").textContent="เลือกวันที่ก่อน";$("pBtn").disabled=true;return}
+  const parts=Object.entries(T.out).filter(([,ids])=>ids.length).map(([k,ids])=>P_LABEL[k]+" "+ids.length+" รายการ"),n=Object.values(T.out).reduce((a,b)=>a+b.length,0);
+  $("pCount").textContent=(T.lo===T.hi?thaiDate(T.lo):thaiDate(T.lo)+" ถึง "+thaiDate(T.hi))+" · "+(n?"จะลบ "+parts.join(" · "):"ไม่มีข้อมูลที่เลือกในช่วงนี้");
+  $("pBtn").disabled=!n;
+}
+["pFrom","pTo"].forEach(k=>$(k).addEventListener("change",renderPart));$("pKinds").addEventListener("change",renderPart);
+$("pBtn").onclick=async()=>{
+  if(!isOwnerAcct)return;const T=partTargets();if(!T)return;
+  const n=Object.values(T.out).reduce((a,b)=>a+b.length,0);if(!n)return;
+  if(!pArmed){pArmed=true;$("pBtnTxt").textContent="กดอีกครั้งเพื่อยืนยันลบ "+n+" รายการ";return}
+  const btn=$("pBtn"),msg=$("pMsg");btn.disabled=true;let done=0;
+  try{
+    for(const [k,ids] of Object.entries(T.out))for(const id of ids){await del(k,id);done++;msg.textContent="กำลังลบ… "+done+"/"+n}
+    COLS.forEach(rerender);loadDay($("date").value,true);
+    msg.innerHTML='<span class="pos">ลบแล้ว '+n+' รายการ</span>';
+  }catch(e){msg.innerHTML='<span class="warn">ลบได้ '+done+'/'+n+' รายการ ('+esc(e.code||e.message||"error")+') กดอีกครั้งเพื่อลบที่เหลือ</span>'}
+  renderPart();
+};
+$("tab-set").addEventListener("click",()=>{if(!$("pFrom").value){$("pFrom").value=todayStr();$("pTo").value=todayStr()}renderPart()});
+
+/* ===== wipe all shop data (owner only): for clearing test entries before going live ===== */
+$("wipeTxt").addEventListener("input",()=>{$("wipeBtn").disabled=$("wipeTxt").value.trim()!=="ลบทั้งหมด"});
+$("wipeBtn").onclick=async()=>{
+  if(!isOwnerAcct||$("wipeTxt").value.trim()!=="ลบทั้งหมด")return;
+  const btn=$("wipeBtn"),msg=$("wipeMsg");btn.disabled=true;msg.textContent="กำลังลบ…";
+  try{
+    if(mode==="db"){
+      const ops=[];
+      // customer QR pages can't be listed, so remove them through each member's token first
+      const ms=await fdb.collection("members").get();ms.docs.forEach(d=>{const t=d.data().token;if(t)ops.push(ref("public",t))});
+      for(const col of COLS){const snap=col==="members"?ms:await fdb.collection(col).get();snap.docs.forEach(d=>ops.push(d.ref))}
+      for(let i=0;i<ops.length;i+=400){const b=fdb.batch();ops.slice(i,i+400).forEach(r=>b.delete(r));await b.commit();msg.textContent="กำลังลบ… "+Math.min(i+400,ops.length)+"/"+ops.length}
+    }else{
+      COLS.forEach(c=>{try{localStorage.removeItem("lw_"+c)}catch(e){}});try{localStorage.removeItem("lw_public")}catch(e){}
+    }
+    COLS.forEach(c=>S[c]={});COLS.forEach(rerender);loadDay($("date").value,true);
+    $("wipeTxt").value="";msg.innerHTML='<span class="pos">ล้างข้อมูลเรียบร้อยแล้ว เริ่มใช้งานจริงได้เลย</span>';
+  }catch(e){btn.disabled=false;msg.innerHTML='<span class="warn">ลบไม่สำเร็จ ('+esc(e.code||e.message||"error")+') ลองอีกครั้ง</span>'}
+};
 
 /* ===== settings ===== */
 /* staff accounts (owner only): each staff member signs in with their own username and password */
@@ -1525,7 +1629,7 @@ function renderSettings(){
   $("sExp").value=expiryDays();
   rwDraft=rewards().map(r=>({name:r.name,kind:r.kind||"other",pts:+r.pts,value:+r.value||0}));renderRwEdit();
   $("countChg").checked=!!config.countChanger;$("sKioskPin").value=config.kioskPin||"";
-  $("sShop").value=config.shopName||"";$("sLine").value=config.shopLine||"";$("sPaper").value=config.paper==="80"?"80":"58";$("sFoot").value=config.receiptFoot||"";
+  $("sShop").value=config.shopName||"";$("sLine").value=config.shopLine||"";$("sPaper").value=config.paper==="80"?"80":"58";$("sFoot").value=config.receiptFoot||"";$("sPP").value=config.ppId||"";$("sPPName").value=config.ppName||"";$("sPPAmt").checked=config.ppAmt!==false;
   renderStaffAccounts();
   $("kReward").textContent="ครบ "+minPts()+" แต้ม "+rwSummary();
 }
@@ -1533,10 +1637,11 @@ $("sSave").onclick=async()=>{
   const rw=rwDraft.map(r=>({name:String(r.name||"").trim(),kind:r.kind||"other",pts:Math.max(1,int(r.pts)),value:int(r.value)})).filter(r=>r.name);
   if(!rw.length){$("sMsg").innerHTML='<span class="warn">ต้องมีรางวัลอย่างน้อย 1 รายการ</span>';return}
   const kp=digits($("sKioskPin").value);
+  {const pp=ppDigits($("sPP").value);if(pp&&!promptPayPayload(pp,0)){$("sMsg").innerHTML='<span class="warn">เบอร์พร้อมเพย์ต้องเป็นเบอร์มือถือ 10 หลัก หรือเลขบัตร 13 หลัก</span>';$("sPP").focus();return}}
   if(kp&&(kp.length<4||kp.length>6)){$("sMsg").innerHTML='<span class="warn">รหัสออกจากหน้าบ้านต้องมี 4–6 หลัก</span>';return}
   config=Object.assign({},config,{rewards:rw,expiryDays:$("sExp").value===""?30:int($("sExp").value),
     kioskPin:kp,countChanger:$("countChg").checked,shopName:$("sShop").value.trim(),shopLine:$("sLine").value.trim(),
-    paper:$("sPaper").value,receiptFoot:$("sFoot").value.trim()});
+    paper:$("sPaper").value,receiptFoot:$("sFoot").value.trim(),ppId:ppDigits($("sPP").value),ppName:$("sPPName").value.trim(),ppAmt:$("sPPAmt").checked});
   try{await saveConfig();$("sMsg").textContent="บันทึกการตั้งค่าแล้ว";renderSettings();updateTotals();applyMode();
     Object.keys(S.members).forEach(mid=>afterWrite("members",mid,S.members[mid]))} // refresh customers' QR pages with the new rules
   catch(e){$("sMsg").innerHTML='<span class="warn">บันทึกไม่สำเร็จ</span>'}
@@ -1724,7 +1829,7 @@ const EN={
 "สมัครสมาชิกใหม่":"New member sign-up","ใส่ชื่อลูกค้า (จำเป็น)":"Customer name (required)","ใส่ชื่อแล้วกดบันทึก ระบบจะสมัครสมาชิกและสะสมแต้มครั้งนี้ให้เลย":"Enter a name and save: the member is created and earns points for this visit","เบอร์นี้ยังไม่เป็นสมาชิก":"This phone is not a member yet","เบอร์ใหม่ ใส่ชื่อลูกค้าเพื่อสมัครสมาชิกก่อน":"New phone: enter the customer's name first","พิมพ์เบอร์โทรลูกค้า (เว้นว่าง = ลูกค้าทั่วไป)":"Customer phone (empty = walk-in)","มาแล้ว":"visits:","แต้มครบ! แลกได้ถึง":"Points full! Redeem by","แต้ม แลกรางวัล":"pts to a reward","(ยังไม่มีชื่อ)":"(no name)","ชื่อ หรือชื่อเล่น (จำเป็น)":"Name (required)",
 "เงินใส่คืนตู้แลกเหรียญ":"Coins refilled into changer","เหรียญ 10 บาทที่เติมเข้าตู้":"10฿ coins refilled","เงินสดให้พนักงานแลก":"Change float for staff","เพิ่มรายการให้พนักงาน":"Add float","ให้ไป (บาท)":"Given (฿)","คืนมา (บาท)":"Returned (฿)","ให้ไปทั้งหมด":"Total given","คืนมาแล้ว":"Returned","ยังไม่คืน":"Not returned","คืนเกินมา":"Returned extra","คืนครบแล้ว":"All returned","ยังไม่มีรายการของวันนี้":"Nothing today","เติมเหรียญคืนตู้แลก":"Changer refill","พนักงาน":"Staff",
 "นับได้จริง":"Counted","เงินสำรองครั้งก่อน":"Last reserve","ยอดที่ควรเหลือ":"Should have","เงินตรง ✓":"Matches ✓","เงินขาด":"Short","เงินเกิน":"Over","ค่าใช้จ่ายเงินสด":"cash expenses","ให้พนักงานแลก (ยังไม่คืน)":"staff float not returned","เงินสดจากตู้":"Cash from box","โอนจ่าย":"Transfer","จ่ายโดย":"Paid by","เงินสด":"Cash","โอน":"Transfer",
-"ให้พนักงานแลกรวมวันนี้":"Float given today","เงินสดที่หยิบจากเงินสำรองให้พนักงานไว้แลกให้ลูกค้า ใส่ยอดที่ให้ไป · ระบบหักออกจากยอดที่ควรเหลือในตู้":"Cash taken from the reserve for staff to give change · enter the amount given · deducted from what the box should have","− เงินสดให้พนักงานแลก":"− staff float","เงินสดให้พนักงานแลก (บันทึกไว้ดู)":"Staff float (record only)",
+"ให้พนักงานแลกรวมวันนี้":"Float given today","QR พร้อมเพย์บนใบเสร็จ":"PromptPay QR on receipt","เบอร์พร้อมเพย์ / เลขบัตร 13 หลัก":"PromptPay phone / 13-digit ID","ชื่อบัญชี (ให้ลูกค้าตรวจก่อนโอน)":"Account name (for customers to check)","ใส่ยอดเงินใน QR":"Put the amount in the QR","เงินสดที่หยิบจากเงินสำรองให้พนักงานไว้แลกให้ลูกค้า ใส่ยอดที่ให้ไป · ระบบหักออกจากยอดที่ควรเหลือในตู้":"Cash taken from the reserve for staff to give change · enter the amount given · deducted from what the box should have","− เงินสดให้พนักงานแลก":"− staff float","เงินสดให้พนักงานแลก (บันทึกไว้ดู)":"Staff float (record only)",
 "บันทึก":"Save","เพิ่ม":"Add","ภาษา":"Language","แล้ว":"✓"
 };
 const EN_KEYS=Object.keys(EN).sort((a,b)=>b.length-a.length);
