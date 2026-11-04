@@ -1,0 +1,51 @@
+rules_version = '2';
+
+// กฎความปลอดภัยของฐานข้อมูล: คัดลอกไฟล์นี้ทั้งหมดไปวางที่ Firebase Console > Firestore Database > Rules แล้วกด Publish
+// - เจ้าของร้าน (owner): เห็นและแก้ไขได้ทุกอย่าง
+// - พนักงาน (staff): คีย์ลูกค้า แลกแต้ม ขายน้ำยา ได้ แต่ "อ่านไม่ได้" เงินสิ้นวัน เงินสำรอง ค่าใช้จ่าย (collection days)
+// - ลูกค้า (ไม่ล็อกอิน): อ่านได้เฉพาะหน้าสรุปแต้มของตัวเองจาก QR บนใบเสร็จเท่านั้น
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function roleDoc() { return /databases/$(database)/documents/roles/$(request.auth.uid); }
+    function role() { return signedIn() && exists(roleDoc()) ? get(roleDoc()).data.role : ''; }
+    function isOwner() { return role() == 'owner'; }
+    function isStaff() { return role() == 'staff' || role() == 'owner'; }
+
+    // owner marker: anyone may check whether the shop has been set up; it can be created once, never changed
+    match /meta/owner {
+      allow get: if true;
+      allow create: if signedIn()
+                    && !exists(/databases/$(database)/documents/meta/owner)
+                    && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // who is owner / staff
+    match /roles/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isOwner());
+      // the first owner creates their own role in the same batch as meta/owner; afterwards only the owner adds staff
+      allow create: if isOwner()
+                    || (signedIn() && uid == request.auth.uid
+                        && request.resource.data.role == 'owner'
+                        && getAfter(/databases/$(database)/documents/meta/owner).data.uid == uid);
+      allow update, delete: if isOwner();
+    }
+
+    match /config/{id}   { allow read: if isStaff(); allow write: if isOwner(); }
+    match /days/{id}     { allow read, write: if isOwner(); }           // cash count, scan, reserve, expenses
+    match /soap/{id}     { allow read, write: if isStaff(); }           // packets sold at the counter
+    match /members/{id}  { allow read, create, update: if isStaff(); allow delete: if isOwner(); }
+    match /visits/{id}   { allow read, write: if isStaff(); }
+    match /claims/{id}   { allow read, write: if isStaff(); }
+    match /redeems/{id}  { allow read, write: if isStaff(); }
+
+    // customer points page: readable only by someone who has the exact link (no listing)
+    match /public/{token} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if isStaff();
+    }
+  }
+}

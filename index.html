@@ -1,0 +1,1760 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#29abe2">
+<title>QUINN Wash &amp; Dry</title>
+<link rel="icon" href="img/welcome.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: back office = sticky header + tabs, one-column ledger cards; front (#kiosk) = full-screen phone keypad for points */
+:root{
+  --bg:#fbf5ea; --surface:#ffffff; --sunk:#f4ead8; --line:#e6d6bb;
+  --fg:#3d2a14; --muted:#7a6248;
+  --accent:#2f7d32; --accent-ink:#ffffff; --accent-soft:#e1f1da;
+  --coin:#b8620a; --coin-soft:#fde8c8;
+  --sky:#29abe2; --sky-soft:#d6f1fc;
+  --good:#2f7d32; --bad:#b23a26; --bad-soft:#f9e0d9;
+  --font:"IBM Plex Sans Thai",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --r:12px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1b150e; --surface:#251d14; --sunk:#16110b; --line:#3e3222;
+  --fg:#f5ead7; --muted:#b6a185;
+  --accent:#7cc96e; --accent-ink:#10240c; --accent-soft:#233a1d;
+  --coin:#f2a64a; --coin-soft:#3c2a14;
+  --sky:#5cc8f2; --sky-soft:#13303c;
+  --good:#7cc96e; --bad:#f08a72; --bad-soft:#3e1d16; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1b150e; --surface:#251d14; --sunk:#16110b; --line:#3e3222;
+  --fg:#f5ead7; --muted:#b6a185;
+  --accent:#7cc96e; --accent-ink:#10240c; --accent-soft:#233a1d;
+  --coin:#f2a64a; --coin-soft:#3c2a14;
+  --sky:#5cc8f2; --sky-soft:#13303c;
+  --good:#7cc96e; --bad:#f08a72; --bad-soft:#3e1d16; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.wrap{max-width:780px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.hrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px 8px}
+h1{font-size:18px;margin:0;font-weight:700;text-wrap:balance}
+h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted)}
+.hside{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.sync{font-size:12px;color:var(--muted);white-space:nowrap}
+.front-link{font-size:13px;font-weight:600;color:var(--accent);text-decoration:none;border:1px solid var(--accent);border-radius:999px;padding:3px 12px;white-space:nowrap}
+.tabs{display:flex;gap:4px;padding-block:0 10px;overflow-x:auto}
+.tab{flex:1 0 auto;border:1px solid var(--line);background:var(--sunk);color:var(--fg);font:inherit;font-size:14px;font-weight:600;padding:7px 12px;border-radius:999px;cursor:pointer;position:relative}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.badge{display:inline-grid;place-items:center;min-width:18px;height:18px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;margin-left:4px;padding:0 5px}
+main{padding-block:16px 120px;display:flex;flex-direction:column;gap:14px}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.datebar{display:flex;align-items:center;gap:8px}
+.datebar input{flex:1;min-width:0}
+.icon-btn{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-size:18px;flex:none}
+input,select{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card h2{margin:0;font-size:15px;font-weight:700;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.card h2 .tot{font-family:var(--mono);font-size:15px;color:var(--accent)}
+.card h2 .tot.coin{color:var(--coin)}
+.sec-title{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--muted);margin:6px 2px -4px}
+.hint{font-size:12px;color:var(--muted);margin:0}
+.grid{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+.field{display:flex;flex-direction:column;gap:4px;background:var(--sunk);border-radius:10px;padding:8px 10px;min-width:0}
+.field label{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.02em}
+.field .row{display:flex;align-items:center;gap:6px}
+.field input{width:100%;text-align:right;font-family:var(--mono);font-size:17px;padding:6px 8px}
+.field input.txt{text-align:left;font-family:var(--font);font-size:15px}
+.field .baht{font-size:12px;color:var(--muted);text-align:right;font-family:var(--mono)}
+.field .who{font-size:12px;color:var(--muted)}
+.unit{font-size:12px;color:var(--muted);flex:none}
+.coinmark{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--coin-soft);color:var(--coin);font-size:10px;font-weight:700;font-family:var(--mono);border:1.5px solid var(--coin);flex:none}
+.vf{display:grid;gap:8px;grid-template-columns:repeat(3,1fr)}
+.vf .span{grid-column:1/-1}
+.bigsum{font-size:20px;font-weight:600;text-align:right;color:var(--accent);padding:4px 0}
+.row-end{display:flex;align-items:center;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.row-end .hint{flex:1;min-width:140px}
+.exp-list{display:flex;flex-direction:column;gap:8px}
+.exp{display:grid;grid-template-columns:1fr 110px 36px;gap:6px;align-items:center}
+.exp .det{grid-column:1/-1;width:100%}
+.exp select,.exp input{width:100%}
+.exp input.amt{text-align:right;font-family:var(--mono)}
+.del{height:34px;min-width:34px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--bad)}
+.ghost{border:1px dashed var(--line);background:transparent;color:var(--accent);padding:10px;border-radius:10px;font-weight:600}
+.sbtn{border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:8px 14px;border-radius:10px;font-weight:600}
+.sum{display:flex;flex-direction:column;gap:6px}
+.sum .l{display:flex;justify-content:space-between;gap:10px}
+.sum .l span:last-child{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.sum .l.sub{color:var(--muted);font-size:13px}
+.sum .l.big{font-size:18px;font-weight:700;border-top:1px solid var(--line);padding-top:8px}
+.sum .l.top{border-top:1px solid var(--line);padding-top:8px}
+.pos{color:var(--good)} .neg{color:var(--bad)} .warn{color:var(--bad)}
+.savebar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));padding-top:10px}
+.savebar .wrap{display:flex;align-items:center;gap:12px}
+.savebar .st{flex:1;min-width:0;font-size:13px;color:var(--muted)}
+.primary{background:var(--accent);color:var(--accent-ink);border:none;border-radius:10px;padding:12px 22px;font-weight:700}
+.primary.sm{padding:9px 16px}
+.primary:disabled{opacity:.45;cursor:default}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;min-width:0}
+.tile .k{font-size:12px;color:var(--muted);font-weight:600}
+.tile .v{font-family:var(--mono);font-size:clamp(15px,4.2vw,21px);font-weight:600;overflow-wrap:anywhere}
+.bars{display:grid;gap:6px}
+.bar{display:grid;grid-template-columns:minmax(72px,110px) 1fr 84px;gap:8px;align-items:center;font-size:13px}
+.bar>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .track{height:12px;background:var(--sunk);border-radius:6px;overflow:hidden}
+.bar .fill{height:100%;background:var(--accent);border-radius:6px}
+.bar .fill.coin{background:var(--coin)} .bar .fill.bad{background:var(--bad)}
+.bar span:last-child{text-align:right;font-family:var(--mono)}
+.tablewrap{overflow-x:auto;margin:0 -14px;padding:0 14px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+table.wide{min-width:620px}
+th,td{padding:7px 6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.03em}
+td{font-family:var(--mono);font-variant-numeric:tabular-nums}
+td:first-child,td.t{font-family:var(--font)}
+td small{display:block;color:var(--muted);font-family:var(--mono);font-size:11px}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--sunk)}
+tfoot td{font-weight:700;border-top:2px solid var(--fg);border-bottom:none}
+.chip{font-size:11px;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:1px 8px;font-weight:600;font-family:var(--font)}
+.chip.coin{background:var(--coin-soft);color:var(--coin)}
+.chart svg{width:100%;height:auto;display:block}
+.empty{text-align:center;color:var(--muted);padding:20px 8px;font-family:var(--font);white-space:normal}
+.toggle{display:flex;gap:10px;align-items:flex-start;font-size:13px}
+.toggle input{width:20px;height:20px;flex:none;margin-top:2px}
+.banner{background:var(--coin-soft);color:var(--fg);border-radius:10px;padding:10px 12px;font-size:13px}
+.claim{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.claim .acts{display:flex;gap:6px}
+.claim b{display:block}
+.claim span{font-size:12px;color:var(--muted)}
+.card.alert{border-color:var(--coin);background:linear-gradient(var(--coin-soft),var(--coin-soft)) top/100% 4px no-repeat,var(--surface)}
+.pts-big{font-family:var(--mono);font-size:34px;font-weight:600;color:var(--accent);line-height:1}
+.stats{display:flex;gap:18px;flex-wrap:wrap}
+.stats div{font-size:12px;color:var(--muted)} .stats b{display:block;font-size:17px;color:var(--fg);font-family:var(--mono)}
+
+/* ---------- front: kiosk ---------- */
+#kiosk{min-height:100vh;background:linear-gradient(180deg,var(--sky-soft),var(--bg) 60%);color:var(--fg);display:flex;flex-direction:column}
+.k-wrap{flex:1;max-width:520px;width:100%;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 20px;display:flex;flex-direction:column;gap:18px}
+.k-brand{font-size:30px;font-weight:700;line-height:1.2;text-wrap:balance;text-align:center}
+.k-brand small{color:var(--muted)}
+.brand-logo{display:block;width:100%;max-width:340px;height:auto;margin:0 auto}
+.mascot{display:block;width:100%;height:auto;margin:0 auto;pointer-events:none;user-select:none}
+.mascot.sm{max-width:180px}.mascot.md{max-width:260px}.mascot.lg{max-width:340px}
+.hlogo{height:46px;width:auto;display:block}
+.hbrand{display:flex;align-items:center;gap:10px;min-width:0}
+.card .art{display:flex;justify-content:center;margin:-4px 0 -2px}
+.k-panel .art{margin-bottom:-8px}
+.hrow{flex-wrap:wrap;row-gap:6px}
+.hbrand h1{white-space:nowrap}
+@media (max-width:520px){.hrow{flex-direction:column;align-items:stretch}.hside{align-items:stretch}.hbtns{justify-content:flex-start}.sync{text-align:left}.hlogo{height:40px}}
+.k-brand small{display:block;font-size:15px;font-weight:500;opacity:.85}
+.k-panel{background:var(--surface);color:var(--fg);border-radius:20px;padding:22px 18px;display:flex;flex-direction:column;gap:16px}
+.k-q{margin:0;font-size:18px;font-weight:600;text-align:center}
+.k-display{font-size:34px;text-align:center;letter-spacing:.08em;min-height:52px;border-bottom:2px solid var(--line);padding-bottom:6px}
+.k-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.k-pad button{height:64px;border-radius:14px;border:1px solid var(--line);background:var(--sunk);color:var(--fg);font-family:var(--mono);font-size:26px;font-weight:600}
+.k-pad button.fn{font-family:var(--font);font-size:16px}
+.k-pad button:active{background:var(--accent-soft)}
+.k-go{height:58px;border-radius:14px;border:none;background:var(--accent);color:var(--accent-ink);font-size:19px;font-weight:700}
+.k-go:disabled{opacity:.4}
+.k-back{background:transparent;border:none;color:var(--muted);font-size:15px;padding:8px}
+.k-name{font-size:24px;font-weight:700;text-align:center;margin:0}
+.k-pts{display:flex;justify-content:center;align-items:baseline;gap:8px}
+.k-pts b{font-family:var(--mono);font-size:64px;color:var(--accent);line-height:1}
+.k-pts span{font-size:18px;color:var(--muted)}
+.drums{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.drum{width:30px;height:30px;border-radius:50%;border:3px solid var(--line);background:var(--sunk);position:relative}
+.drum.on{border-color:var(--accent);background:radial-gradient(circle at 50% 50%,var(--accent-soft) 0 38%,var(--accent) 40%)}
+.k-note{text-align:center;font-size:15px;color:var(--muted);margin:0}
+.k-step-row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--sunk);border-radius:14px;padding:10px 12px}
+.k-step-row span{font-size:18px;font-weight:600}
+.stepper{display:flex;align-items:center;gap:10px}
+.stepper button{width:48px;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-size:26px;font-weight:600}
+.stepper output{font-family:var(--mono);font-size:28px;min-width:36px;text-align:center}
+.k-input{font-size:20px;padding:14px;border-radius:12px;width:100%}
+.k-big-ok{font-size:64px;text-align:center;line-height:1;color:var(--good)}
+.k-foot{display:flex;justify-content:center}
+.k-staff{background:transparent;border:1px solid currentColor;color:var(--muted);opacity:.8;border-radius:999px;padding:6px 16px;font-size:13px}
+.k-err{color:var(--bad);text-align:center;margin:0;min-height:1.5em}
+
+button.front-link{background:transparent;font:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.pinbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-block:0 10px;font-size:14px;font-weight:600}
+.pinbar input{width:110px;text-align:center}
+.soapgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.sp{background:var(--sunk);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center}
+.sp .lab{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px}
+.sp .lab .ic{width:28px;height:28px;color:var(--accent)}
+.sp .size{font-size:12px;color:var(--muted)}
+.sp .ctl{display:flex;align-items:center;gap:10px}
+.sp .ctl button{width:52px;height:52px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-size:28px;font-weight:600}
+.sp .ctl button.plus{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.sp .ctl output{font-family:var(--mono);font-size:30px;min-width:44px}
+.sp .bt{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.soap-ro{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.soap-ro div{background:var(--sunk);border-radius:10px;padding:8px 10px;font-size:13px}
+.soap-ro b{display:block;font-family:var(--mono);font-size:17px}
+.coin-in{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.coin-in .field{flex:1;min-width:200px}
+.coin-in .field input{font-size:24px}
+.coin-icons{display:flex;align-items:center;gap:4px;color:var(--coin);font-weight:700;font-size:20px}
+.coin-icons .ic{width:34px;height:34px}
+.mcard{background:var(--surface);border:1.5px solid var(--coin);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;margin-top:4px;color:var(--fg)}
+.mc-top{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}
+.mc-top .ic{width:26px;height:26px;color:var(--coin)}
+.mc-top b{display:block;font-size:16px}.mc-top span{font-size:12px;color:var(--muted);font-family:var(--mono)}
+.mc-pts{font-family:var(--mono);color:var(--muted);white-space:nowrap}.mc-pts b{font-size:26px;color:var(--coin)}
+.mc-drums{display:flex;flex-wrap:wrap;gap:5px}
+.mc-drums i{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);background:var(--sunk)}
+.mc-drums i.on{border-color:var(--coin);background:radial-gradient(circle,var(--coin-soft) 0 35%,var(--coin) 38%)}
+.mc-note{font-size:13px;font-weight:600;color:var(--coin)}
+.field.signup{border:1.5px dashed var(--accent);background:var(--accent-soft)}
+.rw-label{font-size:13px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:6px}
+.rw{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.rw button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border:1.5px solid var(--coin);background:var(--coin-soft);color:var(--fg);border-radius:12px;padding:10px 12px}
+.rw button b{font-size:15px}
+.rw button span{font-family:var(--mono);font-size:13px;color:var(--coin)}
+.rw button:disabled{border-color:var(--line);background:var(--sunk);color:var(--muted);cursor:default}
+.rw button:disabled span{color:var(--muted)}
+.rw button.armed{background:var(--coin);color:var(--surface)} .rw button.armed span{color:var(--surface)}
+.rw-edit{display:flex;flex-direction:column;gap:8px}
+.rw-row{display:grid;grid-template-columns:1fr 96px 34px;gap:6px;align-items:center}
+.rw-row.r4{grid-template-columns:1.4fr 1fr .7fr .8fr 34px}
+.rw-head{display:grid;grid-template-columns:1.4fr 1fr .7fr .8fr 34px;gap:6px;font-size:11px;color:var(--muted);font-weight:600}
+.rd-panel{border:1.5px solid var(--coin);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
+@media (max-width:560px){.rw-row.r4{grid-template-columns:1fr 1fr 1fr 34px}.rw-row.r4 .n{grid-column:1/-1}.rw-head{display:none}}
+.rw-row input{width:100%} .rw-row input.p{text-align:right;font-family:var(--mono)}
+.ready{display:flex;flex-wrap:wrap;gap:8px}
+.ready button{border:1px solid var(--coin);background:var(--coin-soft);color:var(--fg);border-radius:999px;padding:6px 12px;font-size:14px}
+.ready button b{font-family:var(--mono);color:var(--coin);margin-left:4px}
+.ready button{border-radius:12px;text-align:left}
+.ready button small{display:block;font-size:12px;color:var(--muted)} .ready button small.neg{color:var(--bad);font-weight:600}
+.ready button small .ic{width:14px;height:14px}
+/* icons */
+.ic{width:1.3em;height:1.3em;vertical-align:-.28em;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.h-ic{display:inline-flex;align-items:center;gap:10px}
+.icbox{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:11px;background:var(--accent-soft);color:var(--accent);flex:none}
+.icbox .ic{width:26px;height:26px}
+.icbox.coin{background:var(--coin-soft);color:var(--coin)}
+.icbox.bad{background:var(--bad-soft);color:var(--bad)}
+.tab .ic{width:20px;height:20px;margin-right:4px}
+.field label .ic{width:18px;height:18px;margin-right:3px;color:var(--accent)}
+.field label .ic.coin{color:var(--coin)}
+th .ic{width:16px;height:16px;color:var(--accent)}
+button .ic{width:20px;height:20px}
+.primary,.sbtn,.ghost,.del{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.lang{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.lang button{border:none;background:transparent;color:var(--muted);padding:3px 10px;font-size:13px;font-weight:600}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.hbtns{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:560px){.vf{grid-template-columns:1fr 1fr}.tiles{grid-template-columns:1fr 1fr}}
+@media (max-width:420px){.exp{grid-template-columns:1fr 92px 34px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+/* standalone-site additions */
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-size:15px}
+img{max-width:100%}
+#login{min-height:100vh;background:linear-gradient(180deg,var(--sky-soft),var(--bg) 60%);color:var(--fg);display:flex;flex-direction:column}
+#login .k-panel label{align-self:flex-start}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(10,20,22,.55);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px))}
+.modal-card{background:var(--surface);color:var(--fg);border-radius:16px;padding:16px;width:100%;max-width:440px;display:flex;flex-direction:column;gap:12px;margin-block:auto}
+.modal-card h2{margin:0;font-size:16px}
+.rc-prev{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;display:flex;justify-content:center;max-height:62vh;overflow:auto}
+.rc-prev img{width:100%;max-width:300px;height:auto;image-rendering:auto}
+.rc-btn{min-width:36px;height:34px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--accent);display:inline-grid;place-items:center}
+.rc-btn .ic{width:18px;height:18px}
+#printArea{display:none}
+.staff-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.staff-row b{display:block}.staff-row span{font-size:12px;color:var(--muted);font-family:var(--mono)}
+@media print{
+  @page{margin:0}
+  body *{visibility:hidden!important}
+  #printArea,#printArea *{visibility:visible!important}
+  #printArea{display:block!important;position:absolute;left:0;top:0;width:var(--paper,58mm)}
+  #printArea img{width:100%;display:block}
+  body{background:#fff!important}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-wash" viewBox="0 0 24 24"><rect x="4" y="2.5" width="16" height="19" rx="2.5"/><path d="M4 7h16"/><circle cx="7" cy="4.8" r=".6"/><circle cx="12" cy="14" r="4.8"/><path d="M8.6 14.6c1.2-1 2.2 1 3.4 0s2.2 1 3.4 0"/></symbol>
+  <symbol id="i-dry" viewBox="0 0 24 24"><rect x="4" y="2.5" width="16" height="19" rx="2.5"/><path d="M4 7h16"/><circle cx="7" cy="4.8" r=".6"/><circle cx="12" cy="14" r="4.8"/><path d="M10.4 11.6c-.8 1 .8 1.8 0 2.8M13.6 11.6c-.8 1 .8 1.8 0 2.8M12 12.6c-.8 1 .8 1.8 0 2.8"/></symbol>
+  <symbol id="i-soap" viewBox="0 0 24 24"><path d="M10 2.5h4M12 2.5v3"/><path d="M9 5.5h6l1.5 3.5V20a1.5 1.5 0 0 1-1.5 1.5H9A1.5 1.5 0 0 1 7.5 20V9z"/><path d="M12 11.5c-1.4 1.8-2 2.8-2 3.8a2 2 0 0 0 4 0c0-1-.6-2-2-3.8z"/></symbol>
+  <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="6"/><path d="M10.5 10v4.5M12.8 10.2h1.4v4.3h-1.4z"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.8"/><path d="M6 9.5v5M18 9.5v5"/></symbol>
+  <symbol id="i-exp" viewBox="0 0 24 24"><path d="M6 2.5h12v19l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5-2 1.5z"/><path d="M9 8h6M9 12h6M9 16h3"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M15.5 4.8a3.5 3.5 0 0 1 0 6.4M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.8l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></symbol>
+  <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3.5" y="8" width="17" height="4" rx="1"/><path d="M5 12v8.5h14V12M12 8v12.5M12 8c-1.5-3.5-5.5-4-5.5-1.5S10 8 12 8zm0 0c1.5-3.5 5.5-4 5.5-1.5S14 8 12 8z"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3.5 20.5h17"/><rect x="5" y="11" width="3" height="7"/><rect x="10.5" y="6" width="3" height="12"/><rect x="16" y="13" width="3" height="5"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 13.5h9l1-13.5M10 11v6M14 11v6"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 3.5h11l3.5 3.5v13.5h-15z"/><path d="M8 3.5v5h7v-5M7.5 20.5v-6h9v6"/></symbol>
+  <symbol id="i-store" viewBox="0 0 24 24"><path d="M3.5 9.5L5 4h14l1.5 5.5"/><path d="M3.5 9.5a2.8 2.8 0 0 0 5.7 0 2.8 2.8 0 0 0 5.6 0 2.8 2.8 0 0 0 5.7 0"/><path d="M5 12v8.5h14V12M10 20.5v-5h4v5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></symbol>
+  <symbol id="i-soft" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.5"/><path d="M12 9.5c-1.5-2.5-1.5-5 0-6.5 1.5 1.5 1.5 4 0 6.5zM12 14.5c1.5 2.5 1.5 5 0 6.5-1.5-1.5-1.5-4 0-6.5zM9.5 12c-2.5 1.5-5 1.5-6.5 0 1.5-1.5 4-1.5 6.5 0zM14.5 12c2.5-1.5 5-1.5 6.5 0-1.5 1.5-4 1.5-6.5 0z"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M17 20h4M20 17v3M14 20h.01"/><path d="M6 6h1M17 6h1M6 17h1"/></symbol>
+  <symbol id="i-safe" viewBox="0 0 24 24"><rect x="3" y="3.5" width="18" height="15" rx="2"/><circle cx="12" cy="11" r="3.5"/><path d="M12 9v.01M12 11l1.5 0M6 20.5v-2M18 20.5v-2"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 3.5v12M7 11l5 5 5-5M4.5 20.5h15"/></symbol>
+  <symbol id="i-xls" viewBox="0 0 24 24"><path d="M6 2.5h8.5L19 7v14.5H6z"/><path d="M14.5 2.5V7H19"/><path d="M9 11l5 6M14 11l-5 6"/></symbol>
+  <symbol id="i-sum" viewBox="0 0 24 24"><rect x="4" y="2.5" width="16" height="19" rx="2"/><path d="M8 7h8M8 11.5h2M14 11.5h2M8 15.5h2M14 15.5h2"/></symbol>
+</svg>
+
+<!-- ================= LOGIN ================= -->
+<div id="login" hidden>
+  <div class="k-wrap">
+    <img class="brand-logo" src="img/logo.webp" alt="QUINN Wash &amp; Dry" width="1000" height="366">
+    <img class="mascot md" src="img/welcome.webp" alt="" width="720" height="591">
+    <div class="k-brand" style="font-size:20px"><span id="lgShop">ระบบร้าน</span><small> · เข้าสู่ระบบเพื่อใช้งาน</small></div>
+    <form class="k-panel" id="lgForm" autocomplete="on">
+      <label class="k-note" for="lgUser">ชื่อผู้ใช้</label>
+      <input id="lgUser" class="k-input" autocomplete="username" autocapitalize="none" required>
+      <label class="k-note" for="lgPass">รหัสผ่าน</label>
+      <input id="lgPass" class="k-input" type="password" autocomplete="current-password" required>
+      <p class="k-err" id="lgErr"></p>
+      <button class="k-go" id="lgGo" type="submit">เข้าสู่ระบบ</button>
+      <button class="k-back" id="lgForgot" type="button">ลืมรหัสผ่าน (เฉพาะบัญชีที่ใช้อีเมลจริง)</button>
+    </form>
+    <form class="k-panel" id="setupForm" hidden>
+      <p class="k-q">ตั้งค่าครั้งแรก: สร้างบัญชีเจ้าของร้าน</p>
+      <p class="k-note">ทำครั้งเดียว บัญชีนี้จะเป็นเจ้าของร้าน เข้าหลังบ้านได้ทุกส่วน</p>
+      <label class="k-note" for="suShop">ชื่อร้าน</label><input id="suShop" class="k-input" required>
+      <label class="k-note" for="suName">ชื่อเจ้าของ</label><input id="suName" class="k-input" required>
+      <label class="k-note" for="suUser">อีเมลของเจ้าของร้าน (แนะนำ ใช้รีเซ็ตรหัสผ่านได้) หรือชื่อผู้ใช้</label><input id="suUser" class="k-input" autocapitalize="none" autocomplete="username" required>
+      <label class="k-note" for="suPass">รหัสผ่าน (อย่างน้อย 6 ตัว)</label><input id="suPass" class="k-input" type="password" autocomplete="new-password" required>
+      <p class="k-err" id="suErr"></p>
+      <button class="k-go" type="submit">สร้างบัญชีเจ้าของร้าน</button>
+    </form>
+    <div class="k-panel" id="noRole" hidden>
+      <p class="k-q">บัญชีนี้ยังไม่มีสิทธิ์ใช้งาน</p>
+      <p class="k-note">ให้เจ้าของร้านสร้างบัญชีพนักงานให้ในหน้า ตั้งค่า</p>
+      <button class="k-go" id="nrOut" type="button">ออกจากระบบ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= RECEIPT ================= -->
+<div class="modal" id="rcModal" hidden role="dialog" aria-modal="true" aria-labelledby="rcTitle">
+  <div class="modal-card">
+    <h2 id="rcTitle"><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-exp"/></svg></span>ใบเสร็จ</span></h2>
+    <div class="rc-prev"><img id="rcImg" alt="ใบเสร็จ"></div>
+    <p class="hint" id="rcMsg"></p>
+    <div class="row-end">
+      <button class="sbtn" id="rcClose"><svg class="ic"><use href="#i-x"/></svg>ปิด</button>
+      <button class="sbtn" id="rcSave"><svg class="ic"><use href="#i-down"/></svg>บันทึกรูป</button>
+      <button class="primary sm" id="rcPrint"><svg class="ic"><use href="#i-exp"/></svg>ปริ้น</button>
+    </div>
+  </div>
+</div>
+<div id="printArea" aria-hidden="true"></div>
+
+<!-- ================= BACK OFFICE ================= -->
+<div id="back" hidden>
+<header>
+  <div class="wrap">
+    <div class="hrow">
+      <div class="hbrand"><img class="hlogo" src="img/logo.webp" alt="QUINN Wash &amp; Dry" width="1000" height="366"><h1><span id="hTitle">สมุดบัญชีร้านซักผ้า</span><small id="hSub">หลังบ้าน · ซัก 5 เครื่อง · อบ 4 เครื่อง</small></h1></div>
+      <div class="hside">
+        <div class="hbtns">
+          <div class="lang nt" role="group" aria-label="ภาษา / Language"><button id="lang-th" aria-pressed="true">ไทย</button><button id="lang-en" aria-pressed="false">EN</button></div>
+          <a class="front-link" href="#kiosk"><svg class="ic"><use href="#i-store"/></svg> เปิดหน้าบ้าน</a>
+          <button class="front-link" id="toStaff" hidden><svg class="ic"><use href="#i-user"/></svg> โหมดพนักงาน<span class="badge" id="claimBadge" hidden>0</span></button>
+          <button class="front-link" id="toOwner" hidden><svg class="ic"><use href="#i-gear"/></svg> หลังบ้าน</button>
+          <button class="front-link" id="logout"><svg class="ic"><use href="#i-x"/></svg> ออกจากระบบ</button>
+        </div>
+        <span class="sync"><span id="who" class="nt"></span><span id="sync">กำลังเชื่อมต่อ…</span></span>
+      </div>
+    </div>
+    <div class="tabs" role="tablist" id="ownerTabs">
+      <button class="tab" role="tab" id="tab-day" aria-selected="true"><svg class="ic"><use href="#i-cal"/></svg>รายวัน</button>
+      <button class="tab" role="tab" id="tab-mem" aria-selected="false"><svg class="ic"><use href="#i-users"/></svg>สมาชิก</button>
+      <button class="tab" role="tab" id="tab-month" aria-selected="false"><svg class="ic"><use href="#i-chart"/></svg>สรุปเดือน</button>
+      <button class="tab" role="tab" id="tab-set" aria-selected="false"><svg class="ic"><use href="#i-gear"/></svg>ตั้งค่า</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="view-day">
+  <div class="datebar">
+    <button class="icon-btn" id="prev" aria-label="วันก่อนหน้า">‹</button>
+    <input type="date" id="date" aria-label="วันที่">
+    <button class="icon-btn" id="next" aria-label="วันถัดไป">›</button>
+  </div>
+  <div id="storeNote" class="banner" hidden></div>
+  <section class="card" id="ownerCustSum">
+    <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-users"/></svg></span>ยอดจากพนักงานหน้าร้าน</span> <span class="tot num" id="t-ownHeads">0 คน</span></h2>
+    <div class="sum" id="ownCust"></div>
+  </section>
+
+  <div class="sec-title">เงินที่เก็บได้สิ้นวัน</div>
+  <section class="card">
+    <h2><span class="h-ic"><span class="icbox coin"><svg class="ic"><use href="#i-coin"/></svg></span>เหรียญจากตู้ซักและตู้อบ</span> <span class="tot coin num" id="t-coin">0</span></h2>
+    <p class="hint">นับเหรียญ 10 บาทจากเครื่องซักทั้ง 5 เครื่องและเครื่องอบทั้ง 4 เครื่องรวมกัน แล้วใส่จำนวนเหรียญทั้งหมดของวันนี้</p>
+    <div class="coin-in">
+      <span class="coin-icons"><svg class="ic"><use href="#i-wash"/></svg>+<svg class="ic"><use href="#i-dry"/></svg>=</span>
+      <div class="field"><label for="fCoins"><svg class="ic coin"><use href="#i-coin"/></svg>เหรียญ 10 บาท (รวม)</label>
+        <div class="row"><span class="coinmark">10</span><input id="fCoins" type="number" inputmode="numeric" min="0" step="1" placeholder="0"><span class="unit">เหรียญ</span></div>
+        <div class="baht" id="fCoinsBaht">= 0 บาท</div></div>
+    </div>
+  </section>
+  <section class="card">
+    <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-qr"/></svg></span>ยอดสแกนจ่าย</span> <span class="tot num" id="t-scan">0</span></h2>
+    <p class="hint" id="scanHint">ยอดเงินที่ลูกค้าสแกน QR หรือโอนจ่ายทั้งวัน ดูจากแอปธนาคาร · บันทึกไว้ดูอย่างเดียว ไม่นำไปรวมหรือหักกับยอดอื่น</p>
+    <div class="coin-in">
+      <div class="field"><label for="fScan"><svg class="ic"><use href="#i-qr"/></svg>ยอดสแกนจ่ายรวม (บาท)</label>
+        <div class="row"><input id="fScan" type="number" inputmode="decimal" min="0" placeholder="0"><span class="unit">บาท</span></div></div>
+    </div>
+  </section>
+  <section class="card">
+    <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-soap"/></svg></span>น้ำยาที่ขายได้</span> <span class="tot num" id="t-soap">0</span></h2>
+    <p class="hint">พนักงานหน้าร้านเป็นคนบันทึก · ซองเล็ก 5 บาท · ซองใหญ่ 20 บาท</p>
+    <div class="soap-ro" id="g-soap"></div>
+  </section>
+  <section class="card">
+    <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-note"/></svg></span>ตู้แลกเหรียญ</span> <span class="tot num" id="t-chg">0</span></h2>
+    <p class="hint">ใส่จำนวนแบงก์ที่เก็บได้จากหลังตู้</p>
+    <div class="grid" id="g-chg"></div>
+  </section>
+  <section class="card">
+    <h2><span class="h-ic"><span class="icbox coin"><svg class="ic"><use href="#i-safe"/></svg></span>เงินสำรองในตู้</span> <span class="tot coin num" id="t-res">0</span></h2>
+    <p class="hint">นับหลังจากเติมเงินกลับเข้าตู้แลกเหรียญเรียบร้อยแล้ว · ใส่จำนวนใบ/เหรียญ · ยอดนี้ไม่นับเป็นรายรับ</p>
+    <div class="grid" id="g-res"></div>
+    <div class="sum" id="resDiff"></div>
+  </section>
+  <section class="card">
+    <h2><span class="h-ic"><span class="icbox bad"><svg class="ic"><use href="#i-exp"/></svg></span>ค่าใช้จ่ายวันนี้</span> <span class="tot num neg" id="t-exp">0</span></h2>
+    <div class="exp-list" id="expList"></div>
+    <button class="ghost" id="addExp"><svg class="ic"><use href="#i-plus"/></svg>เพิ่มรายการค่าใช้จ่าย</button>
+  </section>
+  <section class="card">
+    <div class="art"><img class="mascot md" src="img/money.webp" alt="" width="720" height="415"></div>
+    <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-sum"/></svg></span>สรุปวันนี้</span></h2>
+    <div class="sum" id="daySum"></div>
+    <div class="field"><label for="note">หมายเหตุ</label><input id="note" class="txt" placeholder="เช่น เครื่องซัก 3 เหรียญติด"></div>
+  </section>
+</main>
+
+<main class="wrap" id="view-staff" hidden>
+  <div id="staffBody">
+  <div class="datebar">
+    <button class="icon-btn" id="sprev" aria-label="วันก่อนหน้า">‹</button>
+    <input type="date" id="sdate" aria-label="วันที่">
+    <button class="icon-btn" id="snext" aria-label="วันถัดไป">›</button>
+  </div>
+  <section class="card alert" id="claimCard" hidden>
+    <h2><span class="h-ic"><span class="icbox coin"><svg class="ic"><use href="#i-clock"/></svg></span>ลูกค้าสะสมแต้มจากหน้าบ้าน รอยืนยัน</span> <span class="tot coin" id="t-claims"></span></h2>
+    <p class="hint">กด “ยืนยัน” แล้วใส่ยอดเงินที่ลูกค้าจ่าย ระบบจะบันทึกเป็นยอดของลูกค้าคนนั้นและให้แต้มตามจำนวนถัง</p>
+    <div id="claimList"></div>
+  </section>
+
+    <section class="card" id="custCard">
+    <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-users"/></svg></span>ลูกค้าที่มาวันนี้</span> <span class="tot num" id="t-heads">0 คน</span></h2>
+    <div class="vf">
+      <div class="field span"><label for="vMem"><svg class="ic"><use href="#i-user"/></svg>ลูกค้า</label>
+        <input id="vMem" class="txt" list="memList" type="tel" inputmode="tel" placeholder="พิมพ์เบอร์โทรลูกค้า (เว้นว่าง = ลูกค้าทั่วไป)" autocomplete="off">
+        <div class="who" id="vWho">ลูกค้าทั่วไป · ไม่สะสมแต้ม</div>
+        <button class="sbtn" id="vRedeemBtn" hidden style="align-self:flex-start;border-color:var(--coin);color:var(--coin)"><svg class="ic"><use href="#i-gift"/></svg>แลกแต้ม</button></div>
+      <div class="span" id="vRedeemHost"></div>
+      <div class="field span signup" id="vNewBox" hidden><label for="vNewName"><svg class="ic"><use href="#i-plus"/></svg>สมัครสมาชิกใหม่ · เบอร์ <span class="num" id="vNewPhone"></span></label>
+        <input id="vNewName" class="txt" placeholder="ใส่ชื่อลูกค้า (จำเป็น)" autocomplete="off">
+        <div class="who">ใส่ชื่อแล้วกดบันทึก ระบบจะสมัครสมาชิกและสะสมแต้มครั้งนี้ให้เลย</div></div>
+      <div class="field"><label for="vWL"><svg class="ic"><use href="#i-wash"/></svg>ซัก (ถัง)</label><input id="vWL" type="number" inputmode="numeric" min="0" placeholder="0"></div>
+      <div class="field"><label for="vWA"><svg class="ic coin"><use href="#i-coin"/></svg>ค่าซัก (บาท)</label><input id="vWA" type="number" inputmode="numeric" min="0" placeholder="0"></div>
+      <div class="field"><label for="vSA"><svg class="ic"><use href="#i-soap"/></svg>ค่าน้ำยา (บาท)</label><input id="vSA" type="number" inputmode="numeric" min="0" placeholder="0"></div>
+      <div class="field"><label for="vDL"><svg class="ic"><use href="#i-dry"/></svg>อบ (ถัง)</label><input id="vDL" type="number" inputmode="numeric" min="0" placeholder="0"></div>
+      <div class="field"><label for="vDA"><svg class="ic coin"><use href="#i-coin"/></svg>ค่าอบ (บาท)</label><input id="vDA" type="number" inputmode="numeric" min="0" placeholder="0"></div>
+      <div class="field"><label><svg class="ic"><use href="#i-sum"/></svg>รวมคนนี้</label><div class="bigsum num" id="vTot">0 ฿</div></div>
+    </div>
+    <div class="row-end"><span class="hint" id="vMsg"></span><button class="sbtn" id="vCancel" hidden><svg class="ic"><use href="#i-x"/></svg>ยกเลิก</button><button class="primary sm" id="vAdd"><svg class="ic"><use href="#i-check"/></svg><span id="vAddTxt">บันทึกลูกค้า</span></button></div>
+    <div class="tablewrap"><table>
+      <thead><tr><th><svg class="ic"><use href="#i-user"/></svg></th><th><svg class="ic"><use href="#i-wash"/></svg> ซัก</th><th><svg class="ic"><use href="#i-dry"/></svg> อบ</th><th><svg class="ic"><use href="#i-soap"/></svg> น้ำยา</th><th><svg class="ic"><use href="#i-sum"/></svg> รวม</th><th><svg class="ic"><use href="#i-star"/></svg> แต้ม</th><th></th></tr></thead>
+      <tbody id="vBody"></tbody><tfoot id="vFoot"></tfoot>
+    </table></div>
+  </section>
+  <section class="card">
+    <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-soap"/></svg></span>ขายน้ำยา</span> <span class="tot num" id="t-ssoap">0 ฿</span></h2>
+    <p class="hint">กด + ทุกครั้งที่ขายได้ 1 ซอง · บันทึกทันที</p>
+    <div class="soapgrid" id="soapPad"></div>
+    <p class="hint" id="soapMsg"></p>
+  </section>
+  </div>
+</main>
+
+<main class="wrap" id="view-mem" hidden>
+  <section class="card">
+    <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-user"/></svg></span>สมัครสมาชิกใหม่</span></h2>
+    <div class="vf">
+      <div class="field"><label for="mPhone"><svg class="ic"><use href="#i-phone"/></svg>เบอร์โทร</label><input id="mPhone" class="txt" type="tel" inputmode="tel" placeholder="0812345678"></div>
+      <div class="field" style="grid-column:span 2"><label for="mName"><svg class="ic"><use href="#i-user"/></svg>ชื่อลูกค้า</label><input id="mName" class="txt" placeholder="ชื่อ หรือชื่อเล่น (จำเป็น)"></div>
+    </div>
+    <div class="row-end"><span class="hint" id="mMsg"></span><button class="primary sm" id="mAdd"><svg class="ic"><use href="#i-plus"/></svg>เพิ่มสมาชิก</button></div>
+  </section>
+  <section class="card">
+    <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-users"/></svg></span>รายชื่อสมาชิก</span> <span class="tot num" id="mCount">0 คน</span></h2>
+    <div class="datebar">
+      <input id="mSearch" placeholder="ค้นหาเบอร์หรือชื่อ" aria-label="ค้นหาสมาชิก">
+      <input type="month" id="mMonth" aria-label="เดือนที่ดูยอด" style="flex:none;width:auto">
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th><svg class="ic"><use href="#i-user"/></svg> สมาชิก</th><th><svg class="ic"><use href="#i-cal"/></svg> มา</th><th><svg class="ic"><use href="#i-star"/></svg> แต้ม</th><th>ยอดเดือนนี้</th><th>ยอดทั้งหมด</th></tr></thead>
+      <tbody id="memBody"></tbody>
+    </table></div>
+  </section>
+  <section class="card">
+    <h2><span class="h-ic"><span class="icbox coin"><svg class="ic"><use href="#i-star"/></svg></span>แต้มครบ พร้อมแลก</span> <span class="tot coin num" id="readyCount">0 คน</span></h2>
+    <div class="art" id="readyArt" hidden><img class="mascot sm" src="img/reward.webp" alt="" width="720" height="476"></div>
+    <div class="ready" id="readyList"></div>
+  </section>
+  <section class="card">
+    <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-gift"/></svg></span>ประวัติการแลกรางวัล</span> <span class="tot num" id="rdCount">0 ครั้ง</span></h2>
+    <p class="hint">แสดงตามเดือนที่เลือกด้านบน · ใหม่สุดอยู่บน</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th><svg class="ic"><use href="#i-cal"/></svg> วันที่ · เวลา</th><th><svg class="ic"><use href="#i-user"/></svg> สมาชิก</th><th><svg class="ic"><use href="#i-gift"/></svg> รางวัล</th><th><svg class="ic"><use href="#i-coin"/></svg> จ่ายเพิ่ม</th><th><svg class="ic"><use href="#i-star"/></svg> แต้ม</th><th></th></tr></thead>
+      <tbody id="rdBody"></tbody>
+    </table></div>
+  </section>
+  <section class="card">
+    <h2><span class="h-ic"><span class="icbox bad"><svg class="ic"><use href="#i-clock"/></svg></span>แต้มหมดอายุ</span> <span class="tot num neg" id="expCount">0 ครั้ง</span></h2>
+    <p class="hint">แต้มที่ครบแล้วแต่ไม่ได้มาแลกภายในเวลาที่กำหนด ระบบตัดให้อัตโนมัติ · แสดงตามเดือนที่เลือก</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th><svg class="ic"><use href="#i-cal"/></svg> วันที่ตัด</th><th><svg class="ic"><use href="#i-user"/></svg> สมาชิก</th><th>แต้มครบเมื่อ</th><th><svg class="ic"><use href="#i-star"/></svg> แต้ม</th></tr></thead>
+      <tbody id="expBody"></tbody>
+    </table></div>
+  </section>
+  <section class="card" id="memDetail" hidden>
+    <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-user"/></svg></span><span id="mdName" class="nt"></span></span><span class="chip" id="mdPhone"></span></h2>
+    <div class="stats" id="mdStats"></div>
+    <div id="mdRedeemHost"><div id="redeemBox">
+    <div class="rw-label"><svg class="ic"><use href="#i-gift"/></svg> แลกรางวัล</div>
+    <div class="rw" id="mdRewards"></div>
+    <div class="rd-panel" id="rdPanel" hidden>
+      <div class="rw-label"><svg class="ic"><use href="#i-gift"/></svg> แลก <span id="rdName"></span></div>
+      <div class="vf"><div class="field"><label for="rdPrice"><svg class="ic coin"><use href="#i-coin"/></svg>ราคาบริการครั้งนี้ (บาท)</label><input id="rdPrice" type="number" inputmode="numeric" min="0" placeholder="0"></div></div>
+      <div class="sum" id="rdOut"></div>
+      <div class="row-end"><button class="sbtn" id="rdCancel"><svg class="ic"><use href="#i-x"/></svg>ยกเลิก</button><button class="primary sm" id="rdOk"><svg class="ic"><use href="#i-check"/></svg>ยืนยันแลก</button></div>
+    </div>
+    <p class="hint" id="mdRedeemMsg"></p>
+    </div></div>
+    <div class="tablewrap"><table>
+      <thead><tr><th><svg class="ic"><use href="#i-cal"/></svg></th><th><svg class="ic"><use href="#i-wash"/></svg> ซัก</th><th><svg class="ic"><use href="#i-dry"/></svg> อบ</th><th><svg class="ic"><use href="#i-soap"/></svg> น้ำยา</th><th><svg class="ic"><use href="#i-sum"/></svg> รวม</th><th><svg class="ic"><use href="#i-star"/></svg> แต้ม</th></tr></thead>
+      <tbody id="mdBody"></tbody>
+    </table></div>
+    <div class="vf">
+      <div class="field" style="grid-column:span 2"><label for="mdEditName">แก้ชื่อ</label><input id="mdEditName" class="txt"></div>
+      <div class="field" style="justify-content:flex-end"><button class="sbtn" id="mdSaveName"><svg class="ic"><use href="#i-save"/></svg>บันทึกชื่อ</button></div>
+    </div>
+    <div class="datebar"><button class="del" style="flex:1;padding:8px" id="mdDel"><svg class="ic"><use href="#i-trash"/></svg><span id="mdDelTxt">ลบสมาชิกคนนี้</span></button></div>
+  </section>
+</main>
+
+<main class="wrap" id="view-month" hidden>
+  <div class="datebar">
+    <button class="icon-btn" id="mprev" aria-label="เดือนก่อนหน้า">‹</button>
+    <input type="month" id="month" aria-label="เดือน">
+    <button class="icon-btn" id="mnext" aria-label="เดือนถัดไป">›</button>
+  </div>
+  <section class="card">
+    <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-xls"/></svg></span>ดาวน์โหลด Excel</span></h2>
+    <p class="hint">ไฟล์มี 7 ชีต: สรุป · รายวัน · ลูกค้ารายคน · ค่าใช้จ่าย · สมาชิก · แลกรางวัล · แต้มหมดอายุ</p>
+    <div class="row-end" style="justify-content:flex-start">
+      <select id="xScope" aria-label="ช่วงข้อมูล"><option value="month">เฉพาะเดือนที่เลือก</option><option value="all">ข้อมูลทั้งหมด</option></select>
+      <button class="primary sm" id="xBtn"><svg class="ic"><use href="#i-down"/></svg>ดาวน์โหลด .xlsx</button>
+    </div>
+    <p class="hint" id="xMsg"></p>
+  </section>
+  <div class="tiles">
+    <div class="tile"><div class="k">รายรับ</div><div class="v" id="m-inc">0</div></div>
+    <div class="tile"><div class="k">ค่าใช้จ่าย</div><div class="v neg" id="m-exp">0</div></div>
+    <div class="tile"><div class="k">คงเหลือ</div><div class="v" id="m-net">0</div></div>
+    <div class="tile"><div class="k">ลูกค้า (หัว)</div><div class="v" id="m-heads">0</div></div>
+  </div>
+  <section class="card chart"><h2>คงเหลือรายวัน</h2><div id="chart"></div></section>
+  <section class="card"><h2>จำนวนลูกค้ารายวัน</h2><div id="headChart"></div></section>
+  <section class="card">
+    <h2>ยอดรายวัน</h2>
+    <p class="hint">แตะแถวเพื่อเปิดวันนั้น · คงเหลือสะสมนับจากวันที่ 1 ของเดือน</p>
+    <div class="tablewrap"><table class="wide">
+      <thead><tr><th>วันที่</th><th>ลูกค้า</th><th>เหรียญตู้</th><th>สแกนจ่าย</th><th>น้ำยา</th><th>ตู้แลก</th><th>รายรับ</th><th>จ่าย</th><th>คงเหลือ</th><th>สะสม</th><th>เงินสำรอง</th></tr></thead>
+      <tbody id="mBody"></tbody><tfoot id="mFoot"></tfoot>
+    </table></div>
+  </section>
+  <section class="card"><h2>รายรับแยกตามแหล่ง</h2><div class="bars" id="srcBars"></div></section>
+  <section class="card"><h2>สมาชิกที่ใช้บริการมากที่สุด</h2><div class="bars" id="topBars"></div></section>
+  <section class="card"><h2>ค่าใช้จ่ายแยกหมวด</h2><div class="bars" id="expBars"></div></section>
+</main>
+
+<main class="wrap" id="view-set" hidden>
+  <section class="card">
+    <h2>แต้มสะสม</h2>
+    <p class="hint">ซัก 1 ถัง = 1 แต้ม · อบ 1 ถัง = 1 แต้ม (ซักแล้วอบ = 2 แต้ม) · ช่อง “ลดได้” คือมูลค่าสูงสุดที่แต้มช่วยจ่าย ถ้าราคาบริการเกิน ลูกค้าจ่ายส่วนต่างเพิ่ม · ใส่ 0 = ฟรีทั้งหมด</p>
+    <div class="vf">
+    </div>
+    <div class="vf"><div class="field"><label for="sExp"><svg class="ic"><use href="#i-clock"/></svg>ต้องแลกภายใน (วัน)</label><input id="sExp" type="number" inputmode="numeric" min="0" placeholder="30"></div></div>
+    <p class="hint">นับจากวันที่แต้มครบ ถ้าไม่มาแลกภายในจำนวนวันนี้ ระบบตัดแต้มชุดที่ครบออกอัตโนมัติ แต้มที่เกินมายังเก็บไว้ · ใส่ 0 = แต้มไม่มีวันหมดอายุ</p>
+    <div class="rw-edit" id="sRewards"></div>
+    <button class="ghost" id="sAddRw"><svg class="ic"><use href="#i-plus"/></svg>เพิ่มรางวัล</button>
+  </section>
+  <section class="card">
+    <h2>ร้านและใบเสร็จ</h2>
+    <div class="vf">
+      <div class="field" style="grid-column:span 2"><label for="sShop">ชื่อร้าน (พิมพ์บนใบเสร็จ)</label><input id="sShop" class="txt" placeholder="เช่น ร้านซักผ้าหยอดเหรียญ ..."></div>
+      <div class="field"><label for="sLine">LINE ID ร้าน (พิมพ์บนใบเสร็จ)</label><input id="sLine" class="txt" autocapitalize="none" placeholder="@919ahdge"></div>
+      <div class="field"><label for="sPaper">กระดาษใบเสร็จ</label><select id="sPaper"><option value="58">กระดาษความร้อน 58 มม.</option><option value="80">กระดาษความร้อน 80 มม.</option></select></div>
+      <div class="field" style="grid-column:span 2"><label for="sFoot">ข้อความท้ายใบเสร็จ</label><input id="sFoot" class="txt" placeholder="ขอบคุณที่ใช้บริการ"></div>
+    </div>
+  </section>
+  <section class="card" id="staffAcct">
+    <h2>บัญชีพนักงาน</h2>
+    <p class="hint">พนักงานล็อกอินด้วยชื่อผู้ใช้และรหัสผ่านของตัวเอง จะเห็นเฉพาะหน้าร้าน (คีย์ลูกค้า แลกแต้ม ขายน้ำยา) เข้าหลังบ้านไม่ได้</p>
+    <div id="staffList" class="vlist"></div>
+    <div class="vf">
+      <div class="field"><label for="nsName">ชื่อพนักงาน</label><input id="nsName" class="txt" autocomplete="off"></div>
+      <div class="field"><label for="nsUser">ชื่อผู้ใช้ (ภาษาอังกฤษ)</label><input id="nsUser" class="txt" autocomplete="off" autocapitalize="none" placeholder="เช่น khin"></div>
+      <div class="field"><label for="nsPass">รหัสผ่าน (อย่างน้อย 6 ตัว)</label><input id="nsPass" class="txt" type="text" autocomplete="new-password"></div>
+    </div>
+    <div class="row-end"><span class="hint" id="nsMsg"></span><button class="primary sm" id="nsAdd"><svg class="ic"><use href="#i-plus"/></svg>สร้างบัญชีพนักงาน</button></div>
+  </section>
+  <section class="card">
+    <h2>หน้าบ้าน (ให้ลูกค้าสะสมแต้ม)</h2>
+    <p class="hint">เปิดหน้าบ้านบนแท็บเล็ตของร้าน ลูกค้ากดเบอร์ เช็คแต้ม และแจ้งจำนวนถังได้เอง รายการจะขึ้นที่หน้าร้านให้พนักงานกดยืนยัน</p>
+    <div class="vf"><div class="field"><label for="sKioskPin">รหัสออกจากหน้าบ้าน</label><input id="sKioskPin" type="password" inputmode="numeric" maxlength="6" placeholder="4–6 หลัก"></div></div>
+    <p class="hint">กันลูกค้ากดออกจากหน้าบ้านโดยไม่ตั้งใจ · เว้นว่าง = กดปุ่ม “พนักงาน” แล้วออกได้เลย</p>
+  </section>
+  <section class="card">
+    <label class="toggle"><input type="checkbox" id="countChg">
+      <span><b>นับเงินตู้แลกเหรียญเป็นรายรับ</b><br><span class="hint">เงินในตู้แลกคือแบงก์ที่ลูกค้าเอามาแลกเหรียญ แล้วเหรียญนั้นก็หยอดเข้าเครื่องซัก/อบอยู่แล้ว ถ้านับรวมจะซ้ำกัน จึงตั้งต้นไว้ที่ “ไม่นับ” และแสดงยอดแยกไว้ให้เทียบ</span></span>
+    </label>
+  </section>
+  <div class="row-end"><span class="hint" id="sMsg"></span><button class="primary" id="sSave"><svg class="ic"><use href="#i-save"/></svg>บันทึกการตั้งค่า</button></div>
+</main>
+
+<div class="savebar" id="savebar">
+  <div class="wrap">
+    <span class="st" id="saveSt">ยังไม่มีการแก้ไข</span>
+    <button class="primary" id="save" disabled><svg class="ic"><use href="#i-save"/></svg>บันทึกเงินสิ้นวัน</button>
+  </div>
+</div>
+</div>
+
+<!-- ================= FRONT (KIOSK) ================= -->
+<div id="kiosk" hidden>
+  <div class="k-wrap">
+    <img class="brand-logo" src="img/logo.webp" alt="QUINN Wash &amp; Dry" width="1000" height="366">
+    <div class="k-brand">สะสมแต้มซักอบ<small style="display:block;font-size:15px;font-weight:500">ซัก 1 ถัง = 1 แต้ม · อบ 1 ถัง = 1 แต้ม<br><span id="kReward"></span></small></div>
+
+    <div class="k-panel" id="k-phone">
+      <div class="art"><img class="mascot sm" src="img/tablet.webp" alt="" width="560" height="608"></div>
+      <p class="k-q">กรอกเบอร์โทรศัพท์ของคุณ</p>
+      <div class="k-display num" id="kNum" aria-live="polite"></div>
+      <div class="k-pad" id="kPad"></div>
+      <button class="k-go" id="kGo" disabled>ถัดไป</button>
+    </div>
+
+    <div class="k-panel" id="k-reg" hidden>
+      <p class="k-q">สมัครสมาชิกใหม่<br><span class="num" id="kRegPhone"></span></p>
+      <label for="kRegName" class="k-note">เบอร์นี้ยังไม่เป็นสมาชิก ใส่ชื่อเพื่อเริ่มสะสมแต้ม</label>
+      <input id="kRegName" class="k-input" placeholder="ชื่อ หรือชื่อเล่น" autocomplete="off">
+      <p class="k-err" id="kRegErr"></p>
+      <button class="k-go" id="kRegGo">สมัครสมาชิก</button>
+      <button class="k-back" data-home>กลับ</button>
+    </div>
+
+    <div class="k-panel" id="k-mem" hidden>
+      <div class="art" id="kRewardArt" hidden><img class="mascot md" src="img/reward.webp" alt="" width="720" height="476"></div>
+      <p class="k-name" id="kName"></p>
+      <div class="k-pts"><b id="kPts">0</b><span>แต้ม</span></div>
+      <div class="drums" id="kDrums"></div>
+      <p class="k-note" id="kGoal"></p>
+      <div class="k-step-row"><span>ซัก (ถัง)</span><div class="stepper"><button data-st="w" data-d="-1" aria-label="ลดถังซัก">−</button><output id="kW">0</output><button data-st="w" data-d="1" aria-label="เพิ่มถังซัก">+</button></div></div>
+      <div class="k-step-row"><span>อบ (ถัง)</span><div class="stepper"><button data-st="d" data-d="-1" aria-label="ลดถังอบ">−</button><output id="kD">0</output><button data-st="d" data-d="1" aria-label="เพิ่มถังอบ">+</button></div></div>
+      <p class="k-err" id="kMemErr"></p>
+      <button class="k-go" id="kClaim" disabled>สะสมแต้ม</button>
+      <button class="k-back" data-home>เสร็จแล้ว</button>
+    </div>
+
+    <div class="k-panel" id="k-done" hidden>
+      <img class="mascot md" src="img/thanks.webp" alt="" width="720" height="487">
+      <p class="k-q" id="kDoneTxt"></p>
+      <p class="k-note">พนักงานจะยืนยันแต้มให้ภายในวันนี้</p>
+      <button class="k-go" data-home>เรียบร้อย</button>
+    </div>
+
+    <div class="k-panel" id="k-pin" hidden>
+      <p class="k-q">สำหรับพนักงาน</p>
+      <label for="kPinIn" class="k-note">ใส่รหัสเพื่อออกจากหน้าบ้าน</label>
+      <input id="kPinIn" class="k-input num" type="password" inputmode="numeric" maxlength="6" style="text-align:center">
+      <p class="k-err" id="kPinErr"></p>
+      <button class="k-go" id="kPinGo">ออกจากหน้าบ้าน</button>
+      <button class="k-back" data-home>กลับ</button>
+    </div>
+
+    <div class="k-foot"><button class="k-staff" id="kStaff">พนักงาน</button></div>
+  </div>
+</div>
+
+<datalist id="memList"></datalist>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="config.js"></script>
+
+<script>
+/* ===== constants & helpers ===== */
+const WASH=5, DRY=4;
+const SOAP=[["det_s","น้ำยาซัก ซองเล็ก",5],["det_l","น้ำยาซัก ซองใหญ่",20],["soft_s","ปรับผ้านุ่ม ซองเล็ก",5],["soft_l","ปรับผ้านุ่ม ซองใหญ่",20]];
+const NOTES=[["b100","แบงก์ 100",100],["b50","แบงก์ 50",50],["b20","แบงก์ 20",20]];
+// reserve cash kept in the shop after refilling the coin changer
+const RES=[["r1000","แบงก์ 1,000",1000],["r500","แบงก์ 500",500],["r100","แบงก์ 100",100],["r50","แบงก์ 50",50],["r20","แบงก์ 20",20],
+  ["rc10","เหรียญ 10",10],["rc5","เหรียญ 5",5],["rc2","เหรียญ 2",2],["rc1","เหรียญ 1",1]];
+const resTotal=r=>RES.reduce((t,[k,,p])=>t+int(r&&r[k])*p,0);
+const hasRes=r=>!!r&&RES.some(([k])=>r[k]!=null);
+const CATS=["ค่าไฟ","ค่าน้ำ","ค่าแก๊ส","ค่าถุง","ซื้อน้ำยา","ค่าแรง","ค่าเช่า","ซ่อมเครื่อง","เติมเหรียญตู้แลก","อื่น ๆ (ระบุเอง)"];
+const OTHER="อื่น ๆ (ระบุเอง)";
+// label used in summaries: the typed description for a custom expense
+const expLabel=e=>(e.n===OTHER||e.n==="อื่น ๆ")?(String(e.d||"").trim()||"อื่น ๆ"):e.n;
+const THM=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+const THD=["อา.","จ.","อ.","พ.","พฤ.","ศ.","ส."];
+const $=id=>document.getElementById(id);
+const fmt=n=>(Math.round(n)||0).toLocaleString("th-TH");
+const int=v=>Math.max(0,parseInt(v)||0);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const digits=s=>String(s||"").replace(/\D/g,"");
+const fmtPhone=p=>p&&p.length===10?p.slice(0,3)+"-"+p.slice(3,6)+"-"+p.slice(6):(p||"");
+const dn=id=>(S.members[id]&&S.members[id].name)||fmtPhone(id); // display name: name if given, else phone
+const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const pad=n=>String(n).padStart(2,"0");
+const ymd=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const todayStr=()=>ymd(new Date());
+const shift=(ds,n)=>{const d=new Date(ds+"T00:00:00");d.setDate(d.getDate()+n);return ymd(d)};
+const ENM=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], END=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const thaiDate=ds=>{const d=new Date(ds+"T00:00:00");return lang==="en"?END[d.getDay()]+" "+d.getDate()+" "+ENM[d.getMonth()]+" "+d.getFullYear():THD[d.getDay()]+" "+d.getDate()+" "+THM[d.getMonth()]+" "+(d.getFullYear()+543)};
+let lang="th";try{lang=localStorage.getItem("lw_lang")==="en"?"en":"th"}catch(e){}
+const hhmm=iso=>{try{const d=new Date(iso);return pad(d.getHours())+":"+pad(d.getMinutes())}catch(e){return""}};
+const blankDay=d=>({date:d,det_s:0,det_l:0,soft_s:0,soft_l:0,b100:0,b50:0,b20:0,expenses:[],note:""});
+
+/* ===== store ===== */
+const COLS=["days","soap","members","visits","claims","redeems"];
+const S={days:{},soap:{},members:{},visits:{},claims:{},redeems:{}};
+// one day = owner's cash record + staff sachet counts
+const D=ds=>(S.days[ds]||S.soap[ds])?Object.assign({date:ds},S.days[ds]||{},soapOf(S.soap[ds])):null;
+let config={countChanger:false,rewards:[{name:"ซัก 1 ถัง",kind:"wash",pts:10,value:50},{name:"อบ 1 ถัง",kind:"dry",pts:10,value:50}],shopName:"",shopLine:"@919ahdge",paper:"58",receiptFoot:"ขอบคุณที่ใช้บริการ",kioskPin:""};
+// "ครบ 10 แต้ม แลกซัก 1 ถัง หรือ อบ 1 ถัง (ลดได้ 50 บาท)"
+function rwSummary(){const rs=rewards().filter(r=>+r.pts===minPts()), vals=[...new Set(rs.map(r=>+r.value||0))];
+  return "แลก"+rs.map(r=>r.name).join(" หรือ ")+(vals.length===1&&vals[0]?" (ลดได้ "+vals[0]+" บาท)":"")}
+// discount and extra payment for one redemption: value 0 = fully free
+function rwCalc(r,price){price=int(price);const v=+r.value||0;const disc=v?Math.min(v,price):price;return {price,disc,extra:Math.max(0,price-disc)}}
+const rewards=()=>Array.isArray(config.rewards)&&config.rewards.length?config.rewards:[{name:"ซัก 1 ถัง",kind:"wash",pts:10,value:50}];
+const minPts=()=>Math.min(...rewards().map(r=>+r.pts||1));
+let curStaff="";
+function setStaff(n){curStaff=n||"";const w=document.getElementById("who");if(w)w.textContent=curStaff?"👤 "+curStaff+" · ":""}
+const cheapest=()=>rewards().reduce((a,b)=>(+b.pts<+a.pts?b:a));
+
+/* ===== data layer: Firebase (Firestore) when config.js is filled in, otherwise demo mode in this browser ===== */
+let fdb=null, fauth=null, mode="local", myRole=null;
+const FB=window.FIREBASE_CONFIG||null;
+const fbReady=!!(FB&&FB.apiKey&&!/ใส่|YOUR_/i.test(FB.apiKey)&&window.firebase);
+function persist(col){if(mode!=="db")try{localStorage.setItem("lw_"+col,JSON.stringify(S[col]))}catch(e){}}
+const ref=(col,id)=>fdb.collection(col).doc(id);
+async function put(col,id,data){if(mode==="db")await ref(col,id).set(data);S[col][id]=data;persist(col);afterWrite(col,id,data)}
+// write only the given fields, keeping fields someone else wrote
+async function merge(col,id,data){const next=Object.assign({},S[col][id]||{},data);if(mode==="db")await ref(col,id).set(data,{merge:true});S[col][id]=next;persist(col);afterWrite(col,id,next)}
+async function del(col,id){const old=S[col][id];if(mode==="db")await ref(col,id).delete();delete S[col][id];persist(col);afterWrite(col,id,old,true)}
+async function saveConfig(){if(mode==="db")await ref("config","main").set(config);else try{localStorage.setItem("lw_config",JSON.stringify(config))}catch(e){}}
+
+/* ===== public points summary: what a customer sees after scanning the receipt QR =====
+   Stored under an unguessable token (never the phone number), readable by anyone who has the link. */
+const newToken=()=>{const a=new Uint8Array(12);crypto.getRandomValues(a);return Array.from(a,b=>b.toString(36).padStart(2,"0")).join("").slice(0,20)};
+const maskPhone=p=>p&&p.length>=9?p.slice(0,3)+"-xxx-"+p.slice(-4):(p||"");
+const pubTimers={};
+function afterWrite(col,id,data,deleted){
+  if(col==="members"&&deleted){if(data&&data.token)writePublic(data.token,null);return}
+  const mid=col==="members"?id:(data&&data.memberId);
+  if(!mid||!["members","visits","redeems"].includes(col))return;
+  clearTimeout(pubTimers[mid]);pubTimers[mid]=setTimeout(()=>publishMember(mid),400);
+}
+async function ensureToken(mid){
+  const m=S.members[mid];if(!m)return null;if(m.token)return m.token;
+  const t=newToken();await merge("members",mid,{token:t});return t;
+}
+function publicSummary(mid){
+  const m=S.members[mid];if(!m)return null;
+  const vs=Object.values(S.visits).filter(v=>v.memberId===mid).sort((a,b)=>(a.date+(a.at||"")).localeCompare(b.date+(b.at||"")));
+  const rs=Object.values(S.redeems).filter(r=>r.memberId===mid);
+  return {shop:config.shopName||"",shopLine:config.shopLine||"",phone:maskPhone(mid),since:m.since||"",
+    visits:vs.slice(-80).map(v=>({d:v.date,t:hhmm(v.at),w:int(v.washLoads),dr:int(v.dryLoads),a:vTotal(v),p:vPts(v)})),
+    visitCount:vs.length,spent:vs.reduce((t,v)=>t+vTotal(v),0),
+    events:[...vs.map(v=>({d:v.date,t:v.at||"",p:vPts(v)})),...rs.map(r=>({d:r.date,t:r.at||"",p:-(+r.points||0),r:1,n:r.note||""}))],
+    goal:minPts(),days:expiryDays(),rewards:rewards().map(r=>({name:r.name,pts:+r.pts,value:+r.value||0})),updatedAt:new Date().toISOString()};
+}
+async function publishMember(mid){
+  try{const t=await ensureToken(mid);if(!t)return;await writePublic(t,publicSummary(mid))}catch(e){console.warn("public summary",e)}
+}
+async function writePublic(token,data){
+  if(mode==="db"){if(data)await ref("public",token).set(data);else await ref("public",token).delete();return}
+  try{const all=JSON.parse(localStorage.getItem("lw_public")||"{}");if(data)all[token]=data;else delete all[token];localStorage.setItem("lw_public",JSON.stringify(all))}catch(e){}
+}
+const checkUrl=token=>{const u=new URL("check.html",location.href);u.hash=token;return u.href};
+
+/* ===== calculations ===== */
+const vTotal=v=>(+v.washAmt||0)+(+v.dryAmt||0)+(+v.soapAmt||0);
+const vPts=v=>v.memberId?(int(v.washLoads)+int(v.dryLoads)):0;
+function memberStats(id){
+  const vs=Object.values(S.visits).filter(v=>v.memberId===id);
+  const rs=Object.values(S.redeems).filter(r=>r.memberId===id);
+  const earned=vs.reduce((t,v)=>t+vPts(v),0), used=rs.reduce((t,r)=>t+(+r.points||0),0);
+  const pending=Object.values(S.claims).filter(c=>c.memberId===id).reduce((t,c)=>t+int(c.washLoads)+int(c.dryLoads),0);
+  // Expiry: replay points in time order. When the balance reaches a full set (goal), a window of N days starts.
+  // If no redemption by the last day of the window, one full set of points is cut on the next day.
+  const goal=minPts(), days=expiryDays();
+  const ev=[...vs.map(v=>({d:v.date,t:v.at||"",p:vPts(v)})),...rs.map(r=>({d:r.date,t:r.at||"",p:-(+r.points||0),r:1}))].sort((a,b)=>(a.d+a.t).localeCompare(b.d+b.t));
+  let bal=0, since=null;const expired=[];
+  const cutBefore=ds=>{while(days&&since&&bal>=goal&&shift(since,days)<ds){const last=shift(since,days);expired.push({date:shift(last,1),since,points:goal});bal-=goal;since=bal>=goal?shift(last,1):null}};
+  for(const e of ev){cutBefore(e.d);bal+=e.p;if(bal>=goal){if(!since||e.r)since=e.d}else since=null}
+  cutBefore(todayStr());
+  const expiredPts=expired.reduce((t,x)=>t+x.points,0);
+  return {vs,rs,earned,used,balance:bal,expired,expiredPts,deadline:days&&since&&bal>=goal?shift(since,days):null,
+    pending,spent:vs.reduce((t,v)=>t+vTotal(v),0),loads:earned};
+}
+const expiryDays=()=>config.expiryDays==null?30:int(config.expiryDays);
+const daysLeft=ds=>Math.round((new Date(ds+"T00:00:00")-new Date(todayStr()+"T00:00:00"))/864e5);
+// one combined count of 10-baht coins (washers + dryers); older records kept per-machine counts
+const coinCount=r=>r.coins!=null?int(r.coins):[...(r.wash||[]),...(r.dry||[])].reduce((t,v)=>t+(+v||0),0);
+function calcDay(r){
+  const sum=a=>a.reduce((x,y)=>x+(+y||0),0);
+  const coins=coinCount(r), coin=coins*10;
+  const soap=SOAP.reduce((t,[k,,p])=>t+(+r[k]||0)*p,0);
+  const chg=NOTES.reduce((t,[k,,p])=>t+(+r[k]||0)*p,0);
+  const exp=sum((r.expenses||[]).map(e=>e.a));
+  const scan=Math.max(0,+r.scan||0);
+  const sales=coin+soap; // scan payments are recorded for reference only and never enter any total
+  const inc=sales+(config.countChanger?chg:0);
+  return {coins,coin,soap,scan,sales,chg,exp,inc,net:inc-exp,cash:coin+soap+chg};
+}
+const visitsOn=ds=>Object.entries(S.visits).filter(([,v])=>v.date===ds).sort((a,b)=>(a[1].at||"").localeCompare(b[1].at||""));
+
+/* ===== day: cash form ===== */
+let cur=blankDay(todayStr()), dirty=false, leaveArmed=false;
+function numField(label,val,onIn,unit,mark,bahtOf){
+  const w=document.createElement("div");w.className="field";
+  const id="f"+Math.random().toString(36).slice(2,8);
+  w.innerHTML=`<label for="${id}">${label}</label><div class="row">${mark?'<span class="coinmark">10</span>':""}<input id="${id}" type="number" inputmode="numeric" min="0" step="1" value="${val||""}" placeholder="0"><span class="unit">${unit}</span></div><div class="baht">= ${fmt(bahtOf(val))} บาท</div>`;
+  const inp=w.querySelector("input"), b=w.querySelector(".baht");
+  inp.addEventListener("input",()=>{const v=int(inp.value);onIn(v);b.textContent="= "+fmt(bahtOf(v))+" บาท";touch()});
+  inp.addEventListener("focus",()=>inp.select());
+  return w;
+}
+function renderForm(){
+  const r=cur, fill=(gid,arr)=>{const g=$(gid);g.innerHTML="";arr.forEach(x=>g.append(x))};
+  const I=(n,c="")=>`<svg class="ic ${c}"><use href="#i-${n}"/></svg>`;
+  r.coins=coinCount(r);delete r.wash;delete r.dry;
+  $("fCoins").value=r.coins||"";$("fCoinsBaht").textContent="= "+fmt(r.coins*10)+" บาท";$("fScan").value=r.scan||"";
+  fill("g-chg",NOTES.map(([k,l,p])=>numField(I("note")+l,r[k],x=>r[k]=x,"ใบ",false,x=>x*p)));
+  fill("g-res",RES.map(([k,l,p])=>{const coin=k.startsWith("rc");return numField(I(coin?"coin":"note",coin?"coin":"")+l,r[k],x=>r[k]=x,coin?"เหรียญ":"ใบ",false,x=>x*p)}));
+  renderExp();$("note").value=r.note||"";updateTotals();
+}
+$("fCoins").addEventListener("input",()=>{cur.coins=int($("fCoins").value);$("fCoinsBaht").textContent="= "+fmt(cur.coins*10)+" บาท";touch()});
+$("fCoins").addEventListener("focus",()=>$("fCoins").select());
+$("fScan").addEventListener("input",()=>{cur.scan=Math.max(0,parseFloat($("fScan").value)||0);touch()});
+$("fScan").addEventListener("focus",()=>$("fScan").select());
+function renderExp(){
+  const L=$("expList");L.innerHTML="";
+  if(!cur.expenses.length){L.innerHTML='<p class="hint">ยังไม่มีค่าใช้จ่ายของวันนี้</p>';return}
+  cur.expenses.forEach((e,i)=>{
+    const row=document.createElement("div");row.className="exp";
+    const sel=document.createElement("select");sel.id="ec"+i;sel.setAttribute("aria-label","หมวดค่าใช้จ่าย");
+    [...CATS,...(CATS.includes(e.n)?[]:[e.n])].forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=c;o.selected=c===e.n;sel.append(o)});
+    const amt=document.createElement("input");Object.assign(amt,{id:"ea"+i,className:"amt",type:"number",inputMode:"decimal",min:"0",placeholder:"บาท",value:e.a||""});amt.setAttribute("aria-label","จำนวนเงิน");
+    const d=document.createElement("button");d.className="del";d.textContent="✕";d.setAttribute("aria-label","ลบรายการ");
+    sel.onchange=()=>{e.n=sel.value;touch()};
+    amt.oninput=()=>{e.a=Math.max(0,parseFloat(amt.value)||0);touch()};
+    d.onclick=()=>{cur.expenses.splice(i,1);renderExp();touch()};
+    row.append(sel,amt,d);
+    if(e.n===OTHER||e.n==="อื่น ๆ"){
+      const det=document.createElement("input");Object.assign(det,{id:"ed"+i,className:"det",placeholder:"ระบุว่าเป็นค่าอะไร เช่น ค่าน้ำมันรถ",value:e.d||""});det.setAttribute("aria-label","รายละเอียดค่าใช้จ่าย");
+      det.oninput=()=>{e.d=det.value;touch()};row.append(det);
+    }
+    sel.onchange=()=>{e.n=sel.value;if(e.n!==OTHER)delete e.d;renderExp();touch();if(e.n===OTHER){const x=$("ed"+i);x&&x.focus()}};
+    L.append(row);
+  });
+}
+// sachet counts always come from what staff saved, never from the owner's open form
+const soapOf=r=>{const o={};SOAP.forEach(([k])=>o[k]=int(r&&r[k]));return o};
+function updateTotals(){
+  const live=Object.assign({},cur,soapOf(S.soap[cur.date]));
+  const c=calcDay(live);
+  $("t-coin").textContent=fmt(c.coin)+" ฿";$("t-scan").textContent=fmt(c.scan)+" ฿";
+  const res=resTotal(cur);$("t-res").textContent=fmt(res)+" ฿";
+  const prevDs=Object.keys(S.days).filter(d=>d<cur.date&&hasRes(S.days[d])).sort().pop();
+  const Lr=(a,b,cls="")=>`<div class="l ${cls}"><span>${a}</span><span>${b}</span></div>`;
+  $("resDiff").innerHTML=Lr("รวมเงินสำรอง",fmt(res)+" ฿","big")+(prevDs?Lr("ครั้งก่อน ("+thaiDate(prevDs)+")",fmt(resTotal(S.days[prevDs]))+" ฿","sub")+Lr("เปลี่ยนแปลง",((res-resTotal(S.days[prevDs]))>0?"+":"")+fmt(res-resTotal(S.days[prevDs]))+" ฿","sub"):"");
+  $("t-soap").textContent=fmt(c.soap)+" ฿";$("t-chg").textContent=fmt(c.chg)+" ฿";$("t-exp").textContent=fmt(c.exp)+" ฿";
+  $("g-soap").innerHTML=SOAP.map(([k,l,p])=>`<div><svg class="ic"><use href="#i-soap"/></svg> ${l}<b>${live[k]} ซอง</b>${fmt(live[k]*p)} ฿</div>`).join("");
+  const vs=visitsOn(cur.date).map(x=>x[1]);
+  const heads=vs.length, mem=vs.filter(v=>v.memberId).length, keyed=vs.reduce((t,v)=>t+vTotal(v),0);
+  const box=c.sales, diff=keyed-box;
+  const L=(a,b,cls="")=>`<div class="l ${cls}"><span>${a}</span><span>${b}</span></div>`;
+  const sw=vs.reduce((t,v)=>t+(+v.washAmt||0),0), sd=vs.reduce((t,v)=>t+(+v.dryAmt||0),0), ss=vs.reduce((t,v)=>t+(+v.soapAmt||0),0);
+  const wl=vs.reduce((t,v)=>t+int(v.washLoads),0), dl=vs.reduce((t,v)=>t+int(v.dryLoads),0);
+  $("t-ownHeads").textContent=heads+" คน";
+  $("ownCust").innerHTML=heads?L("ลูกค้า (สมาชิก / ทั่วไป)",mem+" / "+(heads-mem))+L("ซัก ("+wl+" ถัง)",fmt(sw)+" ฿")+L("อบ ("+dl+" ถัง)",fmt(sd)+" ฿")+L("น้ำยา (คีย์รายคน)",fmt(ss)+" ฿")+L("ยอดที่พนักงานคีย์รวม",fmt(keyed)+" ฿","big")
+    :'<p class="hint">พนักงานยังไม่ได้คีย์ลูกค้าของวันนี้</p>';
+  $("daySum").innerHTML=
+    L("เหรียญตู้ซัก+อบ ("+fmt(c.coins)+" เหรียญ)",fmt(c.coin))+L("ค่าน้ำยา",fmt(c.soap))+
+    (config.countChanger?L("ตู้แลกเหรียญ",fmt(c.chg)):"")+
+    L("รวมรายรับ",fmt(c.inc)+" ฿")+
+L("หักค่าใช้จ่าย","−"+fmt(c.exp)+" ฿")+
+    L("คงเหลือวันนี้",`<span class="${c.net<0?"neg":"pos"}">${fmt(c.net)} ฿</span>`,"big")+
+    (config.countChanger?"":L("เงินตู้แลกเหรียญ (แยกไว้ ไม่รวมรายรับ)",fmt(c.chg)+" ฿","sub"))+
+    L("เงินสดที่เก็บได้ทั้งหมด",fmt(c.cash)+" ฿","sub")+
+    L("ยอดสแกนจ่าย (บันทึกไว้ดู ไม่นำไปคำนวณ)",fmt(c.scan)+" ฿","sub")+
+    L("เงินสำรองในตู้ (หลังเติมตู้แลกเหรียญ)",fmt(resTotal(cur))+" ฿","sub")+
+    (heads&&box?L("ยอดคีย์รายคน เทียบ ยอดขาย",(diff>0?"+":"")+fmt(diff)+" ฿","sub"):"");
+}
+function touch(){dirty=true;updateTotals();$("save").disabled=false;$("saveSt").textContent="มีการแก้ไขที่ยังไม่บันทึก"}
+function confirmLeave(){
+  if(leaveArmed){leaveArmed=false;dirty=false;return true}
+  leaveArmed=true;$("saveSt").innerHTML='<span class="neg">เงินสิ้นวันยังไม่ได้บันทึก กดอีกครั้งเพื่อทิ้งการแก้ไข</span>';
+  setTimeout(()=>leaveArmed=false,4000);return false;
+}
+function loadDay(ds,force){
+  if(dirty&&!force&&!confirmLeave())return false;
+  $("date").value=ds;
+  const s=S.days[ds];
+  cur=s?JSON.parse(JSON.stringify(Object.assign(blankDay(ds),s))):blankDay(ds);
+  dirty=false;$("save").disabled=true;
+  $("saveSt").textContent=s?("บันทึกแล้ว · "+thaiDate(ds)):("ยังไม่ได้บันทึกเงินสิ้นวันของ "+thaiDate(ds));
+  renderForm();renderVisits();return true;
+}
+async function saveDay(){
+  cur.note=$("note").value.trim();
+  const rec=JSON.parse(JSON.stringify(cur));
+  rec.expenses=rec.expenses.filter(e=>e.a>0);rec.updatedAt=new Date().toISOString();
+  $("save").disabled=true;$("saveSt").textContent="กำลังบันทึก…";
+  const own={date:rec.date,coins:int(rec.coins),scan:Math.max(0,+rec.scan||0),...Object.fromEntries(RES.map(([k])=>[k,int(rec[k])])),b100:int(rec.b100),b50:int(rec.b50),b20:int(rec.b20),expenses:rec.expenses,note:rec.note||"",updatedAt:rec.updatedAt,cashBy:curStaff||"owner"};
+  try{await merge("days",rec.date,own);dirty=false;cur.expenses=rec.expenses;renderExp();
+    $("saveSt").textContent="บันทึกแล้ว · "+thaiDate(rec.date);renderMonth()}
+  catch(e){$("save").disabled=false;$("saveSt").innerHTML='<span class="neg">บันทึกไม่สำเร็จ ('+esc(e.code||"error")+') ลองกดอีกครั้ง</span>'}
+}
+
+/* ===== staff: sachet sales (tap +/−, saved right away, one write at a time) ===== */
+const sDate=()=>$("sdate").value||todayStr();
+let soapLocal=null, soapBusy=false, soapTimer=null;
+function renderSoapPad(){
+  const ds=sDate(), base=soapLocal&&soapLocal.date===ds?soapLocal:Object.assign({date:ds},soapOf(S.soap[ds]));
+  const tot=SOAP.reduce((t,[k,,p])=>t+base[k]*p,0);
+  $("t-ssoap").textContent=fmt(tot)+" ฿";
+  $("soapPad").innerHTML=SOAP.map(([k,l,p])=>{const [kind,size]=l.split(" ");
+    const ico=k.startsWith("soft")?"soft":"soap", big=k.endsWith("_l");
+    return `<div class="sp"><div class="lab"><svg class="ic" style="${big?"width:38px;height:38px":"width:24px;height:24px"}"><use href="#i-${ico}"/></svg>${kind}</div><div class="size">${big?"▮▮":"▮"} ${size} · ${p} ฿</div>
+    <div class="ctl"><button data-sk="${k}" data-sd="-1" aria-label="ลด ${l}">−</button><output>${base[k]}</output><button class="plus" data-sk="${k}" data-sd="1" aria-label="เพิ่ม ${l}">+</button></div>
+    <div class="bt">${fmt(base[k]*p)} ฿</div></div>`}).join("");
+  $("soapPad").querySelectorAll("[data-sk]").forEach(b=>b.onclick=()=>{
+    const ds=sDate();if(!soapLocal||soapLocal.date!==ds)soapLocal=Object.assign({date:ds},soapOf(S.soap[ds]));
+    soapLocal[b.dataset.sk]=Math.max(0,soapLocal[b.dataset.sk]+(+b.dataset.sd));
+    renderSoapPad();$("soapMsg").textContent="กำลังบันทึก…";clearTimeout(soapTimer);soapTimer=setTimeout(flushSoap,600);
+  });
+}
+async function flushSoap(){
+  if(!soapLocal)return;if(soapBusy){clearTimeout(soapTimer);soapTimer=setTimeout(flushSoap,400);return}
+  soapBusy=true;const snap=Object.assign({},soapLocal);
+  try{await merge("soap",snap.date,Object.assign({date:snap.date,soapBy:curStaff||""},soapOf(snap)));
+    $("soapMsg").textContent="บันทึกแล้ว ✓";
+    if(soapLocal&&SOAP.every(([k])=>soapLocal[k]===snap[k]))soapLocal=null;
+    updateTotals();
+  }catch(e){$("soapMsg").innerHTML='<span class="warn">บันทึกไม่สำเร็จ ('+esc(e.code||"error")+') กดอีกครั้ง</span>'}
+  soapBusy=false;
+}
+
+/* ===== view mode: staff (front counter) vs owner (back office) ===== */
+// the signed-in role decides: staff accounts only ever get the counter screen; the owner can switch
+let isOwnerAcct=false, viewMode="owner", curTab="day";
+try{viewMode=localStorage.getItem("lw_mode")==="staff"?"staff":"owner"}catch(e){}
+function setMode(m){viewMode=m;try{localStorage.setItem("lw_mode",m)}catch(e){}applyMode()}
+function applyMode(){
+  const staff=viewMode==="staff"||!isOwnerAcct;
+  $("ownerTabs").hidden=staff;
+  $("hTitle").textContent=staff?"หน้าร้าน":"หลังบ้าน";
+  $("hSub").textContent=staff?"ลูกค้า · แต้ม · น้ำยา":"ซัก 5 เครื่อง · อบ 4 เครื่อง";
+  $("toStaff").hidden=staff||!isOwnerAcct;$("toOwner").hidden=!(staff&&isOwnerAcct);
+  if(staff){["day","mem","month","set"].forEach(k=>$("view-"+k).hidden=true);$("view-staff").hidden=false;$("savebar").hidden=true;
+    moveRedeem("vRedeemHost");renderVisits();renderClaims();renderSoapPad();vFormState()}
+  else{$("view-staff").hidden=true;moveRedeem("mdRedeemHost");showTab(curTab)}
+}
+function moveRedeem(host){const b=$("redeemBox"),h=$(host);if(b&&h&&b.parentNode!==h)h.appendChild(b)}
+$("toStaff").onclick=()=>setMode("staff");
+$("toOwner").onclick=()=>setMode("owner");
+$("sdate").value=todayStr();
+$("sprev").onclick=()=>{$("sdate").value=shift(sDate(),-1);soapLocal=null;renderVisits();renderSoapPad()};
+$("snext").onclick=()=>{$("sdate").value=shift(sDate(),1);soapLocal=null;renderVisits();renderSoapPad()};
+$("sdate").onchange=()=>{if(!$("sdate").value)$("sdate").value=todayStr();soapLocal=null;renderVisits();renderSoapPad()};
+// staff redeem at the counter: opens the same reward panel for the member typed in
+let staffRedeemOpen=false;
+$("vRedeemBtn").onclick=()=>{const id=findMember($("vMem").value);if(!id)return;selMember=id;rwArmed=null;staffRedeemOpen=true;$("mdRedeemMsg").textContent="";moveRedeem("vRedeemHost");renderDetail();vFormState();$("vRedeemHost").scrollIntoView({behavior:"smooth",block:"center"})};
+
+/* ===== day: per-customer visits ===== */
+let editClaim=null;
+function renderDatalist(){
+  $("memList").innerHTML=Object.entries(S.members).map(([id,m])=>`<option value="${esc(fmtPhone(id)+(m.name?" · "+m.name:""))}"></option>`).join("");
+}
+function findMember(q){
+  q=(q||"").trim();if(!q)return null;
+  const d=digits(q.split("·")[0]);
+  if(d.length>=9&&S.members[d])return d;
+  const nm=q.split("·").pop().trim();
+  const hits=Object.entries(S.members).filter(([,m])=>m.name&&m.name===nm);
+  return hits.length===1?hits[0][0]:undefined;
+}
+// a typed phone number (9–10 digits, nothing else) that is not a member yet
+function newPhone(){const raw=$("vMem").value.trim();if(!/^[\d\s-]+$/.test(raw))return null;const d=digits(raw);return d.length>=9&&d.length<=10&&!S.members[d]?d:null}
+function vFormState(){
+  const id=findMember($("vMem").value);
+  const np=newPhone();
+  $("vNewBox").hidden=!np;
+  if(id===null)$("vWho").textContent="ลูกค้าทั่วไป · ไม่สะสมแต้ม";
+  else if(np){$("vWho").innerHTML='<span class="warn">เบอร์นี้ยังไม่เป็นสมาชิก</span>';$("vNewPhone").textContent=fmtPhone(np)}
+  else if(id===undefined)$("vWho").innerHTML='<span class="warn">ไม่พบสมาชิกนี้ · พิมพ์เบอร์ให้ครบ 10 หลัก หรือเลือกจากรายการ</span>';
+  else{const st=memberStats(id),m=S.members[id],g=minPts(),f=Math.min(g,st.balance);
+    $("vWho").innerHTML=`<div class="mcard"><div class="mc-top"><svg class="ic"><use href="#i-star"/></svg><div><b class="nt">${esc(m.name||"(ยังไม่มีชื่อ)")}</b><span>${fmtPhone(id)} · มาแล้ว ${st.vs.length} ครั้ง</span></div><div class="mc-pts"><b>${st.balance}</b>/${g}</div></div>`
+      +(g<=30?`<div class="mc-drums">${Array.from({length:g},(_,i)=>`<i class="${i<f?"on":""}"></i>`).join("")}</div>`:"")
+      +`<div class="mc-note">${st.deadline?"แต้มครบ! แลกได้ถึง "+thaiDate(st.deadline):"อีก "+(g-st.balance)+" แต้ม แลกรางวัล"}</div></div>`}
+  const can=id&&id!==undefined&&memberStats(id).balance>=minPts();
+  $("vRedeemBtn").hidden=!can;
+  $("vRedeemHost").hidden=!(can&&staffRedeemOpen&&selMember===id);
+  const t=int($("vWA").value)+int($("vDA").value)+int($("vSA").value);
+  $("vTot").textContent=fmt(t)+" ฿";
+}
+$("vMem").oninput=vFormState;
+$("vWL").oninput=vFormState;
+$("vDL").oninput=vFormState;
+["vWA","vDA","vSA"].forEach(k=>$(k).oninput=()=>{$(k).dataset.manual=$(k).value?"1":"0";vFormState()});
+function resetVForm(){
+  ["vMem","vNewName","vWL","vWA","vDL","vDA","vSA"].forEach(k=>{$(k).value="";$(k).dataset.manual="0"});
+  editClaim=null;staffRedeemOpen=false;$("vCancel").hidden=true;$("vAddTxt").textContent="บันทึกลูกค้า";vFormState();
+}
+$("vCancel").onclick=()=>{resetVForm();$("vMsg").textContent=""};
+$("vAdd").onclick=async()=>{
+  let id=findMember($("vMem").value);
+  const np=newPhone(), nn=$("vNewName").value.trim();
+  if(id===undefined&&!np){$("vMsg").innerHTML='<span class="warn">ไม่พบสมาชิกนี้ พิมพ์เบอร์ให้ครบ หรือเว้นว่างถ้าเป็นลูกค้าทั่วไป</span>';return}
+  if(np&&!nn){$("vMsg").innerHTML='<span class="warn">เบอร์ใหม่ ใส่ชื่อลูกค้าเพื่อสมัครสมาชิกก่อน</span>';$("vNewName").focus();return}
+  const vw={washLoads:int($("vWL").value),dryLoads:int($("vDL").value),washAmt:int($("vWA").value),dryAmt:int($("vDA").value),soapAmt:int($("vSA").value)};
+  if(!vw.washLoads&&!vw.dryLoads&&!vTotal(vw)){$("vMsg").innerHTML='<span class="warn">ใส่จำนวนถังหรือยอดเงินอย่างน้อยหนึ่งช่อง</span>';return}
+  if(np){try{await put("members",np,{name:nn,phone:np,since:todayStr(),source:"staff"});renderDatalist();id=np}
+    catch(e){$("vMsg").innerHTML='<span class="warn">สมัครสมาชิกไม่สำเร็จ ('+esc(e.code||"error")+')</span>';return}}
+  const v={date:editClaim?editClaim.date:sDate(),memberId:id||"",washLoads:int($("vWL").value),dryLoads:int($("vDL").value),
+    washAmt:int($("vWA").value),dryAmt:int($("vDA").value),soapAmt:int($("vSA").value),at:new Date().toISOString(),source:editClaim?"front":"staff",by:curStaff};
+  if(!v.washLoads&&!v.dryLoads&&!vTotal(v)){$("vMsg").innerHTML='<span class="warn">ใส่จำนวนถังหรือยอดเงินอย่างน้อยหนึ่งช่อง</span>';return}
+  $("vAdd").disabled=true;
+  try{
+    const vid=newId();await put("visits",vid,v);
+    if(editClaim)await del("claims",editClaim.id);
+    const who=id?dn(id):"ลูกค้าทั่วไป";
+    $("vMsg").textContent="บันทึก "+who+" "+fmt(vTotal(v))+" บาท"+(vPts(v)?" · +"+vPts(v)+" แต้ม":"")+" แล้ว"+(np?" · สมัครสมาชิกใหม่ให้แล้ว":"");
+    resetVForm();renderVisits();renderClaims();openReceipt(vid);
+  }catch(e){$("vMsg").innerHTML='<span class="warn">บันทึกไม่สำเร็จ ('+esc(e.code||"error")+')</span>'}
+  $("vAdd").disabled=false;
+};
+function renderVisits(){
+  const ds=sDate(), list=visitsOn(ds);
+  const tot=list.reduce((t,[,v])=>t+vTotal(v),0);
+  $("t-heads").textContent=list.length+" คน · "+fmt(tot)+" ฿";
+  if(!list.length){$("vBody").innerHTML='<tr><td colspan="7"><div class="empty">ยังไม่มีลูกค้าของ '+thaiDate(ds)+'<br>กรอกข้อมูลด้านบนเมื่อลูกค้ามาใช้บริการ</div></td></tr>';$("vFoot").innerHTML="";updateTotals();return}
+  let W=0,D=0,P=0,wl=0,dl=0,pt=0;
+  $("vBody").innerHTML=list.map(([vid,v],i)=>{
+    const m=v.memberId&&S.members[v.memberId];
+    W+=+v.washAmt||0;D+=+v.dryAmt||0;P+=+v.soapAmt||0;wl+=int(v.washLoads);dl+=int(v.dryLoads);pt+=vPts(v);
+    const name=v.memberId?(m?'<span class="nt">'+esc(dn(v.memberId))+"</span>":"(สมาชิกถูกลบ)"):"ลูกค้าทั่วไป "+(i+1);
+    return `<tr><td>${name}<small>${v.memberId&&S.members[v.memberId]&&S.members[v.memberId].name?fmtPhone(v.memberId)+" · ":""}${hhmm(v.at)}${v.by?' · <span class="nt">'+esc(v.by)+"</span>":""}</small></td>
+      <td>${fmt(v.washAmt)}<small>${int(v.washLoads)} ถัง</small></td><td>${fmt(v.dryAmt)}<small>${int(v.dryLoads)} ถัง</small></td>
+      <td>${fmt(v.soapAmt)}</td><td><b>${fmt(vTotal(v))}</b></td><td>${v.memberId?"+"+vPts(v):"–"}</td>
+      <td style="white-space:nowrap"><button class="rc-btn" data-rc="${vid}" aria-label="ใบเสร็จ"><svg class="ic"><use href="#i-exp"/></svg></button> <button class="del" data-v="${vid}" aria-label="ลบรายการ">✕</button></td></tr>`}).join("");
+  $("vFoot").innerHTML=`<tr><td>รวม ${list.length} คน</td><td>${fmt(W)}<small>${wl} ถัง</small></td><td>${fmt(D)}<small>${dl} ถัง</small></td><td>${fmt(P)}</td><td>${fmt(tot)}</td><td>+${pt}</td><td></td></tr>`;
+  $("vBody").querySelectorAll("[data-rc]").forEach(b=>b.onclick=()=>openReceipt(b.dataset.rc));
+  $("vBody").querySelectorAll("[data-v]").forEach(b=>b.onclick=async()=>{
+    if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="ลบ?";setTimeout(()=>{b.dataset.armed="";b.textContent="✕"},3000);return}
+    try{await del("visits",b.dataset.v);renderVisits()}catch(e){$("vMsg").innerHTML='<span class="warn">ลบไม่สำเร็จ ลองอีกครั้ง</span>'}});
+  updateTotals();
+}
+function renderClaims(){
+  const list=Object.entries(S.claims).sort((a,b)=>(a[1].at||"").localeCompare(b[1].at||""));
+  $("claimCard").hidden=!list.length;$("claimBadge").hidden=!list.length;$("claimBadge").textContent=list.length;
+  $("t-claims").textContent=list.length+" รายการ";
+  $("claimList").innerHTML=list.map(([cid,c])=>{const m=S.members[c.memberId];
+    return `<div class="claim"><div><b class="nt">${esc(m?dn(c.memberId):"—")}</b><span>${fmtPhone(c.memberId)} · ${thaiDate(c.date)} ${hhmm(c.at)} · <svg class="ic"><use href="#i-wash"/></svg> ${int(c.washLoads)} ถัง · <svg class="ic"><use href="#i-dry"/></svg> ${int(c.dryLoads)} ถัง</span></div>
+    <div class="acts"><button class="primary sm" data-ok="${cid}"><svg class="ic"><use href="#i-check"/></svg>ยืนยัน</button><button class="del" data-no="${cid}" aria-label="ปฏิเสธ">✕</button></div></div>`}).join("");
+  $("claimList").querySelectorAll("[data-ok]").forEach(b=>b.onclick=()=>{
+    const c=S.claims[b.dataset.ok];if(!c)return;
+    resetVForm();editClaim={id:b.dataset.ok,date:c.date};
+    const m=S.members[c.memberId];$("vMem").value=m?fmtPhone(c.memberId)+(m.name?" · "+m.name:""):c.memberId;
+    $("vWL").value=c.washLoads||"";$("vDL").value=c.dryLoads||"";
+    $("vAddTxt").textContent="ยืนยันและบันทึก";$("vCancel").hidden=false;
+    $("vMsg").textContent="ตรวจยอดเงินแล้วกด “ยืนยันและบันทึก”"+(c.date!==sDate()?" (จะบันทึกลงวันที่ "+thaiDate(c.date)+")":"");
+    vFormState();$("custCard").scrollIntoView({behavior:"smooth"});
+  });
+  $("claimList").querySelectorAll("[data-no]").forEach(b=>b.onclick=async()=>{
+    if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="ปฏิเสธ?";setTimeout(()=>{b.dataset.armed="";b.textContent="✕"},3000);return}
+    try{await del("claims",b.dataset.no);renderClaims()}catch(e){}});
+}
+
+/* ===== members ===== */
+let selMember=null, delArmed=false;
+$("mAdd").onclick=async()=>{
+  const p=digits($("mPhone").value), n=$("mName").value.trim();
+  if(p.length<9||p.length>10){$("mMsg").innerHTML='<span class="warn">เบอร์โทรต้องมี 9–10 หลัก</span>';return}
+  if(S.members[p]){$("mMsg").innerHTML='<span class="warn">เบอร์นี้เป็นสมาชิกอยู่แล้ว ('+esc(dn(p))+')</span>';return}
+  if(!n){$("mMsg").innerHTML='<span class="warn">ใส่ชื่อลูกค้า</span>';$("mName").focus();return}
+  try{await put("members",p,{name:n,phone:p,since:todayStr(),source:"staff"});$("mMsg").textContent="เพิ่มสมาชิก "+(n||fmtPhone(p))+" แล้ว";$("mPhone").value="";$("mName").value="";renderDatalist();renderMembers()}
+  catch(e){$("mMsg").innerHTML='<span class="warn">บันทึกไม่สำเร็จ ('+esc(e.code||"error")+')</span>'}
+};
+function renderMembers(){
+  const q=$("mSearch").value.trim().toLowerCase(), mm=$("mMonth").value, qd=digits(q);
+  const ids=Object.keys(S.members).filter(id=>!q||(qd&&id.includes(qd))||String(S.members[id].name||"").toLowerCase().includes(q));
+  const rows=ids.map(id=>{const st=memberStats(id);return {id,st,month:st.vs.filter(v=>v.date.startsWith(mm)).reduce((t,v)=>t+vTotal(v),0)}}).sort((a,b)=>b.month-a.month||b.st.spent-a.st.spent);
+  $("mCount").textContent=Object.keys(S.members).length+" คน";
+  $("memBody").innerHTML=rows.length?rows.map(r=>`<tr class="click" data-m="${r.id}"><td><span class="nt">${esc(dn(r.id))}</span>${S.members[r.id].name?"<small>"+fmtPhone(r.id)+"</small>":""}</td><td>${r.st.vs.length}</td><td>${r.st.balance}${r.st.balance>=minPts()?' <span class="chip coin">แลกได้</span>':""}</td><td>${fmt(r.month)}</td><td>${fmt(r.st.spent)}</td></tr>`).join("")
+    :`<tr><td colspan="5"><div class="empty">${Object.keys(S.members).length?"ไม่พบสมาชิกที่ค้นหา":"ยังไม่มีสมาชิก เพิ่มคนแรกจากช่องด้านบน หรือให้ลูกค้าสมัครเองที่หน้าบ้าน"}</div></td></tr>`;
+  $("memBody").querySelectorAll("[data-m]").forEach(tr=>tr.onclick=()=>openMember(tr.dataset.m));
+  // members who reached a reward
+  const ready=Object.keys(S.members).map(id=>{const s=memberStats(id);return [id,s.balance,s.deadline]}).filter(([,b])=>b>=minPts()).sort((a,b)=>(a[2]||"9").localeCompare(b[2]||"9"));
+  $("readyCount").textContent=ready.length+" คน";$("readyArt").hidden=!ready.length;
+  $("readyList").innerHTML=ready.length?ready.map(([id,b,dl])=>{const left=dl?daysLeft(dl):null;return `<button data-m="${id}"><span class="nt">${esc(dn(id))}</span><b>${b}</b>${dl?`<small class="${left<=7?"neg":""}"><svg class="ic"><use href="#i-clock"/></svg> ถึง ${thaiDate(dl)} · เหลือ ${left} วัน</small>`:""}</button>`}).join(""):'<p class="hint">ยังไม่มีสมาชิกที่แต้มครบ</p>';
+  $("readyList").querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>openMember(b.dataset.m));
+  // redemption log for the selected month
+  const rd=Object.entries(S.redeems).filter(([,r])=>(r.date||"").startsWith(mm)).sort((a,b)=>(b[1].at||"").localeCompare(a[1].at||""));
+  $("rdCount").textContent=rd.length+" ครั้ง";
+  const exp=[];Object.keys(S.members).forEach(id=>memberStats(id).expired.forEach(x=>{if(x.date.startsWith(mm))exp.push({id,...x})}));
+  exp.sort((a,b)=>b.date.localeCompare(a.date));
+  $("expCount").textContent=exp.length+" ครั้ง";
+  $("expBody").innerHTML=exp.length?exp.map(x=>`<tr><td>${thaiDate(x.date)}</td><td class="t click" data-m="${esc(x.id)}"><span class="nt">${esc(dn(x.id))}</span></td><td class="t">${thaiDate(x.since)}</td><td class="neg">−${x.points}</td></tr>`).join("")
+    :'<tr><td colspan="4"><div class="empty">ไม่มีแต้มหมดอายุในเดือนนี้</div></td></tr>';
+  $("expBody").querySelectorAll("td[data-m]").forEach(td=>td.onclick=()=>{if(S.members[td.dataset.m])openMember(td.dataset.m)});
+  $("rdBody").innerHTML=rd.length?rd.map(([rid,r])=>{const m=S.members[r.memberId];
+    return `<tr><td>${thaiDate(r.date)}<small>${hhmm(r.at)} น.</small></td><td class="t click" data-m="${esc(r.memberId)}"><span class="nt">${esc(m?dn(r.memberId):"—")}</span>${m&&m.name?"<small>"+fmtPhone(r.memberId)+"</small>":""}</td><td class="t">${esc(r.note||"รางวัล")}${r.price!=null?`<small>ราคา ${fmt(r.price)} · ลด ${fmt(r.disc)}</small>`:""}</td><td>${r.price!=null?fmt(r.extra):"–"}</td><td class="neg">−${r.points}</td><td><button class="del" data-rd="${rid}" aria-label="ยกเลิกการแลก">✕</button></td></tr>`}).join("")
+    :'<tr><td colspan="6"><div class="empty">ยังไม่มีการแลกรางวัลในเดือนนี้</div></td></tr>';
+  $("rdBody").querySelectorAll("td[data-m]").forEach(td=>td.onclick=()=>{if(S.members[td.dataset.m])openMember(td.dataset.m)});
+  $("rdBody").querySelectorAll("[data-rd]").forEach(b=>b.onclick=async()=>{
+    if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="คืนแต้ม?";setTimeout(()=>{b.dataset.armed="";b.textContent="✕"},3000);return}
+    try{await del("redeems",b.dataset.rd);renderMembers()}catch(e){}});
+  renderDetail();
+}
+function openMember(id){selMember=id;delArmed=false;rwArmed=null;$("mdEditName").value=S.members[id].name||"";$("mdRedeemMsg").textContent="";renderDetail();$("memDetail").scrollIntoView({behavior:"smooth"})}
+let rwArmed=null;
+function renderDetail(){
+  const id=selMember;if(!id||!S.members[id]){$("memDetail").hidden=true;return}
+  $("memDetail").hidden=false;const m=S.members[id], st=memberStats(id);
+  $("mdName").textContent=dn(id);$("mdPhone").textContent=fmtPhone(id);
+  $("mdStats").innerHTML=`<div>แต้มคงเหลือ<b class="pts-big">${st.balance}</b></div><div>มาใช้บริการ<b>${st.vs.length} ครั้ง</b></div><div>ใช้ไปทั้งหมด<b>${st.loads} ถัง</b></div><div>ยอดรวม<b>${fmt(st.spent)} ฿</b></div><div>สมาชิกตั้งแต่<b style="font-family:var(--font);font-size:14px">${thaiDate(m.since||todayStr())}</b></div>`+(st.pending?`<div>รอยืนยัน<b>+${st.pending}</b></div>`:"")
+    +(st.deadline?`<div>ต้องแลกภายใน<b class="${daysLeft(st.deadline)<=7?"neg":""}" style="font-family:var(--font);font-size:14px">${thaiDate(st.deadline)} (เหลือ ${daysLeft(st.deadline)} วัน)</b></div>`:"")
+    +(st.expiredPts?`<div>แต้มหมดอายุไปแล้ว<b class="neg">${st.expiredPts}</b></div>`:"");
+  $("mdRewards").innerHTML=rewards().map((r,i)=>{const ok=st.balance>=r.pts;
+    return `<button data-rw="${i}" ${ok?"":"disabled"} class="${rwArmed===i?"armed":""}"><b><svg class="ic"><use href="#i-${r.kind==="dry"?"dry":r.kind==="wash"?"wash":"gift"}"/></svg> ${esc(r.name)}</b><span>${ok?"ใช้ "+r.pts+" แต้ม"+(+r.value?" · ลดได้ "+r.value+" ฿":" · ฟรี"):"อีก "+(r.pts-st.balance)+" แต้ม"}</span></button>`}).join("");
+  $("mdRewards").querySelectorAll("[data-rw]").forEach(b=>b.onclick=()=>openRedeem(+b.dataset.rw));
+  if(rwArmed===null||!rewards()[rwArmed]||st.balance<rewards()[rwArmed].pts){$("rdPanel").hidden=true;rwArmed=null}
+  const hist=[...st.vs.map(v=>({d:v.date,at:v.at||"",v})),...st.rs.map(r=>({d:r.date,at:r.at||"",r})),...st.expired.map(x=>({d:x.date,at:"",x}))].sort((a,b)=>(b.d+b.at).localeCompare(a.d+a.at));
+  $("mdBody").innerHTML=hist.length?hist.map(h=>h.x?`<tr><td>${thaiDate(h.d)}</td><td colspan="4" class="t neg"><svg class="ic"><use href="#i-clock"/></svg> แต้มหมดอายุ<small>ครบตั้งแต่ ${thaiDate(h.x.since)} ไม่ได้แลกภายใน ${expiryDays()} วัน</small></td><td class="neg">−${h.x.points}</td></tr>`:h.v?`<tr><td>${thaiDate(h.d)}<small>${hhmm(h.at)} น.</small></td><td>${fmt(h.v.washAmt)}<small>${int(h.v.washLoads)} ถัง</small></td><td>${fmt(h.v.dryAmt)}<small>${int(h.v.dryLoads)} ถัง</small></td><td>${fmt(h.v.soapAmt)}</td><td>${fmt(vTotal(h.v))}</td><td class="pos">+${vPts(h.v)}</td></tr>`
+    :`<tr><td>${thaiDate(h.d)}<small>${hhmm(h.at)} น.</small></td><td colspan="3" class="t"><svg class="ic"><use href="#i-gift"/></svg> แลก ${esc(h.r.note||"รางวัล")}${h.r.price!=null?`<small>ราคา ${fmt(h.r.price)} · ลด ${fmt(h.r.disc)}</small>`:""}</td><td>${h.r.price!=null?fmt(h.r.extra)+"<small>จ่ายเพิ่ม</small>":"–"}</td><td class="neg">−${h.r.points}</td></tr>`).join("")
+    :'<tr><td colspan="6"><div class="empty">ยังไม่มีประวัติการใช้บริการ</div></td></tr>';
+  $("mdDelTxt").textContent=delArmed?"กดอีกครั้งเพื่อยืนยันการลบ (ประวัติยังเก็บไว้)":"ลบสมาชิกคนนี้";
+}
+// redeem: pick a reward → enter this service's price → see extra the customer pays → confirm
+function openRedeem(i){
+  const r=rewards()[i];if(!r)return;rwArmed=i;
+  $("rdName").textContent=r.name;
+  $("rdPrice").value="";
+  $("rdPanel").hidden=false;$("mdRedeemMsg").textContent="";rdCalc();renderDetail();$("rdPrice").focus();
+}
+function rdCalc(){
+  const r=rewards()[rwArmed];if(!r)return;const c=rwCalc(r,$("rdPrice").value);
+  $("rdOut").innerHTML=`<div class="l"><span>ราคาบริการ</span><span>${fmt(c.price)} ฿</span></div><div class="l"><span>ลดจากแต้ม (−${r.pts} แต้ม)</span><span class="pos">−${fmt(c.disc)} ฿</span></div><div class="l big"><span>ลูกค้าจ่ายเพิ่ม</span><span class="${c.extra?"neg":""}">${fmt(c.extra)} ฿</span></div>`;
+}
+$("rdPrice").oninput=rdCalc;
+$("rdCancel").onclick=()=>{rwArmed=null;$("rdPanel").hidden=true;renderDetail()};
+$("rdOk").onclick=async()=>{
+  const r=rewards()[rwArmed], st=memberStats(selMember);if(!r||st.balance<r.pts)return;
+  if(!int($("rdPrice").value)){$("mdRedeemMsg").innerHTML='<span class="warn">ใส่ราคาบริการครั้งนี้ก่อน</span>';$("rdPrice").focus();return}
+  const c=rwCalc(r,$("rdPrice").value), now=new Date().toISOString();
+  $("rdOk").disabled=true;
+  try{await put("redeems",newId(),{memberId:selMember,points:+r.pts,note:r.name,kind:r.kind||"",value:+r.value||0,price:c.price,disc:c.disc,extra:c.extra,date:todayStr(),at:now,by:curStaff});
+    rwArmed=null;$("rdPanel").hidden=true;
+    $("mdRedeemMsg").textContent="แลก "+r.name+" แล้ว · "+(c.extra?"ลูกค้าจ่ายเพิ่ม "+fmt(c.extra)+" บาท · ":"ไม่ต้องจ่ายเพิ่ม · ")+hhmm(now)+" น.";renderMembers();vFormState()}
+  catch(e){$("mdRedeemMsg").innerHTML='<span class="warn">บันทึกไม่สำเร็จ ลองอีกครั้ง</span>'}
+  $("rdOk").disabled=false;
+};
+$("mdSaveName").onclick=async()=>{
+  const n=$("mdEditName").value.trim();if(!n||!selMember)return;
+  try{await put("members",selMember,Object.assign({},S.members[selMember],{name:n}));renderDatalist();renderMembers()}catch(e){}
+};
+$("mdDel").onclick=async()=>{
+  if(!delArmed){delArmed=true;renderDetail();setTimeout(()=>{delArmed=false;renderDetail()},4000);return}
+  try{await del("members",selMember);selMember=null;delArmed=false;renderDatalist();renderMembers()}catch(e){}
+};
+$("mSearch").oninput=renderMembers;$("mMonth").onchange=renderMembers;
+
+/* ===== month ===== */
+function bars(el,rows,cls){
+  const max=Math.max(1,...rows.map(r=>r[1]));
+  el.innerHTML=rows.length?rows.map(([k,v])=>`<div class="bar"><span title="${esc(k)}" class="${cls==="nt"?"nt":""}">${esc(k)}</span><div class="track"><div class="fill ${cls||""}" style="width:${v/max*100}%"></div></div><span>${fmt(v)}</span></div>`).join(""):'<p class="hint">ยังไม่มีข้อมูล</p>';
+}
+function niceStep(r){const raw=r/4,p=Math.pow(10,Math.floor(Math.log10(raw||1))),f=raw/p;return (f<=1?1:f<=2?2:f<=5?5:10)*p}
+function barChart(el,pts,n,unit,colorPos){
+  const W=700,H=200,pl=48,pr=8,pt=12,pb=26, vals=pts.filter(v=>v!==null);
+  if(!vals.length||vals.every(v=>!v)){el.innerHTML='<p class="hint">ยังไม่มีข้อมูลเดือนนี้</p>';return}
+  let mx=Math.max(0,...vals), mn=Math.min(0,...vals);
+  const step=Math.max(1,niceStep((mx-mn)||4)); mx=Math.ceil(mx/step)*step||step; mn=Math.floor(mn/step)*step;
+  const y=v=>pt+(mx-v)/(mx-mn)*(H-pt-pb), bw=(W-pl-pr)/n; let g="";
+  for(let v=mn;v<=mx+1e-6;v+=step)g+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${v===0?1.5:1}"/><text x="${pl-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${fmt(v)}</text>`;
+  pts.forEach((v,i)=>{const x=pl+i*bw;
+    if(v){const y0=y(0),y1=y(v);g+=`<rect x="${x+bw*.15}" y="${Math.min(y0,y1)}" width="${bw*.7}" height="${Math.max(1,Math.abs(y1-y0))}" rx="2" fill="${v<0?"var(--bad)":colorPos}"><title>${i+1}: ${fmt(v)} ${unit}</title></rect>`}
+    if((i+1)%5===0||i===0)g+=`<text x="${x+bw/2}" y="${H-8}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${i+1}</text>`});
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img">${g}</svg>`;
+}
+function renderMonth(){
+  const m=$("month").value;if(!m)return;
+  const [y,mo]=m.split("-").map(Number), nDays=new Date(y,mo,0).getDate();
+  const T={coins:0,coin:0,scan:0,soap:0,chg:0,inc:0,exp:0,net:0,heads:0};
+  const cat={},sp={det:0,soft:0},top={};
+  let rows="",run=0;const netPts=[],headPts=[];
+  for(let d=1;d<=nDays;d++){
+    const ds=m+"-"+pad(d), r=D(ds), vs=visitsOn(ds).map(x=>x[1]);
+    vs.forEach(v=>{if(v.memberId)top[v.memberId]=(top[v.memberId]||0)+vTotal(v)});
+    headPts.push(vs.length||null);T.heads+=vs.length;
+    if(!r&&!vs.length){netPts.push(null);continue}
+    const c=r?calcDay(r):{coins:0,coin:0,scan:0,soap:0,chg:0,inc:0,exp:0,net:0};
+    run+=c.net;netPts.push(r?c.net:null);
+    ["coins","coin","scan","soap","chg","inc","exp","net"].forEach(k=>T[k]+=c[k]);
+    if(r){sp.det+=(r.det_s||0)*5+(r.det_l||0)*20;sp.soft+=(r.soft_s||0)*5+(r.soft_l||0)*20;
+      (r.expenses||[]).forEach(e=>{const k=expLabel(e);cat[k]=(cat[k]||0)+(+e.a||0)})}
+    rows+=`<tr class="click" data-d="${ds}"><td>${THD[new Date(ds+"T00:00:00").getDay()]} ${d}${r?"":' <span class="chip coin">ยังไม่ปิดยอด</span>'}</td><td>${vs.length}</td><td>${fmt(c.coin)}<small>${fmt(c.coins)} เหรียญ</small></td><td>${fmt(c.scan)}</td><td>${fmt(c.soap)}</td><td>${fmt(c.chg)}</td><td>${fmt(c.inc)}</td><td class="neg">${c.exp?fmt(c.exp):"–"}</td><td class="${c.net<0?"neg":""}">${fmt(c.net)}</td><td>${fmt(run)}</td><td>${r&&hasRes(r)?fmt(resTotal(r)):"–"}</td></tr>`;
+  }
+  const has=rows!=="";
+  const lastResDay=Object.keys(S.days).filter(d=>d.startsWith(m)&&hasRes(S.days[d])).sort().pop(), lastRes=lastResDay?resTotal(S.days[lastResDay]):null;
+  $("mBody").innerHTML=has?rows:`<tr><td colspan="11"><div class="empty">ยังไม่มีบันทึกของ ${THM[mo-1]} ${y+543}<br>เริ่มกรอกที่แท็บ “รายวัน”</div></td></tr>`;
+  $("mFoot").innerHTML=has?`<tr><td>รวม</td><td>${T.heads}</td><td>${fmt(T.coin)}<small>${fmt(T.coins)} เหรียญ</small></td><td>${fmt(T.scan)}</td><td>${fmt(T.soap)}</td><td>${fmt(T.chg)}</td><td>${fmt(T.inc)}</td><td>${fmt(T.exp)}</td><td>${fmt(T.net)}</td><td></td><td>${lastRes!=null?fmt(lastRes)+"<small>ล่าสุด</small>":"–"}</td></tr>`:"";
+  $("m-inc").textContent=fmt(T.inc);$("m-exp").textContent=fmt(T.exp);
+  $("m-net").textContent=fmt(T.net);$("m-net").className="v "+(T.net<0?"neg":"pos");$("m-heads").textContent=fmt(T.heads);
+  bars($("srcBars"),has?[["เหรียญตู้ซัก+อบ",T.coin],["น้ำยาซัก",sp.det],["ปรับผ้านุ่ม",sp.soft],[config.countChanger?"ตู้แลก":"ตู้แลก (ไม่นับ)",T.chg]]:[]);
+  bars($("topBars"),Object.entries(top).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([id,v])=>[dn(id),v]),"nt");
+  bars($("expBars"),Object.entries(cat).sort((a,b)=>b[1]-a[1]),"bad");
+  barChart($("chart"),netPts,nDays,"บาท","var(--accent)");
+  barChart($("headChart"),headPts,nDays,"คน","var(--coin)");
+  document.querySelectorAll("#mBody tr[data-d]").forEach(tr=>tr.onclick=()=>{if(loadDay(tr.dataset.d))showTab("day")});
+}
+const mshift=n=>{const [y,m]=$("month").value.split("-").map(Number);const d=new Date(y,m-1+n,1);$("month").value=d.getFullYear()+"-"+pad(d.getMonth()+1);renderMonth()};
+$("mprev").onclick=()=>mshift(-1);$("mnext").onclick=()=>mshift(1);$("month").onchange=renderMonth;
+
+/* ===== Excel export ===== */
+function buildWorkbook(scope){
+  const E=lang==="en", L=(th,en)=>E?en:th;
+  const m=$("month").value, inScope=ds=>scope==="all"||(ds||"").startsWith(m);
+  const mname=id=>S.members[id]?S.members[id].name:"";
+  const dates=[...new Set([...Object.keys(S.days),...Object.keys(S.soap),...Object.values(S.visits).map(v=>v.date)])].filter(inScope).sort();
+  const wb=XLSX.utils.book_new();
+  const add=(name,rows,widths)=>{const ws=XLSX.utils.aoa_to_sheet(rows);ws["!cols"]=widths.map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws,name)};
+  // daily
+  const dHead=[L("วันที่","Date"),L("ลูกค้า (คน)","Customers"),L("เหรียญ 10 บาท ตู้ซัก+อบ (เหรียญ)","10฿ coins washers+dryers"),L("เงินเหรียญ (บาท)","Coins ฿"),L("ยอดสแกนจ่าย (บาท)","Scan/transfer ฿"),
+    ...SOAP.map(([,l])=>l+L(" (ซอง)"," (packs)")),L("ค่าน้ำยา","Soap ฿"),...NOTES.map(([,l])=>l+L(" (ใบ)"," (notes)")),L("ตู้แลกเหรียญ","Changer ฿"),
+    L("รายรับ","Income"),L("ค่าใช้จ่าย","Expenses"),L("คงเหลือ","Balance"),L("คงเหลือสะสม","Running"),...RES.map(([,l])=>L("สำรอง ","Reserve ")+l),L("เงินสำรองรวม","Reserve total"),L("หมายเหตุ","Note")];
+  let run=0;const T={heads:0,coins:0,coin:0,scan:0,soap:0,chg:0,inc:0,exp:0,net:0};
+  const dRows=dates.map(ds=>{const r=D(ds)||blankDay(ds),c=calcDay(r),h=visitsOn(ds).length;run+=c.net;
+    T.heads+=h;["coins","coin","scan","soap","chg","inc","exp","net"].forEach(k=>T[k]+=c[k]);
+    return [ds,h,c.coins,c.coin,c.scan,...SOAP.map(([k])=>+r[k]||0),c.soap,...NOTES.map(([k])=>+r[k]||0),c.chg,c.inc,c.exp,c.net,run,...RES.map(([k])=>hasRes(r)?int(r[k]):""),hasRes(r)?resTotal(r):"",r.note||""]});
+  // visits
+  const vRows=Object.values(S.visits).filter(v=>inScope(v.date)).sort((a,b)=>(a.date+(a.at||"")).localeCompare(b.date+(b.at||"")))
+    .map(v=>[v.date,hhmm(v.at),v.memberId?mname(v.memberId):L("ลูกค้าทั่วไป","Walk-in"),v.memberId||"",v.memberId?L("สมาชิก","Member"):L("ทั่วไป","Walk-in"),
+      int(v.washLoads),+v.washAmt||0,int(v.dryLoads),+v.dryAmt||0,+v.soapAmt||0,vTotal(v),vPts(v),(v.by||L("พนักงาน","Staff"))+(v.source==="front"?L(" (ลูกค้าแจ้งจากหน้าบ้าน)"," (from customer screen)"):"")]);
+  // expenses
+  const eRows=[];dates.forEach(ds=>{(S.days[ds]&&S.days[ds].expenses||[]).forEach(e=>eRows.push([ds,e.n===OTHER?"อื่น ๆ":e.n,e.n===OTHER||e.n==="อื่น ๆ"?String(e.d||"").trim():"",+e.a||0]))});
+  // members
+  const mRows=Object.keys(S.members).map(id=>{const s=memberStats(id),inV=s.vs.filter(v=>inScope(v.date));
+    return [id,S.members[id].name,S.members[id].since||"",inV.length,inV.reduce((t,v)=>t+vPts(v),0),inV.reduce((t,v)=>t+vTotal(v),0),s.earned,s.used,s.balance,s.expiredPts,s.deadline||""]}).sort((a,b)=>b[5]-a[5]);
+  // redeems
+  const rRows=Object.values(S.redeems).filter(r=>inScope(r.date)).sort((a,b)=>(a.at||"").localeCompare(b.at||""))
+    .map(r=>[r.date,hhmm(r.at),mname(r.memberId),r.memberId,r.note||"",+r.points||0,r.price!=null?+r.price:"",r.price!=null?+r.disc:"",r.price!=null?+r.extra:"",r.by||""]);
+  // summary
+  const period=scope==="all"?L("ทั้งหมด","All time"):m;
+  add(L("สรุป","Summary"),[[L("สมุดบัญชีร้านซักผ้า","Laundry Shop Ledger")],[L("ช่วงข้อมูล","Period"),period],[L("ดึงข้อมูลเมื่อ","Exported"),todayStr()+" "+hhmm(new Date().toISOString())],[],
+    [L("ลูกค้า (หัว)","Customers"),T.heads],[L("เหรียญ 10 บาท ตู้ซัก+อบ (เหรียญ)","10฿ coins (count)"),T.coins],[L("เงินเหรียญตู้ซัก+อบ","Coins from machines"),T.coin],[L("ยอดสแกนจ่าย (บันทึกไว้ดู ไม่นำไปคำนวณ)","Scan payments (record only, not in totals)"),T.scan],[L("ค่าน้ำยา","Soap"),T.soap],
+    [L("ตู้แลกเหรียญ","Changer")+(config.countChanger?"":L(" (ไม่นับเป็นรายรับ)"," (not in income)")),T.chg],[L("รายรับรวม","Total income"),T.inc],[L("ค่าใช้จ่ายรวม","Total expenses"),T.exp],[L("คงเหลือ","Balance"),T.net],
+    [],[L("ยอดขายที่คีย์รายคน","Sales entered per customer"),vRows.reduce((t,r)=>t+r[10],0)],[L("สมาชิกที่มาใช้บริการ","Members who visited"),mRows.filter(r=>r[3]>0).length],[L("จำนวนครั้งที่แลกรางวัล","Rewards redeemed"),rRows.length],[L("ส่วนลดจากแต้มรวม (บาท)","Points discount total"),rRows.reduce((t,r)=>t+(+r[7]||0),0)],[L("ลูกค้าจ่ายเพิ่มตอนแลกรวม (บาท)","Extra paid on rewards"),rRows.reduce((t,r)=>t+(+r[8]||0),0)]],[32,18]);
+  add(L("รายวัน","Daily"),[dHead,...dRows,[L("รวม","Total"),T.heads,T.coins,T.coin,T.scan,...Array(SOAP.length).fill(""),T.soap,...Array(NOTES.length).fill(""),T.chg,T.inc,T.exp,T.net,"",...RES.map(()=>""),"",""]],[12,10,16,12,14,...Array(SOAP.length).fill(14),10,...Array(NOTES.length).fill(10),12,10,10,10,12,...RES.map(()=>12),14,28]);
+  add(L("ลูกค้ารายคน","Per customer"),[[L("วันที่","Date"),L("เวลา","Time"),L("ชื่อ","Name"),L("เบอร์โทร","Phone"),L("ประเภท","Type"),L("ซัก (ถัง)","Wash loads"),L("ค่าซัก","Wash ฿"),L("อบ (ถัง)","Dry loads"),L("ค่าอบ","Dry ฿"),L("ค่าน้ำยา","Soap ฿"),L("รวม","Total"),L("แต้ม","Points"),L("บันทึกโดย","Entered by")],...vRows],[12,7,20,13,10,10,9,10,9,10,9,7,14]);
+  add(L("ค่าใช้จ่าย","Expenses"),[[L("วันที่","Date"),L("หมวด","Category"),L("รายละเอียด","Detail"),L("จำนวนเงิน","Amount")],...eRows,[L("รวม","Total"),"","",eRows.reduce((t,r)=>t+r[3],0)]],[12,18,26,12]);
+  add(L("สมาชิก","Members"),[[L("เบอร์โทร","Phone"),L("ชื่อ","Name"),L("สมาชิกตั้งแต่","Since"),L("มา (ครั้ง)","Visits"),L("ถังที่ใช้","Loads"),L("ยอดใช้จ่าย","Spent ฿"),L("แต้มสะสมทั้งหมด","Points earned"),L("แต้มที่แลกไป","Points used"),L("แต้มคงเหลือ","Points left"),L("แต้มหมดอายุ","Points expired"),L("ต้องแลกภายใน","Redeem by")],...mRows],[13,20,12,10,10,12,14,13,12,12,13]);
+  const xRows=[];Object.keys(S.members).forEach(id=>memberStats(id).expired.forEach(x=>{if(inScope(x.date))xRows.push([x.date,mname(id),id,x.since,x.points])}));
+  xRows.sort((a,b)=>a[0].localeCompare(b[0]));
+  add(L("แต้มหมดอายุ","Expired points"),[[L("วันที่ตัด","Cut on"),L("ชื่อ","Name"),L("เบอร์โทร","Phone"),L("แต้มครบเมื่อ","Full since"),L("แต้มที่ตัด","Points")],...xRows],[12,20,13,13,10]);
+  add(L("แลกรางวัล","Rewards"),[[L("วันที่","Date"),L("เวลา","Time"),L("ชื่อ","Name"),L("เบอร์โทร","Phone"),L("รางวัล","Reward"),L("แต้มที่ใช้","Points"),L("ราคาบริการ","Price"),L("ส่วนลด","Discount"),L("ลูกค้าจ่ายเพิ่ม","Extra paid"),L("พนักงาน","Staff")],...rRows],[12,7,20,13,16,10,11,9,13,12]);
+  // keep phone numbers as text so the leading 0 stays
+  ["ลูกค้ารายคน","Per customer","สมาชิก","Members","แลกรางวัล","Rewards"].forEach(n=>{const ws=wb.Sheets[n];if(!ws)return;
+    Object.keys(ws).forEach(k=>{if(k[0]!=="!"&&ws[k].t==="s"&&/^0\d{8,9}$/.test(ws[k].v))ws[k].z="@"})});
+  return {wb,period};
+}
+$("xBtn").onclick=async()=>{
+  const msg=$("xMsg");
+  if(!window.XLSX){msg.innerHTML='<span class="warn">โหลดตัวสร้างไฟล์ Excel ไม่ได้ ลองรีเฟรชหน้า</span>';return}
+  $("xBtn").disabled=true;msg.textContent="กำลังสร้างไฟล์…";
+  try{
+    const {wb,period}=buildWorkbook($("xScope").value);
+    XLSX.writeFile(wb,"laundry-"+(period==="ทั้งหมด"||period==="All time"?"all-"+todayStr():period)+".xlsx");
+    msg.textContent="ดาวน์โหลดไฟล์แล้ว";
+  }catch(e){msg.innerHTML='<span class="warn">ดาวน์โหลดไม่สำเร็จ ('+esc(e&&e.message||"error")+')</span>'}
+  $("xBtn").disabled=false;
+};
+
+/* ===== receipt: drawn on a canvas sized for thermal paper (58 mm = 384 px, 80 mm = 576 px at 203 dpi) ===== */
+let rcCanvas=null, rcName="";
+const logoImg=new Image();logoImg.src="img/logo.webp";
+function qrModules(text){
+  if(!window.qrcode)return null;
+  qrcode.stringToBytes=s=>Array.from(new TextEncoder().encode(s)); // UTF-8, so Thai and URLs both work
+  const q=qrcode(0,"M");q.addData(text,"Byte");q.make();return q;
+}
+async function drawReceipt(vid){
+  const v=S.visits[vid];if(!v)return null;
+  try{await document.fonts.load('600 24px "IBM Plex Sans Thai"');await document.fonts.load('500 20px "IBM Plex Mono"')}catch(e){}
+  const W=config.paper==="80"?576:384, pad=14, cv=document.createElement("canvas");cv.width=W;cv.height=2400;
+  const c=cv.getContext("2d");c.fillStyle="#fff";c.fillRect(0,0,W,cv.height);c.fillStyle="#000";c.textBaseline="top";
+  const TH='"IBM Plex Sans Thai",sans-serif', MO='"IBM Plex Mono",monospace';
+  let y=pad;const big=W>400?1.25:1;
+  const txt=(t,{size=20,weight=400,align="left",font=TH,x}={})=>{c.font=`${weight} ${Math.round(size*big)}px ${font}`;c.textAlign=align;
+    const xx=x!=null?x:align==="center"?W/2:align==="right"?W-pad:pad;c.fillText(t,xx,y);};
+  const line=(h)=>{y+=Math.round(h*big)};
+  const row=(l,r,o={})=>{txt(l,Object.assign({},o,{align:"left"}));txt(r,Object.assign({},o,{align:"right",font:MO}));line(o.size?o.size+10:30)};
+  const rule=()=>{c.save();c.setLineDash([6,5]);c.lineWidth=2;c.beginPath();c.moveTo(pad,y+6);c.lineTo(W-pad,y+6);c.stroke();c.restore();line(18)};
+  // wrap long shop names
+  const wrap=(t,size,weight)=>{c.font=`${weight} ${Math.round(size*big)}px ${TH}`;const words=String(t).split(/\s+/);let cur="";
+    words.forEach(w=>{const tryS=cur?cur+" "+w:w;if(c.measureText(tryS).width>W-2*pad&&cur){txt(cur,{size,weight,align:"center"});line(size+8);cur=w}else cur=tryS});
+    if(cur){txt(cur,{size,weight,align:"center"});line(size+8)}};
+  if(logoImg&&logoImg.complete&&logoImg.naturalWidth){const lw=Math.min(W-2*pad,Math.round(300*big)),lh=Math.round(lw*logoImg.naturalHeight/logoImg.naturalWidth);
+    c.save();c.filter="grayscale(1) contrast(1.35)";c.drawImage(logoImg,Math.round((W-lw)/2),y,lw,lh);c.restore();y+=lh+6}
+  else wrap(config.shopName||"ร้านซักผ้า",26,700);
+  if(config.shopLine){txt("LINE ID : "+config.shopLine,{size:18,align:"center",weight:600});line(28)}
+  line(4);txt("ใบเสร็จรับเงิน",{size:20,weight:600,align:"center"});line(32);
+  const no=v.date.replace(/-/g,"").slice(2)+"-"+vid.slice(-4).toUpperCase();
+  row("เลขที่",no,{size:18});row("วันที่",thaiDate(v.date)+" "+hhmm(v.at),{size:18});
+  if(v.by)row("พนักงาน",v.by,{size:18});
+  row("ลูกค้า",v.memberId?maskPhone(v.memberId):"ลูกค้าทั่วไป",{size:18});
+  rule();
+  if(int(v.washLoads)||+v.washAmt)row("ซัก "+int(v.washLoads)+" ถัง",fmt(v.washAmt));
+  if(int(v.dryLoads)||+v.dryAmt)row("อบ "+int(v.dryLoads)+" ถัง",fmt(v.dryAmt));
+  if(+v.soapAmt)row("น้ำยา",fmt(v.soapAmt));
+  rule();
+  row("รวม",fmt(vTotal(v))+" บาท",{size:24,weight:700});
+  let token=null;
+  if(v.memberId&&S.members[v.memberId]){
+    const st=memberStats(v.memberId);
+    rule();
+    row("แต้มครั้งนี้","+"+vPts(v),{size:19});
+    row("แต้มสะสม",st.balance+" / "+minPts(),{size:22,weight:700});
+    if(st.deadline){txt("แต้มครบแล้ว! แลกได้ถึง "+thaiDate(st.deadline),{size:17,align:"center",weight:600});line(28)}
+    else{txt("อีก "+(minPts()-st.balance)+" แต้ม "+rwSummary(),{size:16,align:"center"});line(28)}
+    row("มาใช้บริการ",st.vs.length+" ครั้ง",{size:17});
+    row("ยอดสะสม",fmt(st.spent)+" บาท",{size:17});
+    token=await ensureToken(v.memberId);
+    if(token){await publishMember(v.memberId);
+      const q=qrModules(checkUrl(token));
+      if(q){const n=q.getModuleCount(),size=Math.min(W-2*pad,Math.round(220*big)),cell=Math.floor(size/(n+8)),qs=cell*(n+8),qx=Math.round((W-qs)/2);
+        line(10);c.fillStyle="#fff";c.fillRect(qx,y,qs,qs);c.fillStyle="#000";
+        for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(q.isDark(r,k))c.fillRect(qx+(k+4)*cell,y+(r+4)*cell,cell,cell);
+        y+=qs;line(4);txt("สแกนเพื่อดูแต้มและประวัติการใช้บริการ",{size:16,align:"center"});line(28)}}
+  }
+  rule();txt(config.receiptFoot||"ขอบคุณที่ใช้บริการ",{size:18,align:"center",weight:600});line(40);
+  const out=document.createElement("canvas");out.width=W;out.height=Math.ceil(y+pad);out.getContext("2d").drawImage(cv,0,0);
+  rcName="receipt-"+no+".png";return out;
+}
+async function openReceipt(vid){
+  $("rcModal").hidden=false;$("rcImg").removeAttribute("src");$("rcMsg").textContent="กำลังสร้างใบเสร็จ…";
+  try{rcCanvas=await drawReceipt(vid);if(!rcCanvas){$("rcMsg").textContent="ไม่พบรายการนี้";return}
+    $("rcImg").src=rcCanvas.toDataURL("image/png");
+    $("rcMsg").textContent=S.visits[vid]&&S.visits[vid].memberId?"ลูกค้าสแกน QR บนใบเสร็จหรือบนจอนี้ เพื่อดูแต้มล่าสุดได้ตลอด":"ลูกค้าทั่วไป ไม่มี QR สะสมแต้ม";
+  }catch(e){$("rcMsg").innerHTML='<span class="warn">สร้างใบเสร็จไม่สำเร็จ ('+esc(e.message||e)+')</span>'}
+  $("rcPrint").focus();
+}
+$("rcClose").onclick=()=>{$("rcModal").hidden=true};
+$("rcModal").addEventListener("click",e=>{if(e.target===$("rcModal"))$("rcModal").hidden=true});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("rcModal").hidden)$("rcModal").hidden=true});
+$("rcSave").onclick=()=>{if(!rcCanvas)return;const a=document.createElement("a");a.href=rcCanvas.toDataURL("image/png");a.download=rcName;document.body.appendChild(a);a.click();a.remove()};
+$("rcPrint").onclick=()=>{if(!rcCanvas)return;
+  $("printArea").innerHTML='<img alt="" src="'+rcCanvas.toDataURL("image/png")+'">';
+  document.documentElement.style.setProperty("--paper",(config.paper==="80"?80:58)+"mm");
+  setTimeout(()=>window.print(),150)};
+
+/* ===== settings ===== */
+/* staff accounts (owner only): each staff member signs in with their own username and password */
+let staffRoles={};
+const userEmail=u=>{u=String(u||"").trim().toLowerCase();return u.includes("@")?u:u+"@laundry-shop.local"};
+const userName=email=>String(email||"").replace(/@laundry-shop\.local$/,"");
+function renderStaffAccounts(){
+  const el=$("staffList");if(!el)return;
+  if(mode!=="db"){el.innerHTML='<p class="hint">โหมดทดลอง: สร้างบัญชีพนักงานได้หลังจากเชื่อม Firebase ตามคู่มือ</p>';$("nsAdd").disabled=true;return}
+  const rows=Object.entries(staffRoles).filter(([,r])=>r.role==="staff");
+  el.innerHTML=rows.length?rows.map(([uid,r])=>`<div class="staff-row"><div><b class="nt">${esc(r.name||"")}</b><span>${esc(r.username||"")}</span></div><button class="del" data-rmuid="${uid}" aria-label="ปิดบัญชีพนักงาน">✕</button></div>`).join("")
+    :'<p class="hint">ยังไม่มีบัญชีพนักงาน</p>';
+  el.querySelectorAll("[data-rmuid]").forEach(b=>b.onclick=async()=>{
+    if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="ปิดบัญชี?";setTimeout(()=>{b.dataset.armed="";b.textContent="✕"},3000);return}
+    try{await ref("roles",b.dataset.rmuid).delete();$("nsMsg").textContent="ปิดบัญชีแล้ว พนักงานคนนี้จะเข้าใช้งานไม่ได้อีก"}catch(e){$("nsMsg").innerHTML='<span class="warn">ทำไม่สำเร็จ ('+esc(e.code||"error")+')</span>'}});
+}
+$("nsAdd").onclick=async()=>{
+  const name=$("nsName").value.trim(), user=$("nsUser").value.trim().toLowerCase(), pass=$("nsPass").value;
+  if(!name||!user){$("nsMsg").innerHTML='<span class="warn">ใส่ชื่อพนักงานและชื่อผู้ใช้</span>';return}
+  if(!/^[a-z0-9._-]{3,30}$/.test(user)&&!user.includes("@")){$("nsMsg").innerHTML='<span class="warn">ชื่อผู้ใช้ใช้ได้แค่ a-z 0-9 . _ - อย่างน้อย 3 ตัว</span>';return}
+  if(pass.length<6){$("nsMsg").innerHTML='<span class="warn">รหัสผ่านต้องมีอย่างน้อย 6 ตัว</span>';return}
+  $("nsAdd").disabled=true;$("nsMsg").textContent="กำลังสร้างบัญชี…";
+  try{
+    // a second app instance creates the account without signing the owner out
+    const sec=firebase.apps.find(x=>x.name==="staffMaker")||firebase.initializeApp(FB,"staffMaker");
+    const cred=await sec.auth().createUserWithEmailAndPassword(userEmail(user),pass);
+    await ref("roles",cred.user.uid).set({role:"staff",name,username:user,createdAt:new Date().toISOString()});
+    await sec.auth().signOut();
+    $("nsMsg").textContent="สร้างบัญชี "+name+" แล้ว · ชื่อผู้ใช้: "+user;["nsName","nsUser","nsPass"].forEach(k=>$(k).value="");
+  }catch(e){$("nsMsg").innerHTML='<span class="warn">'+(e.code==="auth/email-already-in-use"?"ชื่อผู้ใช้นี้มีคนใช้แล้ว":e.code==="auth/weak-password"?"รหัสผ่านสั้นเกินไป":"สร้างไม่สำเร็จ ("+esc(e.code||"error")+")")+'</span>'}
+  $("nsAdd").disabled=false;
+};
+let rwDraft=[];
+function renderRwEdit(){
+  $("sRewards").innerHTML=(rwDraft.length?'<div class="rw-head"><span>ชื่อรางวัล</span><span>ประเภท</span><span>ใช้แต้ม</span><span>ลดได้ (บาท)</span><span></span></div>':"")+(rwDraft.map((r,i)=>`<div class="rw-row r4"><input id="rwn${i}" class="txt n" value="${esc(r.name)}" placeholder="ชื่อรางวัล เช่น ซัก 1 ถัง" aria-label="ชื่อรางวัล">
+    <select id="rwk${i}" aria-label="ประเภท"><option value="wash" ${r.kind==="wash"?"selected":""}>ซัก</option><option value="dry" ${r.kind==="dry"?"selected":""}>อบ</option><option value="other" ${r.kind!=="wash"&&r.kind!=="dry"?"selected":""}>อื่น ๆ</option></select>
+    <input id="rwp${i}" class="p" type="number" inputmode="numeric" min="1" value="${r.pts||""}" placeholder="แต้ม" aria-label="ใช้กี่แต้ม">
+    <input id="rwv${i}" class="p" type="number" inputmode="numeric" min="0" value="${r.value||""}" placeholder="0 = ฟรี" aria-label="ลดได้ไม่เกินกี่บาท">
+    <button class="del" data-rwd="${i}" aria-label="ลบรางวัล">✕</button></div>`).join("")||'<p class="hint">ยังไม่มีรางวัล</p>');
+  rwDraft.forEach((r,i)=>{$("rwn"+i).oninput=e=>r.name=e.target.value;$("rwp"+i).oninput=e=>r.pts=int(e.target.value);$("rwk"+i).onchange=e=>r.kind=e.target.value;$("rwv"+i).oninput=e=>r.value=int(e.target.value)});
+  $("sRewards").querySelectorAll("[data-rwd]").forEach(b=>b.onclick=()=>{rwDraft.splice(+b.dataset.rwd,1);renderRwEdit()});
+}
+$("sAddRw").onclick=()=>{rwDraft.push({name:"",kind:"wash",pts:10,value:50});renderRwEdit();$("rwn"+(rwDraft.length-1)).focus()};
+function renderSettings(){
+  $("sExp").value=expiryDays();
+  rwDraft=rewards().map(r=>({name:r.name,kind:r.kind||"other",pts:+r.pts,value:+r.value||0}));renderRwEdit();
+  $("countChg").checked=!!config.countChanger;$("sKioskPin").value=config.kioskPin||"";
+  $("sShop").value=config.shopName||"";$("sLine").value=config.shopLine||"";$("sPaper").value=config.paper==="80"?"80":"58";$("sFoot").value=config.receiptFoot||"";
+  renderStaffAccounts();
+  $("kReward").textContent="ครบ "+minPts()+" แต้ม "+rwSummary();
+}
+$("sSave").onclick=async()=>{
+  const rw=rwDraft.map(r=>({name:String(r.name||"").trim(),kind:r.kind||"other",pts:Math.max(1,int(r.pts)),value:int(r.value)})).filter(r=>r.name);
+  if(!rw.length){$("sMsg").innerHTML='<span class="warn">ต้องมีรางวัลอย่างน้อย 1 รายการ</span>';return}
+  const kp=digits($("sKioskPin").value);
+  if(kp&&(kp.length<4||kp.length>6)){$("sMsg").innerHTML='<span class="warn">รหัสออกจากหน้าบ้านต้องมี 4–6 หลัก</span>';return}
+  config=Object.assign({},config,{rewards:rw,expiryDays:$("sExp").value===""?30:int($("sExp").value),
+    kioskPin:kp,countChanger:$("countChg").checked,shopName:$("sShop").value.trim(),shopLine:$("sLine").value.trim(),
+    paper:$("sPaper").value,receiptFoot:$("sFoot").value.trim()});
+  try{await saveConfig();$("sMsg").textContent="บันทึกการตั้งค่าแล้ว";renderSettings();updateTotals();applyMode();
+    Object.keys(S.members).forEach(mid=>afterWrite("members",mid,S.members[mid]))} // refresh customers' QR pages with the new rules
+  catch(e){$("sMsg").innerHTML='<span class="warn">บันทึกไม่สำเร็จ</span>'}
+};
+
+/* ===== kiosk (front) ===== */
+let kPhone="", kMem=null, kW=0, kD=0, idle=null;
+const kSteps=["k-phone","k-reg","k-mem","k-done","k-pin"];
+function kShow(step){kSteps.forEach(s=>$(s).hidden=s!==step);$("kStaff").hidden=step==="k-pin"}
+function kHome(){kPhone="";kMem=null;kW=kD=0;$("kNum").textContent="";$("kGo").disabled=true;$("kRegName").value="";$("kPinIn").value="";
+  ["kRegErr","kMemErr","kPinErr"].forEach(k=>$(k).textContent="");kShow("k-phone")}
+function kIdle(){clearTimeout(idle);idle=setTimeout(()=>{if(!$("kiosk").hidden)kHome()},45000)}
+(function buildPad(){
+  const keys=["1","2","3","4","5","6","7","8","9","ล้าง","0","ลบ"];
+  $("kPad").innerHTML=keys.map(k=>`<button class="${isNaN(k)?"fn":""}" data-k="${k}">${k}</button>`).join("");
+  $("kPad").onclick=e=>{const k=e.target.dataset&&e.target.dataset.k;if(!k)return;
+    if(k==="ล้าง")kPhone="";else if(k==="ลบ")kPhone=kPhone.slice(0,-1);else if(kPhone.length<10)kPhone+=k;
+    $("kNum").textContent=fmtPhone(kPhone);$("kGo").disabled=kPhone.length<9};
+})();
+// phone only: a known phone opens its points; a new phone becomes a member right away, no name asked
+$("kGo").onclick=()=>{
+  if(S.members[kPhone]){kMem=kPhone;kRenderMem();kShow("k-mem");return}
+  $("kRegPhone").textContent=fmtPhone(kPhone);$("kRegName").value="";$("kRegErr").textContent="";kShow("k-reg");setTimeout(()=>$("kRegName").focus(),50);
+};
+$("kRegGo").onclick=async()=>{
+  const n=$("kRegName").value.trim();if(!n){$("kRegErr").textContent="กรุณาใส่ชื่อ";return}
+  $("kRegGo").disabled=true;
+  try{await put("members",kPhone,{name:n,phone:kPhone,since:todayStr(),source:"front"});renderDatalist();kMem=kPhone;kRenderMem();kShow("k-mem")}
+  catch(e){$("kRegErr").textContent="สมัครไม่สำเร็จ กรุณาแจ้งพนักงาน"}
+  $("kRegGo").disabled=false;
+};
+function kRenderMem(){
+  const m=S.members[kMem];if(!m)return kHome();
+  const st=memberStats(kMem), goal=minPts(), rwName=rwSummary().replace(/^แลก/,"");
+  $("kRewardArt").hidden=st.balance<goal;
+  $("kName").textContent="เบอร์ลงท้าย "+kMem.slice(-4);$("kPts").textContent=st.balance;
+  const filled=Math.min(goal,st.balance), pend=Math.min(goal-filled,st.pending);
+  $("kDrums").innerHTML=goal<=30?Array.from({length:goal},(_,i)=>`<span class="drum ${i<filled?"on":""}" style="${i>=filled&&i<filled+pend?"border-style:dashed;border-color:var(--accent)":""}"></span>`).join(""):"";
+  const last=Object.values(S.redeems).filter(r=>r.memberId===kMem).sort((a,b)=>(b.at||"").localeCompare(a.at||""))[0];
+  $("kGoal").textContent=(st.balance>=goal?"ครบแล้ว! แจ้งพนักงานเพื่อแลกรางวัล"+(st.deadline?" · แลกได้ถึง "+thaiDate(st.deadline)+" (เหลือ "+daysLeft(st.deadline)+" วัน)":""):"อีก "+(goal-st.balance)+" แต้ม ได้"+rwName)+(last?" · แลกล่าสุด "+last.note+" ("+thaiDate(last.date)+")":"")+(st.pending?" · รอพนักงานยืนยัน +"+st.pending:"");
+  $("kW").textContent=kW;$("kD").textContent=kD;$("kClaim").disabled=!(kW+kD);
+  $("kClaim").textContent=kW+kD?"สะสม "+(kW+kD)+" แต้ม":"เลือกจำนวนถังที่ใช้";
+}
+document.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{const d=+b.dataset.d;
+  if(b.dataset.st==="w")kW=Math.min(9,Math.max(0,kW+d));else kD=Math.min(9,Math.max(0,kD+d));kRenderMem()});
+$("kClaim").onclick=async()=>{
+  if(!(kW+kD))return;$("kClaim").disabled=true;
+  try{await put("claims",newId(),{memberId:kMem,washLoads:kW,dryLoads:kD,date:todayStr(),at:new Date().toISOString()});
+    $("kDoneTxt").textContent="ส่งคำขอ +"+(kW+kD)+" แต้มแล้ว";renderClaims();kShow("k-done")}
+  catch(e){$("kMemErr").textContent="ส่งไม่สำเร็จ กรุณาแจ้งพนักงาน";$("kClaim").disabled=false}
+};
+document.querySelectorAll("[data-home]").forEach(b=>b.onclick=kHome);
+$("kStaff").onclick=()=>{if(!config.kioskPin){kHome();location.hash="";return}kShow("k-pin");setTimeout(()=>$("kPinIn").focus(),50)};
+$("kPinGo").onclick=()=>{if(digits($("kPinIn").value)===config.kioskPin){kHome();location.hash=""}else{$("kPinErr").textContent="รหัสไม่ถูกต้อง";$("kPinIn").value=""}};
+$("kPinIn").addEventListener("keydown",e=>{if(e.key==="Enter")$("kPinGo").click()});
+$("kiosk").addEventListener("pointerdown",kIdle);$("kiosk").addEventListener("keydown",kIdle);
+
+/* ===== routing & tabs ===== */
+let authed=false;
+function route(){
+  const front=location.hash==="#kiosk";
+  $("login").hidden=authed;
+  if(!authed){$("kiosk").hidden=true;$("back").hidden=true;return}
+  $("kiosk").hidden=!front;$("back").hidden=front;
+  if(front){kHome();kIdle()}else applyMode();
+  window.scrollTo(0,0);
+}
+window.addEventListener("hashchange",route);
+function showTab(t){
+  if(viewMode==="staff"||!isOwnerAcct)return;
+  curTab=t;$("view-staff").hidden=true;
+  ["day","mem","month","set"].forEach(k=>{$("tab-"+k).setAttribute("aria-selected",t===k);$("view-"+k).hidden=t!==k});
+  $("savebar").hidden=t!=="day";
+  if(t==="month"){if(!$("month").value)$("month").value=$("date").value.slice(0,7);renderMonth()}
+  if(t==="mem")renderMembers();if(t==="set")renderSettings();
+  window.scrollTo(0,0);
+}
+["day","mem","month","set"].forEach(k=>$("tab-"+k).onclick=()=>showTab(k));
+$("prev").onclick=()=>loadDay(shift($("date").value,-1));
+$("next").onclick=()=>loadDay(shift($("date").value,1));
+$("date").onchange=e=>{const v=e.target.value;if(!v)return;if(!loadDay(v))e.target.value=cur.date};
+$("addExp").onclick=()=>{cur.expenses.push({n:CATS[0],a:0});renderExp();touch();const a=$("ea"+(cur.expenses.length-1));a&&a.focus()};
+$("note").oninput=()=>{cur.note=$("note").value;touch()};
+$("save").onclick=saveDay;
+
+/* ===== language: Thai / English (back office only; kiosk stays Thai) ===== */
+const EN={
+"สมุดบัญชีร้านซักผ้า":"Laundry Shop Ledger","หลังบ้าน":"Back office","ซัก 5 เครื่อง":"5 washers","อบ 4 เครื่อง":"4 dryers",
+"เปิดหน้าบ้าน":"Open customer screen","กำลังเชื่อมต่อ…":"Connecting…","ซิงก์แล้ว ✓":"Synced ✓","ยังเชื่อมต่อไม่ได้…":"Cannot connect yet…","เชื่อมต่อขาด":"Disconnected","เก็บในเครื่องนี้":"Saved on this device",
+"สรุปเดือน":"Monthly","ตั้งค่า":"Settings","รายวัน":"Daily",
+"ลูกค้าสะสมแต้มจากหน้าบ้าน รอยืนยัน":"Points requests waiting",
+"กด “ยืนยัน” แล้วใส่ยอดเงินที่ลูกค้าจ่าย ระบบจะบันทึกเป็นยอดของลูกค้าคนนั้นและให้แต้มตามจำนวนถัง":"Tap “Confirm”, enter what the customer paid, then save. Points are given per load.",
+"ยอดขายรายคน":"Sales per customer","ลูกค้าที่มาวันนี้":"Customers today",
+"ลูกค้าทั่วไป · ไม่สะสมแต้ม":"Walk-in · no points","พิมพ์เบอร์หรือชื่อสมาชิก (เว้นว่าง = ลูกค้าทั่วไป)":"Phone or member name (empty = walk-in)",
+"ไม่พบสมาชิกนี้ · เลือกจากรายการ หรือสมัครที่แท็บ “สมาชิก”":"Member not found · pick from the list or add in “Members”",
+"ไม่พบสมาชิกนี้ เลือกจากรายการ หรือเว้นว่างถ้าเป็นลูกค้าทั่วไป":"Member not found. Pick from the list, or leave empty for a walk-in",
+"ใส่จำนวนถังหรือยอดเงินอย่างน้อยหนึ่งช่อง":"Enter loads or an amount",
+"ตรวจยอดเงินแล้วกด “ยืนยันและบันทึก”":"Check the amount, then tap “Confirm & save”",
+"ซัก (ถัง)":"Wash (loads)","ค่าซัก (บาท)":"Wash (฿)","ค่าน้ำยา (บาท)":"Soap (฿)","อบ (ถัง)":"Dry (loads)","ค่าอบ (บาท)":"Dry (฿)","รวมคนนี้":"Total",
+"บันทึกลูกค้า":"Save customer","ยืนยันและบันทึก":"Confirm & save","ยกเลิก":"Cancel","ยืนยัน":"Confirm",
+"เงินที่เก็บได้สิ้นวัน":"End-of-day cash","เครื่องซัก":"Washers","เครื่องอบ":"Dryers",
+"ใส่จำนวนเหรียญ 10 บาทที่เก็บได้จากแต่ละเครื่อง":"Enter the number of 10-baht coins from each machine",
+"น้ำยาที่ขายได้":"Soap sold","ใส่จำนวนซอง · ซองเล็ก 5 บาท · ซองใหญ่ 20 บาท":"Enter packets · small 5 ฿ · large 20 ฿",
+"น้ำยาซัก ซองเล็ก":"Detergent small","น้ำยาซัก ซองใหญ่":"Detergent large","ปรับผ้านุ่ม ซองเล็ก":"Softener small","ปรับผ้านุ่ม ซองใหญ่":"Softener large",
+"ตู้แลกเหรียญ (ไม่นับ)":"Changer (not counted)","ตู้แลกเหรียญ":"Coin changer","ตู้แลก":"Changer","ใส่จำนวนแบงก์ที่เก็บได้จากหลังตู้":"Enter the number of notes from the changer",
+"แบงก์ 100":"100 ฿ notes","แบงก์ 50":"50 ฿ notes","แบงก์ 20":"20 ฿ notes",
+"ค่าใช้จ่ายวันนี้":"Expenses today","เพิ่มรายการค่าใช้จ่าย":"Add expense","ยังไม่มีค่าใช้จ่ายของวันนี้":"No expenses today",
+"ค่าไฟ":"Electricity","ค่าน้ำ":"Water","ซื้อน้ำยา":"Buy soap","ค่าแรง":"Wages","ค่าเช่า":"Rent","ซ่อมเครื่อง":"Repair","เติมเหรียญตู้แลก":"Refill changer coins","อื่น ๆ":"Other",
+"สรุปวันนี้":"Today's summary","หมายเหตุ":"Note","เช่น เครื่องซัก 3 เหรียญติด":"e.g. washer 3 coin stuck",
+"สมาชิก / ลูกค้าทั่วไป":"Members / walk-ins","ยอดขายที่คีย์รายคน":"Sales entered per customer",
+"ค่าซัก (เหรียญในตู้)":"Wash (coins)","ค่าอบ (เหรียญในตู้)":"Dry (coins)","ค่าน้ำยา":"Soap","รวมรายรับ":"Total income","หักค่าใช้จ่าย":"Minus expenses",
+"คงเหลือวันนี้":"Balance today","เงินตู้แลกเหรียญ (แยกไว้ ไม่รวมรายรับ)":"Changer cash (not in income)","เงินสดที่เก็บได้ทั้งหมด":"All cash collected",
+"ยอดคีย์รายคน เทียบ ยอดขาย":"Entered sales vs coins + scan + soap","ยอดสแกนจ่าย":"Scan payments","ยอดสแกนจ่ายรวม (บาท)":"Total scan/transfer (฿)","สแกนจ่าย":"Scan","ยอดเงินที่ลูกค้าสแกน QR หรือโอนจ่ายทั้งวัน ดูจากแอปธนาคาร":"All QR / transfer payments today, from the bank app","ใส่รหัสพนักงาน":"Enter staff PIN","พนักงานแต่ละคนใส่รหัสของตัวเองก่อนเริ่มงาน ยอดที่คีย์จะบันทึกชื่อคนนั้นไว้":"Each staff member enters their own PIN before starting; entries are saved under their name","เปลี่ยนพนักงาน":"Switch staff","รหัสไม่ถูกต้อง":"Wrong PIN","ลูกค้าวันนี้":"Customers today",
+"บันทึกเงินสิ้นวัน":"Save end-of-day","ยังไม่มีการแก้ไข":"No changes","มีการแก้ไขที่ยังไม่บันทึก":"Unsaved changes",
+"เงินสิ้นวันยังไม่ได้บันทึก กดอีกครั้งเพื่อทิ้งการแก้ไข":"Not saved. Tap again to discard",
+"ยังไม่ได้บันทึกเงินสิ้นวันของ":"No end-of-day record for","กำลังบันทึก…":"Saving…","บันทึกไม่สำเร็จ":"Could not save","ลองกดอีกครั้ง":"Try again","บันทึกแล้ว":"Saved",
+"ยังไม่มีลูกค้าของ":"No customers on","กรอกข้อมูลด้านบนเมื่อลูกค้ามาใช้บริการ":"Fill in the form above when a customer comes",
+"ลบไม่สำเร็จ ลองอีกครั้ง":"Could not delete, try again","ปฏิเสธ?":"Reject?","ลบ?":"Delete?","รายการ":"items",
+"สมัครสมาชิกใหม่":"New member","เบอร์โทรต้องมี 9–10 หลัก":"Phone must be 9–10 digits","เบอร์โทร":"Phone","ชื่อลูกค้า":"Name","ชื่อ หรือชื่อเล่น":"Name or nickname","ใส่ชื่อลูกค้า":"Enter a name",
+"เบอร์นี้เป็นสมาชิกอยู่แล้ว":"This phone is already a member","เพิ่มสมาชิก":"Add member","รายชื่อสมาชิก":"Members","ค้นหาเบอร์หรือชื่อ":"Search phone or name",
+"ยอดเดือนนี้":"This month","ยอดทั้งหมด":"All time","แลกได้":"Can redeem","ไม่พบสมาชิกที่ค้นหา":"No matching member",
+"ยังไม่มีสมาชิก เพิ่มคนแรกจากช่องด้านบน หรือให้ลูกค้าสมัครเองที่หน้าบ้าน":"No members yet. Add one above, or customers can sign up on the customer screen",
+"แต้มคงเหลือ":"Points","มาใช้บริการ":"Visits","ใช้ไปทั้งหมด":"Loads used","ยอดรวม":"Total spent","สมาชิกตั้งแต่":"Member since","รอยืนยัน":"Pending",
+"แต้มจึงแลกได้":"more points to redeem","แลกรางวัล":"Redeem","ยังไม่มีประวัติการใช้บริการ":"No visits yet","แก้ชื่อ":"Edit name","บันทึกชื่อ":"Save name",
+"กดอีกครั้งเพื่อยืนยันการลบ (ประวัติยังเก็บไว้)":"Tap again to delete (history is kept)","ลบสมาชิกคนนี้":"Delete member",
+"รายรับ":"Income","ค่าใช้จ่าย":"Expenses","คงเหลือรายวัน":"Daily balance","คงเหลือ":"Balance","ลูกค้า (หัว)":"Customers","จำนวนลูกค้ารายวัน":"Customers per day",
+"ยอดรายวัน":"Daily totals","แตะแถวเพื่อเปิดวันนั้น · คงเหลือสะสมนับจากวันที่ 1 ของเดือน":"Tap a row to open that day · running balance from the 1st",
+"วันที่":"Date","สะสม":"Running","จ่าย":"Spent","ยังไม่ปิดยอด":"No cash count","รายรับแยกตามแหล่ง":"Income by source","รายได้แต่ละเครื่อง":"Income per machine",
+"สมาชิกที่ใช้บริการมากที่สุด":"Top members","ค่าใช้จ่ายแยกหมวด":"Expenses by category","ยังไม่มีข้อมูลเดือนนี้":"No data this month","ยังไม่มีข้อมูล":"No data",
+"น้ำยาซัก":"Detergent","ปรับผ้านุ่ม":"Softener","เริ่มกรอกที่แท็บ “รายวัน”":"Start in the “Daily” tab","ยังไม่มีบันทึกของ":"No records for",
+"ราคาต่อถัง":"Price per load","ซัก 1 ถัง (บาท)":"Wash 1 load (฿)","อบ 1 ถัง (บาท)":"Dry 1 load (฿)",
+"ใส่ราคาไว้ ระบบจะเติมค่าซัก/ค่าอบให้อัตโนมัติเมื่อกรอกจำนวนถัง (แก้ได้ทุกครั้ง) · ใส่ 0 ถ้าไม่ต้องการ":"Set prices to auto-fill amounts when loads are entered (always editable) · 0 to turn off",
+"แต้มสะสม":"Points","ซักหรืออบ 1 ถัง = 1 แต้ม":"1 wash or dry load = 1 point","ครบกี่แต้มแลกได้":"Points for a reward","รางวัล":"Reward",
+"หน้าบ้าน (ให้ลูกค้าสะสมแต้ม)":"Customer screen (points)","รหัสออกจากหน้าบ้าน":"PIN to leave customer screen",
+"เปิดหน้าบ้านบนแท็บเล็ตหรือมือถือของร้านที่ตั้งไว้ในร้าน ลูกค้ากรอกเบอร์ เช็คแต้ม สมัครสมาชิก และแจ้งจำนวนถังที่ใช้ได้เอง รายการจะขึ้นที่แท็บ “รายวัน” ให้พนักงานกดยืนยัน":"Open the customer screen on the shop's tablet. Customers enter their phone, check points, sign up and report loads. Requests appear in “Daily” for staff to confirm.",
+"รหัสนี้กันลูกค้ากดเข้ามาหลังบ้านโดยไม่ตั้งใจเท่านั้น ไม่ใช่ระบบความปลอดภัยเต็มรูปแบบ":"This PIN only stops customers opening the back office by accident; it is not full security.",
+"นับเงินตู้แลกเหรียญเป็นรายรับ":"Count changer cash as income",
+"เงินในตู้แลกคือแบงก์ที่ลูกค้าเอามาแลกเหรียญ แล้วเหรียญนั้นก็หยอดเข้าเครื่องซัก/อบอยู่แล้ว ถ้านับรวมจะซ้ำกัน จึงตั้งต้นไว้ที่ “ไม่นับ” และแสดงยอดแยกไว้ให้เทียบ":"Changer notes are what customers swapped for coins, and those coins already went into the machines. Counting both would double-count, so it is off by default and shown separately.",
+"บันทึกการตั้งค่าแล้ว":"Settings saved","บันทึกการตั้งค่า":"Save settings",
+"ลูกค้าทั่วไป":"Walk-in","ลูกค้า":"Customer","สมาชิก":"Members","แลก":"Redeem","อีก":"",
+"เหรียญ":"coins","ซอง":"packs","ใบ":"notes","บาท":"฿","ครั้ง":"visits","คน":"people","ถัง":"loads","แต้ม":"pts",
+"ซัก":"Wash","อบ":"Dry","น้ำยา":"Soap","รวม":"Total","มา":"Visits","แต้มครบ พร้อมแลก":"Ready to redeem","ยังไม่มีสมาชิกที่แต้มครบ":"No one has enough points yet","ประวัติการแลกรางวัล":"Reward history",
+"แสดงตามเดือนที่เลือกด้านบน · ใหม่สุดอยู่บน":"For the month selected above · newest first","วันที่ · เวลา":"Date · time","ยังไม่มีการแลกรางวัลในเดือนนี้":"No rewards this month",
+"กดอีกครั้งเพื่อยืนยัน":"Tap again to confirm","คืนแต้ม?":"Undo?","ยกเลิกการแลก":"Undo reward","เพิ่มรางวัล":"Add reward","ชื่อรางวัล เช่น ซักฟรี 1 ถัง":"Reward name","ใช้กี่แต้ม":"Points needed",
+"ลบรางวัล":"Delete reward","ต้องมีรางวัลอย่างน้อย 1 รายการ":"Add at least one reward","ยังไม่มีรางวัล":"No rewards","ซักฟรี 1 ถัง":"Free wash","อบฟรี 1 ถัง":"Free dry"," น.":"",
+"ดาวน์โหลด Excel":"Download Excel","ไฟล์มี 7 ชีต: สรุป · รายวัน · ลูกค้ารายคน · ค่าใช้จ่าย · สมาชิก · แลกรางวัล · แต้มหมดอายุ":"7 sheets: Summary · Daily · Per customer · Expenses · Members · Rewards · Expired points",
+"แต้มหมดอายุไปแล้ว":"Points expired","ต้องแลกภายใน (วัน)":"Redeem within (days)","ต้องแลกภายใน":"Redeem by","เหลือ":"","วัน)":"days left)","แต้มหมดอายุ":"Expired points","ไม่มีแต้มหมดอายุในเดือนนี้":"No expired points this month",
+"แต้มที่ครบแล้วแต่ไม่ได้มาแลกภายในเวลาที่กำหนด ระบบตัดให้อัตโนมัติ · แสดงตามเดือนที่เลือก":"Full point sets not redeemed in time are cut automatically · for the selected month",
+"วันที่ตัด":"Cut on","แต้มครบเมื่อ":"Full since","ครบตั้งแต่":"Full since","ไม่ได้แลกภายใน":"not redeemed within","ถึง":"by",
+"นับจากวันที่แต้มครบ ถ้าไม่มาแลกภายในจำนวนวันนี้ ระบบตัดแต้มชุดที่ครบออกอัตโนมัติ แต้มที่เกินมายังเก็บไว้ · ใส่ 0 = แต้มไม่มีวันหมดอายุ":"Counted from the day points become full. If not redeemed within this many days, that full set is cut automatically; extra points stay · 0 = points never expire",
+"เฉพาะเดือนที่เลือก":"Selected month","ข้อมูลทั้งหมด":"All data","ช่วงข้อมูล":"Period","ดาวน์โหลด .xlsx":"Download .xlsx","กำลังสร้างไฟล์…":"Building file…",
+"ดาวน์โหลดไฟล์แล้ว":"Downloaded","ยกเลิกการดาวน์โหลด":"Download cancelled","ดาวน์โหลดไม่สำเร็จ":"Download failed",
+"เบอร์ใหม่ · ระบบจะสมัครสมาชิกให้อัตโนมัติเมื่อบันทึก":"New phone · becomes a member automatically when saved","ชื่อ (ไม่ใส่ก็ได้)":"Name (optional)","ไม่ใส่ก็ได้":"Optional",
+"เบอร์ใหม่ · สมัครสมาชิกให้อัตโนมัติ · เริ่มสะสมแต้มได้เลย":"New phone · auto sign-up · starts collecting points",
+"ไม่พบสมาชิกนี้ · พิมพ์เบอร์ให้ครบ 10 หลัก หรือเลือกจากรายการ":"Member not found · type the full 10-digit phone or pick from the list",
+"เบอร์ใหม่ ใส่ชื่อลูกค้าเพื่อสมัครสมาชิก หรือลบเบอร์ออกถ้าเป็นลูกค้าทั่วไป":"New phone: enter a name to sign up, or clear the phone for a walk-in",
+"สมัครสมาชิกใหม่ให้แล้ว":"new member added","สมัครสมาชิกไม่สำเร็จ":"Could not add member",
+"รหัสพนักงาน (ใช้ออกจากหน้าบ้าน)":"Staff PINs (to leave the customer screen)","เพิ่มพนักงาน":"Add staff","ชื่อพนักงาน":"Staff name","รหัส 4–6 หลัก":"PIN 4–6 digits","ลบพนักงาน":"Remove staff",
+"แต่ละคนมีรหัสของตัวเอง 4–6 หลัก ห้ามซ้ำกัน · คนที่ใส่รหัสเข้าหลังบ้านจะถูกบันทึกเป็น “ผู้คีย์” ของยอดลูกค้าในเครื่องนั้น · รหัสนี้กันลูกค้ากดเข้าหลังบ้านโดยไม่ตั้งใจเท่านั้น ไม่ใช่ระบบความปลอดภัยเต็มรูปแบบ":"Each person has their own 4–6 digit PIN, no duplicates. Whoever unlocks is recorded as the person entering sales on that device. This only stops customers opening the back office by accident; it is not full security.",
+"ยังไม่มีรหัส · กดปุ่ม “พนักงาน” ที่หน้าบ้านแล้วจะเข้าหลังบ้านได้ทันที":"No PINs yet · the “Staff” button opens the back office without a PIN",
+"ใส่ชื่อพนักงานให้ครบทุกคน":"Enter a name for every staff member","รหัสพนักงานต้องมี 4–6 หลัก":"PINs must be 4–6 digits","รหัสพนักงานซ้ำกัน ตั้งให้ไม่ซ้ำกันทุกคน":"Two staff have the same PIN; make each one different",
+"ราคาบริการครั้งนี้ (บาท)":"Price this time (฿)","ราคาบริการ":"Price","ลดจากแต้ม":"Points discount","ลูกค้าจ่ายเพิ่ม":"Customer pays extra","ไม่ต้องจ่ายเพิ่ม":"nothing extra to pay",
+"จ่ายเพิ่ม":"Extra","ยืนยันแลก":"Confirm redeem","ใส่ราคาบริการครั้งนี้ก่อน":"Enter this service's price first","ชื่อรางวัล":"Reward","ประเภท":"Type","ใช้แต้ม":"Points","ลดได้ (บาท)":"Max discount (฿)","ลดได้":"up to","ฟรี":"free","0 = ฟรี":"0 = free","ราคา":"price","ลด":"discount",
+"ซัก 1 ถัง = 1 แต้ม · อบ 1 ถัง = 1 แต้ม (ซักแล้วอบ = 2 แต้ม) · ช่อง “ลดได้” คือมูลค่าสูงสุดที่แต้มช่วยจ่าย ถ้าราคาบริการเกิน ลูกค้าจ่ายส่วนต่างเพิ่ม · ใส่ 0 = ฟรีทั้งหมด":"1 wash load = 1 point · 1 dry load = 1 point (wash + dry = 2) · “Max discount” is how much the points cover; the customer pays any difference · 0 = fully free",
+"ใช้":"uses","หรือ":"or",
+"เหรียญจากตู้ซักและตู้อบ":"Coins from washers & dryers","เหรียญ 10 บาท (รวม)":"10฿ coins (total)",
+"นับเหรียญ 10 บาทจากเครื่องซักทั้ง 5 เครื่องและเครื่องอบทั้ง 4 เครื่องรวมกัน แล้วใส่จำนวนเหรียญทั้งหมดของวันนี้":"Count the 10฿ coins from all 5 washers and 4 dryers together, then enter today's total number of coins",
+"เหรียญตู้ซัก+อบ":"Machine coins","เหรียญตู้":"Machine coins",
+"ค่าแก๊ส":"Gas","ค่าถุง":"Bags","อื่น ๆ (ระบุเอง)":"Other (type it)","ระบุว่าเป็นค่าอะไร เช่น ค่าน้ำมันรถ":"What is it for? e.g. fuel","รายละเอียดค่าใช้จ่าย":"Expense detail","รายละเอียด":"Detail",
+"หน้าร้าน":"Front counter","ระบบพนักงาน · ลูกค้า · แต้ม · น้ำยา":"Staff · customers · points · soap","โหมดพนักงาน":"Staff mode","หลังบ้าน":"Back office",
+"รหัสเจ้าของ (เข้าหลังบ้าน)":"Owner PIN (back office)","รหัสเจ้าของ":"Owner PIN","เข้า":"Enter",
+"ใช้เมื่อเครื่องในร้านล็อกอินด้วยบัญชีเจ้าของ: จากโหมดพนักงานจะกลับเข้าหลังบ้านได้ด้วยรหัสนี้เท่านั้น · บัญชีของพนักงานเองเข้าหลังบ้านไม่ได้อยู่แล้ว":"For a shop device signed in with the owner's account: from staff mode, the back office opens only with this PIN. Staff accounts can never open the back office.",
+"รหัสเจ้าของต้องมี 4–6 หลัก":"Owner PIN must be 4–6 digits","รหัสเจ้าของซ้ำกับรหัสพนักงาน ตั้งให้ต่างกัน":"Owner PIN matches a staff PIN; make it different",
+"ขายน้ำยา":"Soap sales","กด + ทุกครั้งที่ขายได้ 1 ซอง · บันทึกทันที":"Tap + for every packet sold · saves right away",
+"ยอดจากพนักงานหน้าร้าน":"From the front counter","พนักงานยังไม่ได้คีย์ลูกค้าของวันนี้":"No customers entered today yet","ลูกค้า (สมาชิก / ทั่วไป)":"Customers (members / walk-ins)",
+"น้ำยา (คีย์รายคน)":"Soap (per customer)","ยอดที่พนักงานคีย์รวม":"Total entered by staff","พนักงานหน้าร้านเป็นคนบันทึก · ซองเล็ก 5 บาท · ซองใหญ่ 20 บาท":"Entered by front-counter staff · small 5 ฿ · large 20 ฿",
+"แลกแต้ม":"Redeem","แลกได้ถึง":"redeem by","ซองเล็ก":"small","ซองใหญ่":"large",
+"เงินสำรองในตู้":"Reserve cash","เงินสำรอง":"Reserve","รวมเงินสำรอง":"Reserve total","ครั้งก่อน":"Previous","เปลี่ยนแปลง":"Change","ล่าสุด":"latest","แบงก์ 1,000":"1,000 ฿ notes","แบงก์ 500":"500 ฿ notes","เหรียญ 10":"10 ฿ coins","เหรียญ 5":"5 ฿ coins","เหรียญ 2":"2 ฿ coins","เหรียญ 1":"1 ฿ coins","เงินสำรองในตู้ (หลังเติมตู้แลกเหรียญ)":"Reserve cash (after refilling changer)","นับหลังจากเติมเงินกลับเข้าตู้แลกเหรียญเรียบร้อยแล้ว · ใส่จำนวนใบ/เหรียญ · ยอดนี้ไม่นับเป็นรายรับ":"Count after refilling the coin changer · enter number of notes/coins · not counted as income",
+"ยอดขาย":"Sales","สแกนจ่ายที่เครื่องโดยตรง":"Scan at machines","รับเป็นเงินโอน (สแกนจ่าย · อยู่ในยอดขายแล้ว)":"Received by transfer (scan · already in sales)","รับเป็นเงินสด (ยอดขาย − สแกนจ่าย)":"Received in cash (sales − scan)","ยอดคีย์รายคน เทียบ ยอดขาย":"Entered per customer vs sales","สแกนที่เครื่อง":"Scan at machines",
+"ยอดเงินที่ลูกค้าสแกน QR หรือโอนจ่ายทั้งวัน ดูจากแอปธนาคาร · เป็นส่วนหนึ่งของยอดขาย (ลูกค้าโอนแล้วได้เหรียญไปหยอดตู้หรือซื้อน้ำยา) จึงไม่บวกเป็นรายรับซ้ำ":"All QR / transfer payments today from the bank app · part of sales (customers pay by transfer, get coins or soap), so not added again",
+"เครื่องซัก/อบรับสแกนจ่ายได้เอง (ไม่ต้องหยอดเหรียญ)":"Machines accept QR directly (no coins)",
+"ยอดสแกนจ่าย (บันทึกไว้ดู ไม่นำไปคำนวณ)":"Scan payments (record only, not counted)","ดูจากแอปธนาคาร · บันทึกไว้ดูอย่างเดียว ไม่นำไปรวมหรือหักกับยอดอื่น":"from the bank app · record only, not added to or taken from any total",
+"ออกจากระบบ":"Log out","ใบเสร็จ":"Receipt","ปริ้น":"Print","บันทึกรูป":"Save image","กำลังสร้างใบเสร็จ…":"Creating receipt…","ลูกค้าสแกน QR บนใบเสร็จหรือบนจอนี้ เพื่อดูแต้มล่าสุดได้ตลอด":"Customers scan the QR on the receipt or this screen to see their latest points","ลูกค้าทั่วไป ไม่มี QR สะสมแต้ม":"Walk-in customer, no points QR",
+"บัญชีพนักงาน":"Staff accounts","สร้างบัญชีพนักงาน":"Create staff account","ชื่อผู้ใช้ (ภาษาอังกฤษ)":"Username","รหัสผ่าน (อย่างน้อย 6 ตัว)":"Password (6+ characters)","ร้านและใบเสร็จ":"Shop & receipt","ชื่อร้าน (พิมพ์บนใบเสร็จ)":"Shop name (on receipt)","LINE ID ร้าน (พิมพ์บนใบเสร็จ)":"Shop LINE ID (on receipt)","กระดาษใบเสร็จ":"Receipt paper","ข้อความท้ายใบเสร็จ":"Receipt footer","รหัสออกจากหน้าบ้าน":"PIN to leave customer screen","ยังไม่มีบัญชีพนักงาน":"No staff accounts yet",
+"สมัครสมาชิกใหม่":"New member sign-up","ใส่ชื่อลูกค้า (จำเป็น)":"Customer name (required)","ใส่ชื่อแล้วกดบันทึก ระบบจะสมัครสมาชิกและสะสมแต้มครั้งนี้ให้เลย":"Enter a name and save: the member is created and earns points for this visit","เบอร์นี้ยังไม่เป็นสมาชิก":"This phone is not a member yet","เบอร์ใหม่ ใส่ชื่อลูกค้าเพื่อสมัครสมาชิกก่อน":"New phone: enter the customer's name first","พิมพ์เบอร์โทรลูกค้า (เว้นว่าง = ลูกค้าทั่วไป)":"Customer phone (empty = walk-in)","มาแล้ว":"visits:","แต้มครบ! แลกได้ถึง":"Points full! Redeem by","แต้ม แลกรางวัล":"pts to a reward","(ยังไม่มีชื่อ)":"(no name)","ชื่อ หรือชื่อเล่น (จำเป็น)":"Name (required)",
+"บันทึก":"Save","เพิ่ม":"Add","ภาษา":"Language","แล้ว":"✓"
+};
+const EN_KEYS=Object.keys(EN).sort((a,b)=>b.length-a.length);
+const TH_RE=/[฀-๿]/;
+const ORIG=new WeakMap();
+function trStr(s){let o=s;for(const k of EN_KEYS)if(o.includes(k))o=o.split(k).join(EN[k]);
+  if(TH_RE.test(o)){o=o.replace(/(อา|จ|อ|พฤ|พ|ศ|ส)\.\s/g,m=>({"อา.":"Sun","จ.":"Mon","อ.":"Tue","พ.":"Wed","พฤ.":"Thu","ศ.":"Fri","ส.":"Sat"}[m.trim()]||m)+" ")}
+  return o.replace(/\s{2,}/g," ")}
+const skip=n=>{const el=n.nodeType===1?n:n.parentElement;return !el||el.closest(".nt,#kiosk,script,style,datalist")};
+function trNode(n){
+  if(n.nodeType===3){if(!TH_RE.test(n.data)||skip(n))return;const t=trStr(n.data);if(t!==n.data){ORIG.set(n,n.data);n.data=t}return}
+  if(n.nodeType!==1||skip(n))return;
+  ["placeholder","aria-label","title"].forEach(a=>{const v=n.getAttribute(a);if(v&&TH_RE.test(v)){n.setAttribute("data-o-"+a,v);n.setAttribute(a,trStr(v))}});
+  const w=document.createTreeWalker(n,NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT);let x;
+  while((x=w.nextNode())){if(x.nodeType===3)trNode(x);else if(!skip(x))["placeholder","aria-label","title"].forEach(a=>{const v=x.getAttribute(a);if(v&&TH_RE.test(v)){x.setAttribute("data-o-"+a,v);x.setAttribute(a,trStr(v))}})}
+}
+const obs=new MutationObserver(ms=>{if(lang!=="en")return;for(const m of ms){if(m.type==="characterData")trNode(m.target);else m.addedNodes.forEach(trNode)}});
+function setLang(l){
+  lang=l;try{localStorage.setItem("lw_lang",l)}catch(e){}
+  document.documentElement.lang=l;$("lang-th").setAttribute("aria-pressed",l==="th");$("lang-en").setAttribute("aria-pressed",l==="en");
+  const back=$("back");
+  if(l==="en"){obs.observe(back,{subtree:true,childList:true,characterData:true});trNode(back)}
+  else{obs.disconnect();
+    const w=document.createTreeWalker(back,NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT);let x;
+    while((x=w.nextNode())){if(x.nodeType===3){if(ORIG.has(x)){x.data=ORIG.get(x);ORIG.delete(x)}}
+      else["placeholder","aria-label","title"].forEach(a=>{const o=x.getAttribute("data-o-"+a);if(o){x.setAttribute(a,o);x.removeAttribute("data-o-"+a)}})}}
+  if(!dirty)loadDay($("date").value,true);else{renderVisits();updateTotals()}
+  renderClaims();renderMonth();renderSoapPad();vFormState();if(!$("view-mem").hidden)renderMembers();
+}
+$("lang-th").onclick=()=>setLang("th");$("lang-en").onclick=()=>setLang("en");
+
+/* ===== boot ===== */
+function rerender(col){
+  if(col==="days"||col==="soap"){if(!dirty)loadDay($("date").value,true);else updateTotals();renderMonth();if(!soapLocal)renderSoapPad();return}
+  if(col==="members")renderDatalist();
+  renderVisits();renderClaims();vFormState();updateTotals();
+  if(!$("view-mem").hidden)renderMembers();if(!$("view-month").hidden)renderMonth();
+  if(!$("kiosk").hidden&&kMem&&!$("k-mem").hidden)kRenderMem();
+}
+function useLocal(reason){
+  mode="local";isOwnerAcct=true;authed=true;setStaff("เจ้าของร้าน (ทดลอง)");
+  COLS.forEach(c=>{try{S[c]=JSON.parse(localStorage.getItem("lw_"+c)||"{}")}catch(e){S[c]={}}});
+  try{Object.assign(config,JSON.parse(localStorage.getItem("lw_config")||"{}"))}catch(e){}
+  $("sync").textContent="โหมดทดลอง";$("storeNote").hidden=false;$("storeNote").textContent=reason;$("logout").hidden=true;
+  renderSettings();renderDatalist();COLS.forEach(rerender);route();
+}
+$("date").value=todayStr();$("month").value=todayStr().slice(0,7);$("mMonth").value=todayStr().slice(0,7);
+renderSettings();renderForm();renderVisits();renderClaims();renderMonth();
+if(lang==="en")setLang("en");
+
+/* ===== sign-in ===== */
+const authMsg=e=>({"auth/invalid-credential":"ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง","auth/wrong-password":"ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง","auth/user-not-found":"ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง",
+  "auth/invalid-email":"ชื่อผู้ใช้ไม่ถูกต้อง","auth/too-many-requests":"ลองผิดหลายครั้งเกินไป รอสักครู่แล้วลองใหม่","auth/network-request-failed":"ต่ออินเทอร์เน็ตไม่ได้",
+  "auth/email-already-in-use":"ชื่อผู้ใช้นี้มีคนใช้แล้ว","auth/weak-password":"รหัสผ่านต้องมีอย่างน้อย 6 ตัว"}[e&&e.code]||("เกิดข้อผิดพลาด ("+(e&&(e.code||e.message))+")"));
+function showLogin(panel){
+  authed=false;route();
+  ["lgForm","setupForm","noRole"].forEach(k=>$(k).hidden=k!==panel);
+}
+let unsubs=[];
+function stopData(){unsubs.forEach(u=>{try{u()}catch(e){}});unsubs=[];COLS.forEach(c=>S[c]={});staffRoles={}}
+function startData(){
+  mode="db";let ok=0;const want=isOwnerAcct?COLS:COLS.filter(c=>c!=="days");
+  const timer=setTimeout(()=>$("sync").textContent="ยังเชื่อมต่อไม่ได้…",10000);
+  const fail=err=>{clearTimeout(timer);$("sync").textContent="เชื่อมต่อขาด";$("storeNote").hidden=false;$("storeNote").textContent="การเชื่อมต่อฐานข้อมูลขาดไป ("+(err&&err.code)+") รีเฟรชหน้าเพื่อลองใหม่"};
+  want.forEach(col=>unsubs.push(fdb.collection(col).onSnapshot(snap=>{
+    if(!snap.metadata.fromCache&&++ok>=want.length){clearTimeout(timer);$("sync").textContent="ซิงก์แล้ว ✓"}
+    const n={};snap.docs.forEach(d=>n[d.id]=d.data());S[col]=n;rerender(col);
+  },fail)));
+  unsubs.push(ref("config","main").onSnapshot(d=>{if(d.exists){config=Object.assign({},config,d.data());renderSettings();updateTotals();if(!$("view-month").hidden)renderMonth();if(!$("back").hidden)applyMode()}},()=>{}));
+  if(isOwnerAcct)unsubs.push(fdb.collection("roles").onSnapshot(snap=>{const n={};snap.docs.forEach(d=>n[d.id]=d.data());staffRoles=n;renderStaffAccounts()},()=>{}));
+}
+$("lgForm").addEventListener("submit",async e=>{
+  e.preventDefault();$("lgErr").textContent="";$("lgGo").disabled=true;
+  try{await fauth.signInWithEmailAndPassword(userEmail($("lgUser").value),$("lgPass").value);$("lgPass").value=""}
+  catch(err){$("lgErr").textContent=authMsg(err)}
+  $("lgGo").disabled=false;
+});
+// first run only: the very first account becomes the shop owner (the security rules allow this once)
+$("setupForm").addEventListener("submit",async e=>{
+  e.preventDefault();$("suErr").textContent="";
+  const shop=$("suShop").value.trim(),name=$("suName").value.trim(),user=$("suUser").value.trim().toLowerCase(),pass=$("suPass").value;
+  if(!/^[a-z0-9._-]{3,30}$/.test(user)&&!user.includes("@")){$("suErr").textContent="ชื่อผู้ใช้ใช้ได้แค่ a-z 0-9 . _ - อย่างน้อย 3 ตัว";return}
+  try{
+    const cred=await fauth.createUserWithEmailAndPassword(userEmail(user),pass);
+    const b=fdb.batch();
+    b.set(ref("meta","owner"),{uid:cred.user.uid,createdAt:new Date().toISOString()});
+    b.set(ref("roles",cred.user.uid),{role:"owner",name,username:user,createdAt:new Date().toISOString()});
+    await b.commit();
+    await ref("config","main").set(Object.assign({},config,{shopName:shop}));
+    location.reload();
+  }catch(err){$("suErr").textContent=authMsg(err)}
+});
+$("nrOut").onclick=()=>fauth.signOut();
+$("lgForgot").onclick=async()=>{
+  const u=$("lgUser").value.trim();
+  if(!u.includes("@")){$("lgErr").textContent="พิมพ์อีเมลในช่องชื่อผู้ใช้ก่อน · บัญชีพนักงานที่ใช้ชื่อผู้ใช้ ให้เจ้าของร้านปิดบัญชีแล้วสร้างใหม่";return}
+  try{await fauth.sendPasswordResetEmail(u);$("lgErr").textContent="ส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่ "+u+" แล้ว"}catch(err){$("lgErr").textContent=authMsg(err)}
+};
+$("logout").onclick=()=>{if(fauth)fauth.signOut()};
+
+(async()=>{
+  if(!fbReady){useLocal("โหมดทดลอง: ยังไม่ได้เชื่อม Firebase ข้อมูลเก็บไว้ในเบราว์เซอร์นี้เท่านั้น ดูวิธีตั้งค่าในไฟล์ README");return}
+  firebase.initializeApp(FB);fdb=firebase.firestore();fauth=firebase.auth();
+  fauth.onAuthStateChanged(async u=>{
+    stopData();
+    if(!u){
+      let hasOwner=true;try{hasOwner=(await ref("meta","owner").get()).exists}catch(e){}
+      showLogin(hasOwner?"lgForm":"setupForm");return;
+    }
+    let r=null;try{const d=await ref("roles",u.uid).get();r=d.exists?d.data():null}catch(e){}
+    if(!r){showLogin("noRole");return}
+    myRole=r;isOwnerAcct=r.role==="owner";setStaff(r.name||userName(u.email));
+    if(!isOwnerAcct)viewMode="staff";
+    authed=true;$("storeNote").hidden=true;startData();route();
+  });
+})();
+</script>
+
+</body>
+</html>

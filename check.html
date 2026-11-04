@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#29abe2">
+<meta name="robots" content="noindex">
+<title>เช็คแต้มสะสม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one narrow column — points hero on the shop's teal band, then visit history */
+:root{
+  --bg:#fbf5ea; --surface:#ffffff; --sunk:#f4ead8; --line:#e6d6bb;
+  --fg:#3d2a14; --muted:#7a6248;
+  --accent:#2f7d32; --accent-ink:#ffffff; --accent-soft:#e1f1da;
+  --coin:#b8620a; --coin-soft:#fde8c8; --sky:#29abe2; --sky-soft:#d6f1fc; --good:#2f7d32; --bad:#b23a26;
+  --font:"IBM Plex Sans Thai",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#1b150e; --surface:#251d14; --sunk:#16110b; --line:#3e3222;
+  --fg:#f5ead7; --muted:#b6a185;
+  --accent:#7cc96e; --accent-ink:#10240c; --accent-soft:#233a1d;
+  --coin:#f2a64a; --coin-soft:#3c2a14; --sky:#5cc8f2; --sky-soft:#13303c; --good:#7cc96e; --bad:#f08a72; color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.5}
+.band{background:linear-gradient(180deg,var(--sky-soft),var(--bg));color:var(--fg);padding-top:env(safe-area-inset-top,0px)}
+.logo{display:block;width:100%;max-width:300px;height:auto;margin:0 auto 6px}
+.mascot{display:block;width:100%;height:auto;margin:0 auto;pointer-events:none}
+.pts b{color:var(--accent)}
+.wrap{max-width:520px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.band .wrap{padding-block:22px 26px;display:flex;flex-direction:column;gap:4px}
+.shop{font-size:14px;color:var(--muted);font-weight:600}
+.phone{font-family:var(--mono);font-size:15px;color:var(--muted)}
+.pts{display:flex;align-items:baseline;gap:8px;margin-top:8px}
+.pts b{font-family:var(--mono);font-size:64px;line-height:1}
+.pts span{font-size:20px;font-weight:600}
+.drums{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.drum{width:26px;height:26px;border-radius:50%;border:3px solid var(--line);background:var(--surface)}
+.drum.on{border-color:var(--coin);background:radial-gradient(circle,var(--coin-soft) 0 38%,var(--coin) 40%)}
+.goal{margin:10px 0 0;font-size:16px;font-weight:600}
+.goal.urgent{background:var(--surface);color:var(--bad);border-radius:10px;padding:8px 12px;border:1px solid var(--bad)}
+main{padding-block:16px 40px;display:flex;flex-direction:column;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.card h2{margin:0;font-size:15px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stats div{background:var(--sunk);border-radius:10px;padding:10px;min-width:0}
+.stats small{display:block;font-size:12px;color:var(--muted)}
+.stats b{font-family:var(--mono);font-size:19px;overflow-wrap:anywhere}
+.list{display:flex;flex-direction:column}
+.item{display:grid;grid-template-columns:1fr auto;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);align-items:center}
+.item:last-child{border-bottom:none}
+.item .d{font-weight:600}
+.item .s{font-size:13px;color:var(--muted)}
+.item .r{text-align:right;font-family:var(--mono)}
+.item .r small{display:block;font-size:12px}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+.hint{font-size:12px;color:var(--muted);margin:0}
+.empty{text-align:center;color:var(--muted);padding:40px 16px}
+#body{display:flex;flex-direction:column;gap:14px}
+.more{border:1px solid var(--line);background:transparent;color:var(--accent);border-radius:10px;padding:8px;font:inherit;font-weight:600;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="band"><div class="wrap">
+  <img class="logo" src="img/logo.webp" alt="QUINN Wash &amp; Dry" width="1000" height="366">
+  <div class="shop" id="shop"></div>
+  <div class="phone" id="phone"></div>
+  <div class="pts"><b id="pts">–</b><span>แต้ม</span></div>
+  <div class="drums" id="drums" aria-hidden="true"></div>
+  <p class="goal" id="goal">กำลังโหลด…</p>
+  <img class="mascot" id="rewardArt" src="img/reward.webp" alt="" width="720" height="476" style="max-width:280px;margin-top:8px" hidden>
+</div></div>
+<main class="wrap">
+  <div id="body" hidden>
+    <section class="card">
+      <div class="stats">
+        <div><small>มาใช้บริการ</small><b id="sVisits">0</b></div>
+        <div><small>เดือนนี้</small><b id="sMonth">0</b></div>
+        <div><small>ยอดสะสม (บาท)</small><b id="sSpent">0</b></div>
+      </div>
+      <p class="hint" id="rules"></p>
+    </section>
+    <section class="card">
+      <h2>ประวัติการใช้บริการ <span class="hint" id="cnt"></span></h2>
+      <div class="list" id="hist"></div>
+      <button class="more" id="more" hidden>ดูเพิ่ม</button>
+    </section>
+    <p class="hint" id="line" style="text-align:center;font-size:14px" hidden></p>
+    <img class="mascot" src="img/thanks.webp" alt="ขอบคุณที่ใช้บริการ" width="720" height="487" style="max-width:240px">
+    <p class="hint" style="text-align:center;font-size:14px;font-weight:600;color:var(--fg)">ขอบคุณที่ใช้บริการค่ะ</p>
+    <p class="hint" id="upd" style="text-align:center"></p>
+  </div>
+  <div class="empty" id="none" hidden><img class="mascot" src="img/welcome.webp" alt="" width="720" height="591" style="max-width:220px;margin-bottom:12px">ไม่พบข้อมูลสมาชิกจากคิวอาร์โค้ดนี้<br>กรุณาสอบถามพนักงานที่ร้าน</div>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="config.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const THM=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+const pad=n=>String(n).padStart(2,"0");
+const ymd=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const today=ymd(new Date());
+const shift=(ds,n)=>{const d=new Date(ds+"T00:00:00");d.setDate(d.getDate()+n);return ymd(d)};
+const thaiDate=ds=>{const d=new Date(ds+"T00:00:00");return d.getDate()+" "+THM[d.getMonth()]+" "+(d.getFullYear()+543)};
+const fmt=n=>(Math.round(n)||0).toLocaleString("th-TH");
+const daysLeft=ds=>Math.round((new Date(ds+"T00:00:00")-new Date(today+"T00:00:00"))/864e5);
+
+// same rule as the shop system: when points reach a full set, it must be redeemed within N days or that set is cut
+function replay(p){
+  const goal=p.goal||10, days=p.days==null?30:p.days;
+  const ev=(p.events||[]).slice().sort((a,b)=>(a.d+a.t).localeCompare(b.d+b.t));
+  let bal=0,since=null;const expired=[];
+  const cut=ds=>{while(days&&since&&bal>=goal&&shift(since,days)<ds){const last=shift(since,days);expired.push({d:shift(last,1),p:goal});bal-=goal;since=bal>=goal?shift(last,1):null}};
+  for(const e of ev){cut(e.d);bal+=e.p;if(bal>=goal){if(!since||e.r)since=e.d}else since=null}
+  cut(today);
+  return {bal,goal,expired,deadline:days&&since&&bal>=goal?shift(since,days):null};
+}
+
+let all=[],shown=12;
+function render(p){
+  const st=replay(p);
+  document.title="แต้มสะสม "+st.bal+" แต้ม"+(p.shop?" · "+p.shop:"");
+  $("shop").textContent=p.shop||"";if(p.shopLine){$("line").textContent="ติดต่อร้าน LINE ID : "+p.shopLine;$("line").hidden=false}$("rewardArt").hidden=!(st.bal>=st.goal);
+  $("phone").textContent="สมาชิก "+(p.phone||"");
+  $("pts").textContent=st.bal;
+  const filled=Math.min(st.goal,st.bal);
+  $("drums").innerHTML=st.goal<=30?Array.from({length:st.goal},(_,i)=>`<span class="drum ${i<filled?"on":""}"></span>`).join(""):"";
+  const rw=(p.rewards||[]).filter(r=>r.pts===st.goal), rwTxt=rw.map(r=>r.name).join(" หรือ ")+(rw.length&&rw[0].value?" (ลดได้ "+rw[0].value+" บาท)":"");
+  const g=$("goal");
+  if(st.deadline){const l=daysLeft(st.deadline);g.textContent="แต้มครบแล้ว! แลก"+rwTxt+" ได้ถึง "+thaiDate(st.deadline)+" (เหลือ "+l+" วัน)";g.classList.toggle("urgent",l<=7)}
+  else g.textContent="อีก "+(st.goal-st.bal)+" แต้ม แลก"+rwTxt;
+  const vs=p.visits||[];
+  $("sVisits").textContent=fmt(p.visitCount||vs.length);
+  $("sMonth").textContent=fmt(vs.filter(v=>v.d.startsWith(today.slice(0,7))).length);
+  $("sSpent").textContent=fmt(p.spent||0);
+  $("rules").textContent="ซัก 1 ถัง = 1 แต้ม · อบ 1 ถัง = 1 แต้ม"+(p.days?" · แต้มครบแล้วต้องแลกภายใน "+p.days+" วัน":"");
+  all=[...vs.map(v=>({d:v.d,t:v.t||"",k:"v",v})),
+       ...(p.events||[]).filter(e=>e.r).map(e=>({d:e.d,t:e.t?new Date(e.t).toTimeString().slice(0,5):"",k:"r",e})),
+       ...st.expired.map(x=>({d:x.d,t:"",k:"x",x}))].sort((a,b)=>(b.d+b.t).localeCompare(a.d+a.t));
+  $("cnt").textContent=all.length+" รายการ";
+  drawList();
+  $("upd").textContent=p.updatedAt?"ข้อมูลล่าสุด "+thaiDate(p.updatedAt.slice(0,10))+" "+new Date(p.updatedAt).toTimeString().slice(0,5)+" น.":"";
+  $("body").hidden=false;
+}
+function drawList(){
+  $("hist").innerHTML=all.slice(0,shown).map(h=>{
+    if(h.k==="v"){const v=h.v,parts=[];if(v.w)parts.push("ซัก "+v.w+" ถัง");if(v.dr)parts.push("อบ "+v.dr+" ถัง");
+      return `<div class="item"><div><div class="d">${thaiDate(v.d)}${v.t?" · "+v.t+" น.":""}</div><div class="s">${parts.join(" · ")||"ใช้บริการ"}</div></div><div class="r">${fmt(v.a)} ฿<small class="pos">+${v.p} แต้ม</small></div></div>`}
+    if(h.k==="r")return `<div class="item"><div><div class="d">${thaiDate(h.d)}</div><div class="s">แลกรางวัล ${(h.e.n||"").replace(/[<>&]/g,"")}</div></div><div class="r neg">${h.e.p} แต้ม</div></div>`;
+    return `<div class="item"><div><div class="d">${thaiDate(h.d)}</div><div class="s">แต้มหมดอายุ (ไม่ได้แลกภายในเวลาที่กำหนด)</div></div><div class="r neg">−${h.x.p} แต้ม</div></div>`;
+  }).join("")||'<p class="hint">ยังไม่มีประวัติ</p>';
+  $("more").hidden=all.length<=shown;
+}
+$("more").onclick=()=>{shown+=20;drawList()};
+function notFound(){$("goal").textContent="";$("pts").textContent="–";$("none").hidden=false}
+
+(async()=>{
+  const token=decodeURIComponent(location.hash.slice(1)).replace(/[^a-z0-9]/gi,"");
+  if(!token){notFound();return}
+  const FB=window.FIREBASE_CONFIG||null;
+  const ready=!!(FB&&FB.apiKey&&!/ใส่|YOUR_/i.test(FB.apiKey)&&window.firebase);
+  if(!ready){ // demo mode: read what the shop system saved in this same browser
+    let p=null;try{p=JSON.parse(localStorage.getItem("lw_public")||"{}")[token]||null}catch(e){}
+    p?render(p):notFound();return;
+  }
+  try{firebase.initializeApp(FB);const d=await firebase.firestore().collection("public").doc(token).get();d.exists?render(d.data()):notFound()}
+  catch(e){$("goal").textContent="โหลดข้อมูลไม่ได้ ลองใหม่อีกครั้ง";console.warn(e)}
+})();
+</script>
+</body>
+</html>
