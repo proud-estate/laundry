@@ -463,7 +463,7 @@ img{max-width:100%}
   </section>
   <section class="card">
     <h2><span class="h-ic"><span class="icbox coin"><svg class="ic"><use href="#i-safe"/></svg></span>เงินสำรองในตู้</span> <span class="tot coin num" id="t-res">0</span></h2>
-    <p class="hint">นับเงินที่เหลือในตู้จริง <b>หลังเติมตู้แลกเหรียญ และหลังแยกเงินให้พนักงานแลกวันถัดไปออกแล้ว</b> · ใส่จำนวนใบ/เหรียญ · ยอดนี้ไม่นับเป็นรายรับ</p>
+    <p class="hint">นับ<b>เงินทั้งหมดในตู้</b> ทุกใบทุกเหรียญ หลังเติมตู้แลกเหรียญแล้ว (ยังไม่ต้องหยิบเงินให้พนักงานออก) · ระบบหักเงินที่แยกไว้ให้พนักงานให้เอง · ยอดนี้ไม่นับเป็นรายรับ</p>
     <div class="grid" id="g-res"></div>
     <div class="sum" id="resDiff"></div>
   </section>
@@ -809,6 +809,8 @@ const NOTES=[["b100","แบงก์ 100",100],["b50","แบงก์ 50",50],
 const RES=[["r1000","แบงก์ 1,000",1000],["r500","แบงก์ 500",500],["r100","แบงก์ 100",100],["r50","แบงก์ 50",50],["r20","แบงก์ 20",20],
   ["rc10","เหรียญ 10",10],["rc5","เหรียญ 5",5],["rc2","เหรียญ 2",2],["rc1","เหรียญ 1",1]];
 const resTotal=r=>RES.reduce((t,[k,,p])=>t+int(r&&r[k])*p,0);
+// what stays in the box after the float for the next day is taken out
+const resNet=r=>resTotal(r)-(r&&Array.isArray(r.floats)?r.floats.reduce((t,f)=>t+int(f.g),0):0);
 // a day counts as a reserve count only when something was actually counted (saving a day writes zeros for every denomination)
 const hasRes=r=>!!r&&RES.some(([k])=>int(r[k])>0);
 const CATS=["ค่าไฟ","ค่าน้ำ","ค่าแก๊ส","ค่าถุง","ซื้อน้ำยา","ค่าแรง","ค่าเช่า","ซ่อมเครื่อง","อื่น ๆ (ระบุเอง)"];
@@ -1054,26 +1056,27 @@ function updateTotals(){
   const live=Object.assign({},cur,soapOf(S.soap[cur.date]));
   const c=calcDay(live);
   $("t-coin").textContent=fmt(c.coin)+" ฿";$("t-scan").textContent=fmt(c.scan)+" ฿";
-  const res=resTotal(cur);$("t-res").textContent=fmt(res)+" ฿";
+  // the owner counts ALL cash in the box, then takes out the float for tomorrow; what stays is the reserve
+  const res=resTotal(cur), fl=floatTot(cur).g, net=res-fl;$("t-res").textContent=fmt(res)+" ฿";
   const prevDs=Object.keys(S.days).filter(d=>d<cur.date&&hasRes(S.days[d])).sort().pop();
   const Lr=(a,b,cls="")=>`<div class="l ${cls}"><span>${a}</span><span>${b}</span></div>`;
-  let resHtml=Lr("นับได้จริง",fmt(res)+" ฿","big");
+  const tail=Lr("− แยกไว้ให้พนักงานแลกวันถัดไป","−"+fmt(fl)+" ฿","sub")+Lr("เงินสำรองในตู้คงเหลือ",`<span class="${net<0?"neg":""}">${fmt(net)} ฿</span>`,"big");
+  let resHtml=Lr("นับได้ทั้งหมดในตู้",fmt(res)+" ฿","big")+tail;
   if(prevDs){
     // every day from the day after the last count up to today: cash in, minus cash taken out of the box
     const days=[];for(let d=shift(prevDs,1);d<=cur.date;d=shift(d,1))days.push(d);
     const flow=days.map(d=>cashFlow(d===cur.date?live:(D(d)||{date:d}))).reduce((a,b)=>{for(const k in b)a[k]=(a[k]||0)+b[k];return a},{});
-    const expect=resTotal(S.days[prevDs])+flow.inn-flow.out, diff=res-expect;
-    resHtml=Lr("เงินสำรองครั้งก่อน ("+thaiDate(prevDs)+")",fmt(resTotal(S.days[prevDs]))+" ฿","sub")
+    const prev=resNet(S.days[prevDs]), all=prev+flow.inn-flow.out+fl, diff=res-all;
+    resHtml=Lr("เงินสำรองในตู้คงเหลือครั้งก่อน ("+thaiDate(prevDs)+")",fmt(prev)+" ฿","sub")
       +Lr("+ รวมรายรับ (เหรียญตู้ + น้ำยา)"+(days.length>1?" ("+days.length+" วัน)":""),fmt(flow.inc)+" ฿","sub")
       +Lr("+ เงินตู้แลกสุทธิ (แบงก์ "+fmt(flow.chg)+" − เติมคืน "+fmt(flow.refill)+")",fmt(flow.chg-flow.refill)+" ฿","sub")
       +Lr("+ เงินแลกที่ให้พนักงานไปเมื่อวาน (คืนมาแล้ว)",fmt(flow.back)+" ฿","sub")
       +Lr("− ค่าใช้จ่ายที่จ่ายเงินสดจากตู้",fmt(flow.exp)+" ฿","sub")
-      +Lr("ควรนับได้ทั้งหมด (ก่อนแยกเงินให้พนักงาน)",fmt(expect+floatTot(cur).g)+" ฿","top")
-      +Lr("− แยกไว้ให้พนักงานแลกวันถัดไป",fmt(floatTot(cur).g)+" ฿","sub")
-      +Lr("ยอดที่ควรเหลือในตู้",fmt(expect)+" ฿","top")
-      +resHtml
-      +(hasRes(cur)||res?Lr(diff===0?"เงินตรง ✓":diff<0?"เงินขาด":"เงินเกิน",`<span class="${diff===0?"pos":diff<0?"neg":"coin"}">${diff===0?"0":(diff>0?"+":"−")+fmt(Math.abs(diff))} ฿</span>`,"big"):"");
-  } else resHtml+='<p class="hint">ยังไม่มีเงินสำรองที่นับไว้ก่อนหน้า · ยอดที่นับวันนี้จะเป็น<b>ยอดตั้งต้น</b> พรุ่งนี้ระบบจะเริ่มคำนวณยอดที่ควรเหลือและเทียบให้</p>';
+      +Lr("ควรนับได้ทั้งหมดในตู้",fmt(all)+" ฿","top")
+      +Lr("นับได้ทั้งหมดในตู้",fmt(res)+" ฿","big")
+      +(hasRes(cur)?Lr(diff===0?"เงินตรง ✓":diff<0?"เงินขาด":"เงินเกิน",`<span class="${diff===0?"pos":diff<0?"neg":"coin"}">${diff===0?"0":(diff>0?"+":"−")+fmt(Math.abs(diff))} ฿</span>`,"big"):"")
+      +tail;
+  } else resHtml+='<p class="hint">ยังไม่มีเงินสำรองที่นับไว้ก่อนหน้า · ยอดวันนี้จะเป็น<b>ยอดตั้งต้น</b> พรุ่งนี้ระบบจะเริ่มคำนวณและเทียบให้</p>';
   $("resDiff").innerHTML=resHtml;
   $("t-soap").textContent=fmt(c.packSoap)+" ฿";$("t-chg").textContent=fmt(c.chg)+" ฿";$("t-exp").textContent=fmt(c.exp)+" ฿";
   const expT=(cur.expenses||[]).filter(e=>e.p==="transfer").reduce((t,e)=>t+(+e.a||0),0);
@@ -1122,7 +1125,9 @@ function updateTotals(){
     L("ยอดสแกนจ่ายรายวัน (บันทึกไว้ดู ไม่นำไปคำนวณ)",fmt(c.scan)+" ฿","sub")+
     L("<b>4. เงินสดให้พนักงานแลก</b> <small>(ไม่นับเป็นรายรับ)</small>","","top")+
     L("ให้ไปเมื่อวาน (คืนมาแล้ว อยู่ในเงินที่นับวันนี้)",fmt(prevFloat(cur.date).g)+" ฿")+L("แยกไว้ให้พนักงานวันถัดไป",fmt(ft.g)+" ฿")+
-    L("เงินสำรองในตู้คงเหลือที่นับได้ (หลังเติมตู้แลกเหรียญ และหักเงินสำรองให้พนักงาน)",fmt(resTotal(cur))+" ฿","top");
+    L("เงินในตู้ที่นับได้ทั้งหมด",fmt(resTotal(cur))+" ฿","top")+
+    L("− แยกไว้ให้พนักงานวันถัดไป","−"+fmt(ft.g)+" ฿")+
+    L("เงินสำรองในตู้คงเหลือ",fmt(resNet(cur))+" ฿","big");
 }
 function touch(){dirty=true;updateTotals();updFloat();$("save").disabled=false;$("saveSt").textContent="มีการแก้ไขที่ยังไม่บันทึก"}
 function confirmLeave(){
@@ -1484,10 +1489,10 @@ function renderMonth(){
     ["coins","scan","soap","chg","inc","exp","net","redeem"].forEach(k=>T[k]+=c[k]);T.coin+=c.machine;
     if(r){sp.det+=(r.det_s||0)*5+(r.det_l||0)*20;sp.soft+=(r.soft_s||0)*5+(r.soft_l||0)*20;
       (r.expenses||[]).forEach(e=>{const k=expLabel(e);cat[k]=(cat[k]||0)+(+e.a||0)})}
-    rows+=`<tr class="click" data-d="${ds}"><td>${THD[new Date(ds+"T00:00:00").getDay()]} ${d}${r?"":' <span class="chip coin">ยังไม่ปิดยอด</span>'}</td><td>${vs.length}</td><td>${fmt(c.machine)}<small>${fmt(c.coins)} เหรียญ</small></td><td>${fmt(c.scan)}</td><td>${fmt(c.soap)}</td><td>${fmt(c.chg)}</td><td class="neg">${c.redeem?"−"+fmt(c.redeem):"–"}</td><td>${fmt(c.inc)}</td><td class="neg">${c.exp?fmt(c.exp):"–"}</td><td class="${c.net<0?"neg":""}">${fmt(c.net)}</td><td>${fmt(run)}</td><td>${r&&hasRes(r)?fmt(resTotal(r)):"–"}</td></tr>`;
+    rows+=`<tr class="click" data-d="${ds}"><td>${THD[new Date(ds+"T00:00:00").getDay()]} ${d}${r?"":' <span class="chip coin">ยังไม่ปิดยอด</span>'}</td><td>${vs.length}</td><td>${fmt(c.machine)}<small>${fmt(c.coins)} เหรียญ</small></td><td>${fmt(c.scan)}</td><td>${fmt(c.soap)}</td><td>${fmt(c.chg)}</td><td class="neg">${c.redeem?"−"+fmt(c.redeem):"–"}</td><td>${fmt(c.inc)}</td><td class="neg">${c.exp?fmt(c.exp):"–"}</td><td class="${c.net<0?"neg":""}">${fmt(c.net)}</td><td>${fmt(run)}</td><td>${r&&hasRes(r)?fmt(resNet(r)):"–"}</td></tr>`;
   }
   const has=rows!=="";
-  const lastResDay=Object.keys(S.days).filter(d=>d.startsWith(m)&&hasRes(S.days[d])).sort().pop(), lastRes=lastResDay?resTotal(S.days[lastResDay]):null;
+  const lastResDay=Object.keys(S.days).filter(d=>d.startsWith(m)&&hasRes(S.days[d])).sort().pop(), lastRes=lastResDay?resNet(S.days[lastResDay]):null;
   $("mBody").innerHTML=has?rows:`<tr><td colspan="12"><div class="empty">ยังไม่มีบันทึกของ ${THM[mo-1]} ${y+543}<br>เริ่มกรอกที่แท็บ “รายวัน”</div></td></tr>`;
   $("mFoot").innerHTML=has?`<tr><td>รวม</td><td>${T.heads}</td><td>${fmt(T.coin)}<small>${fmt(T.coins)} เหรียญ</small></td><td>${fmt(T.scan)}</td><td>${fmt(T.soap)}</td><td>${fmt(T.chg)}</td><td class="neg">${T.redeem?"−"+fmt(T.redeem):"–"}</td><td>${fmt(T.inc)}</td><td>${fmt(T.exp)}</td><td>${fmt(T.net)}</td><td></td><td>${lastRes!=null?fmt(lastRes)+"<small>ล่าสุด</small>":"–"}</td></tr>`:"";
   $("m-inc").textContent=fmt(T.inc);$("m-exp").textContent=fmt(T.exp);
@@ -1525,11 +1530,11 @@ function buildWorkbook(scope){
   // daily
   const dHead=[L("วันที่","Date"),L("ลูกค้า (คน)","Customers"),L("เหรียญ 10 บาท ตู้ซัก+อบ (เหรียญ)","10฿ coins washers+dryers"),L("เงินเหรียญ (บาท)","Coins ฿"),L("ยอดสแกนจ่าย (บาท)","Scan/transfer ฿"),
     ...SOAP.map(([,l])=>l+L(" (ซอง)"," (packs)")),L("ค่าน้ำยา","Soap ฿"),...NOTES.map(([,l])=>l+L(" (ใบ)"," (notes)")),L("ตู้แลกเหรียญ","Changer ฿"),L("เติมเหรียญคืนตู้แลก (เหรียญ)","Refill coins"),L("เติมเหรียญคืนตู้แลก (บาท)","Refill ฿"),L("ให้พนักงานแลก (บาท)","Float given ฿"),L("ให้ไปเมื่อวาน คืนมาแล้ว (บาท)","Yesterday float back ฿"),L("หักยอดแลกแต้มซักฟรี (บาท)","Free-wash redemptions ฿"),
-    L("รายรับ","Income"),L("ค่าใช้จ่าย","Expenses"),L("คงเหลือ","Balance"),L("คงเหลือสะสม","Running"),...RES.map(([,l])=>L("สำรอง ","Reserve ")+l),L("เงินสำรองรวม","Reserve total"),L("หมายเหตุ","Note")];
+    L("รายรับ","Income"),L("ค่าใช้จ่าย","Expenses"),L("คงเหลือ","Balance"),L("คงเหลือสะสม","Running"),...RES.map(([,l])=>L("สำรอง ","Reserve ")+l),L("เงินสำรองคงเหลือ (หลังแยกให้พนักงาน)","Reserve left (after float)"),L("หมายเหตุ","Note")];
   let run=0;const T={heads:0,coins:0,coin:0,scan:0,soap:0,chg:0,inc:0,exp:0,net:0};
   const dRows=dates.map(ds=>{const r=D(ds)||blankDay(ds),c=calcDay(r),h=visitsOn(ds).length;run+=c.net;
     T.heads+=h;["coins","coin","scan","soap","chg","inc","exp","net"].forEach(k=>T[k]+=c[k]);
-    return [ds,h,c.coins,c.coin,c.scan,...SOAP.map(([k])=>+r[k]||0),c.soap,...NOTES.map(([k])=>+r[k]||0),c.chg,int(r.refill),int(r.refill)*10,floatTot(r).g,prevFloat(ds).g,c.redeem,c.inc,c.exp,c.net,run,...RES.map(([k])=>hasRes(r)?int(r[k]):""),hasRes(r)?resTotal(r):"",r.note||""]});
+    return [ds,h,c.coins,c.coin,c.scan,...SOAP.map(([k])=>+r[k]||0),c.soap,...NOTES.map(([k])=>+r[k]||0),c.chg,int(r.refill),int(r.refill)*10,floatTot(r).g,prevFloat(ds).g,c.redeem,c.inc,c.exp,c.net,run,...RES.map(([k])=>hasRes(r)?int(r[k]):""),hasRes(r)?resNet(r):"",r.note||""]});
   // visits
   const vRows=Object.values(S.visits).filter(v=>inScope(v.date)).sort((a,b)=>(a.date+(a.at||"")).localeCompare(b.date+(b.at||"")))
     .map(v=>[v.date,hhmm(v.at),v.memberId?mname(v.memberId):L("ลูกค้าทั่วไป","Walk-in"),v.memberId||"",v.memberId?L("สมาชิก","Member"):L("ทั่วไป","Walk-in"),
