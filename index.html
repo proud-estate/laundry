@@ -1042,8 +1042,8 @@ function cashFlow(r){
   const c=calcDay(r), refill=int(r.refill)*10,
     exp=(r.expenses||[]).filter(e=>(e.p||"cash")==="cash").reduce((t,e)=>t+(+e.a||0),0);
   const ft=floatTot(r);
-  // cash box: income (coins + soap) + changer notes + float change returned − coins refilled − float given; expenses and free-wash coins don't leave the box count
-  return {inc:c.machine+c.soap,chg:c.chg,inn:c.machine+c.soap+c.chg+ft.b,out:refill+ft.g,refill,exp,flt:ft.g,back:ft.b};
+  // cash box: income (coins + soap) + changer notes + float change returned − coins refilled − float given − expenses paid in cash (transfers don't touch the box)
+  return {inc:c.machine+c.soap,chg:c.chg,inn:c.machine+c.soap+c.chg+ft.b,out:refill+ft.g+exp,refill,exp,flt:ft.g,back:ft.b};
 }
 const soapOf=r=>{const o={};SOAP.forEach(([k])=>o[k]=int(r&&r[k]));return o};
 const L0=(a,b,cls="")=>`<div class="l ${cls}"><span>${a}</span><span>${b}</span></div>`;
@@ -1065,6 +1065,7 @@ function updateTotals(){
       +Lr("+ เงินทอนที่พนักงานเอามาคืน",fmt(flow.back)+" ฿","sub")
       +Lr("+ เงินตู้แลกสุทธิ (แบงก์ "+fmt(flow.chg)+" − เติมคืน "+fmt(flow.refill)+")",fmt(flow.chg-flow.refill)+" ฿","sub")
       +Lr("− เงินสดให้พนักงานแลก",fmt(flow.flt)+" ฿","sub")
+      +Lr("− ค่าใช้จ่ายที่จ่ายเงินสดจากตู้",fmt(flow.exp)+" ฿","sub")
       +Lr("ยอดที่ควรเหลือ",fmt(expect)+" ฿","top")
       +resHtml
       +(hasRes(cur)||res?Lr(diff===0?"เงินตรง ✓":diff<0?"เงินขาด":"เงินเกิน",`<span class="${diff===0?"pos":diff<0?"neg":"coin"}">${diff===0?"0":(diff>0?"+":"−")+fmt(Math.abs(diff))} ฿</span>`,"big"):"");
