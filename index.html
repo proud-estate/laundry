@@ -1092,7 +1092,7 @@ function updateTotals(){
   {const fs=frontSales(cur.date,live);
    $("t-ownHeads").textContent=fmt(fs.total)+" ฿";
    $("ownCust").innerHTML=fs.total||heads?frontSalesHtml(fs,L):'<p class="hint">พนักงานยังไม่ได้ลงยอดขายของวันนี้</p>';}
-  const fs=frontSales(cur.date,live), md=c.coin-c.redeem-c.keyedWD;
+  const fs=frontSales(cur.date,live), md=c.coin-c.keyedWD;
   const ft=floatTot(cur), rf=int(cur.refill)*10;
   $("daySum").innerHTML=
     L("<b>1. ยอดขายวันนี้ที่พนักงานลง</b> <small>(ดูอย่างเดียว ไม่เอาไปคิดเงิน)</small>","")+
@@ -1109,7 +1109,7 @@ function updateTotals(){
     L("− ค่าใช้จ่าย","−"+fmt(c.exp)+" ฿")+
     L("− หักยอดแลกแต้มซักฟรี ("+c.rdn+" ครั้ง)","−"+fmt(c.redeem)+" ฿")+
     L("รายรับจริง",`<span class="${c.net<0?"neg":"pos"}">${fmt(c.net)} ฿</span>`,"big")+
-    (c.coins&&c.keyedWD?L(md===0?"เหรียญหลังหักแลกแต้ม เทียบกับซัก+อบที่พนักงานลง: ตรง ✓":md<0?"เหรียญหลังหักแลกแต้ม เทียบกับซัก+อบที่พนักงานลง: ขาด":"เหรียญหลังหักแลกแต้ม เทียบกับซัก+อบที่พนักงานลง: เกิน",`<span class="${md===0?"pos":md<0?"neg":"coin"}">${md===0?"0":(md>0?"+":"−")+fmt(Math.abs(md))} ฿</span>`,"sub"):"")+
+    (c.coins&&c.keyedWD?L(md===0?"เหรียญตู้ทั้งหมด (ยังไม่หักซักฟรี) เทียบกับซัก+อบที่พนักงานลง: ตรง ✓":md<0?"เหรียญตู้ทั้งหมด (ยังไม่หักซักฟรี) เทียบกับซัก+อบที่พนักงานลง: ขาด":"เหรียญตู้ทั้งหมด (ยังไม่หักซักฟรี) เทียบกับซัก+อบที่พนักงานลง: เกิน",`<span class="${md===0?"pos":md<0?"neg":"coin"}">${md===0?"0":(md>0?"+":"−")+fmt(Math.abs(md))} ฿</span>`,"sub"):"")+
     L("<b>3. ตู้แลกเหรียญ</b>","","top")+
     L("แบงก์ในตู้แลกเหรียญ",fmt(c.chg)+" ฿")+
     L("− เติมเหรียญคืนตู้แลก ("+fmt(int(cur.refill))+" เหรียญ)","−"+fmt(rf)+" ฿")+
@@ -1117,7 +1117,7 @@ function updateTotals(){
     L("ยอดสแกนจ่ายรายวัน (บันทึกไว้ดู ไม่นำไปคำนวณ)",fmt(c.scan)+" ฿","sub")+
     L("<b>4. เงินสดให้พนักงานแลก</b> <small>(ไม่นับเป็นรายรับ)</small>","","top")+
     L("ให้ไป",fmt(ft.g)+" ฿")+L("คืนมา",fmt(ft.b)+" ฿")+
-    L("เงินสำรองในตู้คงเหลือที่นับได้ (หลังเติมตู้แลกเหรียญ)",fmt(resTotal(cur))+" ฿","top");
+    L("เงินสำรองในตู้คงเหลือที่นับได้ (หลังเติมตู้แลกเหรียญ และหักเงินสำรองให้พนักงาน)",fmt(resTotal(cur))+" ฿","top");
 }
 function touch(){dirty=true;updateTotals();updFloat();$("save").disabled=false;$("saveSt").textContent="มีการแก้ไขที่ยังไม่บันทึก"}
 function confirmLeave(){
