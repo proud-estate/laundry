@@ -423,8 +423,8 @@ img{max-width:100%}
     <h2><span class="h-ic"><span class="icbox coin"><svg class="ic"><use href="#i-gift"/></svg></span>หักยอดแลกแต้มซักฟรี</span> <span class="tot neg num" id="t-redeem">0 ฿</span></h2>
     <p class="hint">ตอนลูกค้าแลกแต้ม ร้านหยอดเหรียญของร้านเองลงตู้ เหรียญนี้จึงอยู่ในยอดที่นับจากตู้ แต่ไม่ใช่เงินที่ลูกค้าจ่าย · ระบบดึงจากการแลกแต้มที่พนักงานบันทึกในวันนี้ แล้วหักออกจากรายรับให้อัตโนมัติ</p>
     <div class="sum" id="redeemList"></div>
-    <h3 style="margin:16px 0 4px;font-size:15px">แลกแต้มนอกระบบ</h3>
-    <p class="hint">การแลกที่ไม่ได้บันทึกในระบบ เช่น บัตรสะสมแต้มกระดาษ หรือพนักงานลืมกดแลก · ใส่รายละเอียดและยอดเหรียญที่ร้านหยอดให้</p>
+    <h3 style="margin:16px 0 4px;font-size:15px">เจ้าของเพิ่มการแลกนอกระบบเอง</h3>
+    <p class="hint">ยอดที่พนักงานคีย์ในหน้าร้านขึ้นด้านบนให้แล้ว · ช่องนี้ใช้เมื่อเจ้าของต้องเพิ่มเอง เช่น พนักงานลืมคีย์</p>
     <div class="flt-list" id="fxList"></div>
     <button class="ghost" id="addFx"><svg class="ic"><use href="#i-plus"/></svg>เพิ่มรายการแลกนอกระบบ</button>
   </section>
@@ -526,6 +526,16 @@ img{max-width:100%}
     <p class="hint" id="soapMsg"></p>
     <div id="soapSumStaff"></div>
   </section>
+  <section class="card">
+    <h2><span class="h-ic"><span class="icbox coin"><svg class="ic"><use href="#i-gift"/></svg></span>แลกแต้มซักฟรี นอกระบบ</span> <span class="tot num" id="t-fs">0 ฿</span></h2>
+    <p class="hint">ลูกค้าแลกซักฟรีแบบที่ไม่ได้กดแลกแต้มในเว็บ เช่น บัตรสะสมแต้มกระดาษ · ใส่รายละเอียดและยอดเหรียญที่หยอดให้ลูกค้า</p>
+    <div class="vf">
+      <div class="field"><label for="fsN">รายละเอียด</label><input id="fsN" class="txt" placeholder="เช่น บัตรกระดาษ ซัก 1 ถัง"></div>
+      <div class="field"><label for="fsA">ยอดเหรียญที่หยอดให้ (บาท)</label><input id="fsA" class="mono" type="number" inputmode="numeric" min="0" placeholder="0"></div>
+    </div>
+    <div class="row-end"><span class="hint" id="fsMsg"></span><button class="primary sm" id="fsAdd"><svg class="ic"><use href="#i-check"/></svg>บันทึกการแลก</button></div>
+    <div class="sum" id="fsList" style="margin-top:8px"></div>
+  </section>
   </div>
 </main>
 
@@ -623,7 +633,7 @@ img{max-width:100%}
     <h2>ยอดรายวัน</h2>
     <p class="hint">แตะแถวเพื่อเปิดวันนั้น · คงเหลือสะสมนับจากวันที่ 1 ของเดือน</p>
     <div class="tablewrap"><table class="wide">
-      <thead><tr><th>วันที่</th><th>ลูกค้า</th><th>เหรียญตู้</th><th>สแกนจ่าย</th><th>น้ำยา<small>ไม่รวม</small></th><th>ตู้แลก</th><th>หักแลกแต้ม</th><th>รายรับ</th><th>จ่าย</th><th>คงเหลือ</th><th>สะสม</th><th>เงินสำรอง</th></tr></thead>
+      <thead><tr><th>วันที่</th><th>ลูกค้า</th><th>เหรียญตู้</th><th>สแกนจ่าย</th><th>น้ำยา</th><th>ตู้แลก</th><th>หักแลกแต้ม</th><th>รายรับ</th><th>จ่าย</th><th>คงเหลือ</th><th>สะสม</th><th>เงินสำรอง</th></tr></thead>
       <tbody id="mBody"></tbody><tfoot id="mFoot"></tfoot>
     </table></div>
   </section>
@@ -916,18 +926,18 @@ function calcDay(r){
   const coins=coinCount(r), coin=coins*10;
   // what the counter staff recorded that day (customer rows + sachets)
   const f=r.date?frontSales(r.date,r):null, keyedWD=f?f.wa+f.da:0, keyedSoap=f?f.ka:0;
-  const packSoap=SOAP.reduce((t,[k,,p])=>t+(+r[k]||0)*p,0), soap=packSoap;
+  const packSoap=SOAP.reduce((t,[k,,p])=>t+(+r[k]||0)*p,0), soap=keyedSoap; // soap money = what the staff keyed on customer rows; packets are a count only
   // machine money: the coin count once the owner has counted, otherwise the wash/dry the staff keyed in
   const est=false, machine=coin;
   // free washes from points: the shop drops its own coins into the machine, so they are counted above but are not customer money
-  const rds=r.date?Object.values(S.redeems).filter(x=>x.date===r.date):[], fx=(Array.isArray(r.freeX)?r.freeX:[]).filter(x=>int(x.a)>0);
-  const redeemSys=rds.reduce((t,x)=>t+(+(x.disc!=null?x.disc:x.value)||0),0), redeemX=fx.reduce((t,x)=>t+int(x.a),0), redeem=redeemSys+redeemX;
+  const rds=r.date?Object.values(S.redeems).filter(x=>x.date===r.date):[], fx=(Array.isArray(r.freeX)?r.freeX:[]).filter(x=>int(x.a)>0), fsx=r.date?freeSOf(r.date).filter(x=>int(x.a)>0):[];
+  const redeemSys=rds.reduce((t,x)=>t+(+(x.disc!=null?x.disc:x.value)||0),0), redeemS=fsx.reduce((t,x)=>t+int(x.a),0), redeemX=fx.reduce((t,x)=>t+int(x.a),0), redeem=redeemSys+redeemS+redeemX;
   const chg=NOTES.reduce((t,[k,,p])=>t+(+r[k]||0)*p,0);
   const exp=sum((r.expenses||[]).map(e=>e.a));
   const scan=Math.max(0,+r.scan||0);
-  const sales=machine-redeem; // owner income = coins counted from the machines; staff sales and soap packets are shown for reference only
+  const sales=machine+soap-redeem; // owner income = coins counted from the machines; staff sales and soap packets are shown for reference only
   const inc=sales+(config.countChanger?chg:0);
-  return {coins,coin,machine,est,keyedWD,keyedSoap,packSoap,soap,scan,sales,chg,exp,inc,net:inc-exp,cash:machine+chg,front:f?f.total:0,redeem,redeemSys,redeemX,rdn:rds.length+fx.length};
+  return {coins,coin,machine,est,keyedWD,keyedSoap,packSoap,soap,scan,sales,chg,exp,inc,net:inc-exp,cash:machine+soap+chg,front:f?f.total:0,redeem,redeemSys,redeemS,redeemX,rdn:rds.length+fsx.length+fx.length};
 }
 const visitsOn=ds=>Object.entries(S.visits).filter(([,v])=>v.date===ds).sort((a,b)=>(a[1].at||"").localeCompare(b[1].at||""));
 
@@ -1029,7 +1039,7 @@ function cashFlow(r){
   const c=calcDay(r), refill=int(r.refill)*10,
     exp=(r.expenses||[]).filter(e=>(e.p||"cash")==="cash").reduce((t,e)=>t+(+e.a||0),0);
   const flt=floatTot(r).g;
-  return {inn:c.machine+c.chg,out:refill+exp+flt+c.redeem,refill,exp,flt,redeem:c.redeem};
+  return {inn:c.machine+c.chg+c.soap,out:refill+exp+flt+c.redeem,refill,exp,flt,redeem:c.redeem};
 }
 const soapOf=r=>{const o={};SOAP.forEach(([k])=>o[k]=int(r&&r[k]));return o};
 const L0=(a,b,cls="")=>`<div class="l ${cls}"><span>${a}</span><span>${b}</span></div>`;
@@ -1047,7 +1057,7 @@ function updateTotals(){
     const flow=days.map(d=>cashFlow(d===cur.date?live:(D(d)||{date:d}))).reduce((a,b)=>{for(const k in b)a[k]=(a[k]||0)+b[k];return a},{});
     const expect=resTotal(S.days[prevDs])+flow.inn-flow.out, diff=res-expect;
     resHtml=Lr("เงินสำรองครั้งก่อน ("+thaiDate(prevDs)+")",fmt(resTotal(S.days[prevDs]))+" ฿","sub")
-      +Lr("+ เหรียญตู้ซัก/อบ + แบงก์ตู้แลก"+(days.length>1?" ("+days.length+" วัน)":""),fmt(flow.inn)+" ฿","sub")
+      +Lr("+ เหรียญตู้ซัก/อบ + แบงก์ตู้แลก + น้ำยาที่พนักงานคีย์"+(days.length>1?" ("+days.length+" วัน)":""),fmt(flow.inn)+" ฿","sub")
       +Lr("− เติมเหรียญคืนตู้แลก",fmt(flow.refill)+" ฿","sub")
       +Lr("− ค่าใช้จ่ายเงินสด",fmt(flow.exp)+" ฿","sub")
       +Lr("− เงินสดให้พนักงานแลก",fmt(flow.flt)+" ฿","sub")
@@ -1065,7 +1075,10 @@ function updateTotals(){
    $("t-redeem").textContent=(c.redeem?"−":"")+fmt(c.redeem)+" ฿";
    $("redeemList").innerHTML=rl.length?rl.map(x=>L0(`${hhmm(x.at)} · <span class="nt">${esc(dn(x.memberId))}</span> · ${esc(x.note||"")}${+x.extra?` <small>(ลูกค้าจ่ายเพิ่ม ${fmt(x.extra)} ฿)</small>`:""}`,"−"+fmt(+(x.disc!=null?x.disc:x.value)||0)+" ฿","sub")).join("")+L0("แลกในระบบ ("+rl.length+" ครั้ง)","−"+fmt(c.redeemSys)+" ฿")
      :'<p class="hint">วันนี้ไม่มีการแลกแต้มในระบบ</p>';
-   $("redeemList").innerHTML+=c.redeemX?L0("แลกนอกระบบ","−"+fmt(c.redeemX)+" ฿")+L0("รวมหักวันนี้","−"+fmt(c.redeem)+" ฿","big"):(rl.length?L0("รวมหักวันนี้","−"+fmt(c.redeem)+" ฿","big"):"");}
+   const fl=freeSOf(cur.date);
+   $("redeemList").innerHTML+=(fl.length?fl.map(x=>L0(`${hhmm(x.at)} · <span class="nt">${esc(x.n||"")}</span>${x.by?` <small>(${esc(x.by)})</small>`:""}`,"−"+fmt(x.a)+" ฿","sub")).join("")+L0("แลกนอกระบบ (พนักงานคีย์ "+fl.length+" ครั้ง)","−"+fmt(c.redeemS)+" ฿"):"")
+     +(c.redeemX?L0("แลกนอกระบบ (เจ้าของกรอกเอง)","−"+fmt(c.redeemX)+" ฿"):"")
+     +(c.redeem?L0("รวมหักวันนี้","−"+fmt(c.redeem)+" ฿","big"):"");}
   const vs=visitsOn(cur.date).map(x=>x[1]);
   const heads=vs.length, mem=vs.filter(v=>v.memberId).length, keyed=vs.reduce((t,v)=>t+vTotal(v),0);
   const box=c.sales, diff=keyed-box;
@@ -1076,7 +1089,7 @@ function updateTotals(){
   {const fs=frontSales(cur.date,live);
    $("t-ownHeads").textContent=fmt(fs.total)+" ฿";
    $("ownCust").innerHTML=fs.total||heads?frontSalesHtml(fs,L):'<p class="hint">พนักงานยังไม่ได้ลงยอดขายของวันนี้</p>';}
-  const fs=frontSales(cur.date,live), md=c.coin-c.keyedWD;
+  const fs=frontSales(cur.date,live), md=c.coin-c.redeem-c.keyedWD;
   $("daySum").innerHTML=
     L("<b>ยอดขายวันนี้ที่พนักงานลง (ดูอย่างเดียว ไม่รวมในเงินของร้าน)</b>","")+
     L("ซัก "+fs.wl+" ถัง + อบ "+fs.dl+" ถัง",fmt(fs.wa+fs.da)+" ฿")+
@@ -1085,17 +1098,19 @@ function updateTotals(){
     L("ขายน้ำยา (นับซอง แยกต่างหาก) "+fs.pn+" ชิ้น",fmt(fs.pa)+" ฿","sub")+
     L("<b>เงินที่นับได้จริง</b>","","top")+
     L("เหรียญตู้ซัก+อบ ("+fmt(c.coins)+" เหรียญ)",c.coins?fmt(c.coin)+" ฿":'<span class="coin">ยังไม่ได้นับ</span>')+
-    (c.coins&&c.keyedWD?L(md===0?"เทียบกับซัก+อบที่พนักงานลง: ตรง ✓":md<0?"เทียบกับซัก+อบที่พนักงานลง: ขาด":"เทียบกับซัก+อบที่พนักงานลง: เกิน",`<span class="${md===0?"pos":md<0?"neg":"coin"}">${md===0?"0":(md>0?"+":"−")+fmt(Math.abs(md))} ฿</span>`,"sub"):"")+
     (c.redeem?L("− หักยอดแลกแต้มซักฟรี ("+c.rdn+" ครั้ง)","−"+fmt(c.redeem)+" ฿"):"")+
-    (config.countChanger?L("ตู้แลกเหรียญ",fmt(c.chg)+" ฿"):"")+
-    L("รวมรายรับ"+(c.redeem?"จริง":""),fmt(c.inc)+" ฿")+
+    (c.coins&&c.keyedWD?L(md===0?"เหรียญหลังหักแลกแต้ม เทียบกับซัก+อบที่พนักงานลง: ตรง ✓":md<0?"เหรียญหลังหักแลกแต้ม เทียบกับซัก+อบที่พนักงานลง: ขาด":"เหรียญหลังหักแลกแต้ม เทียบกับซัก+อบที่พนักงานลง: เกิน",`<span class="${md===0?"pos":md<0?"neg":"coin"}">${md===0?"0":(md>0?"+":"−")+fmt(Math.abs(md))} ฿</span>`,"sub"):"")+
+    L("+ น้ำยา (พนักงานคีย์)",fmt(c.soap)+" ฿")+
+    (config.countChanger?L("+ ตู้แลกเหรียญ",fmt(c.chg)+" ฿"):"")+
+    L("รวมรายรับจริง",fmt(c.inc)+" ฿","top")+
     L("หักค่าใช้จ่าย","−"+fmt(c.exp)+" ฿")+
     L("คงเหลือวันนี้",`<span class="${c.net<0?"neg":"pos"}">${fmt(c.net)} ฿</span>`,"big")+
+    '<div style="border-top:2px dashed var(--line,#ddd);margin:8px 0"></div>'+
     (config.countChanger?"":L("เงินตู้แลกเหรียญ (แยกไว้ ไม่รวมรายรับ)",fmt(c.chg)+" ฿","sub"))+
-    L("ยอดสแกนจ่าย (บันทึกไว้ดู ไม่นำไปคำนวณ)",fmt(c.scan)+" ฿","sub")+
+    L("ยอดสแกนจ่ายรายวัน (บันทึกไว้ดู ไม่นำไปคำนวณ)",fmt(c.scan)+" ฿","sub")+
     L("เติมเหรียญคืนตู้แลก ("+fmt(int(cur.refill))+" เหรียญ)",fmt(int(cur.refill)*10)+" ฿","sub")+
     (Array.isArray(cur.floats)&&cur.floats.length?L("เงินสดให้พนักงานแลก",fmt(floatTot(cur).g)+" ฿","sub"):"")+
-    L("เงินสำรองในตู้ (หลังเติมตู้แลกเหรียญ)",fmt(resTotal(cur))+" ฿","sub");
+    L("เงินสำรองในตู้คงเหลือ (หลังเติมตู้แลกเหรียญ)",fmt(resTotal(cur))+" ฿","sub");
 }
 function touch(){dirty=true;updateTotals();updFloat();$("save").disabled=false;$("saveSt").textContent="มีการแก้ไขที่ยังไม่บันทึก"}
 function confirmLeave(){
@@ -1155,7 +1170,7 @@ function soapSummary(counts,ds){
 function renderSoapPad(){
   const ds=sDate(), base=soapLocal&&soapLocal.date===ds?soapLocal:Object.assign({date:ds},soapOf(S.soap[ds]));
   const tot=SOAP.reduce((t,[k,,p])=>t+base[k]*p,0);
-  $("t-ssoap").textContent=fmt(tot)+" ฿";$("soapSumStaff").innerHTML=soapSummary(base,ds);
+  $("t-ssoap").textContent=fmt(tot)+" ฿";$("soapSumStaff").innerHTML=soapSummary(base,ds);renderFreeS();
   $("soapPad").innerHTML=SOAP.map(([k,l,p])=>{const [kind,size]=l.split(" ");
     const ico=k.startsWith("soft")?"soft":"soap", big=k.endsWith("_l");
     return `<div class="sp"><div class="lab"><svg class="ic" style="${big?"width:38px;height:38px":"width:24px;height:24px"}"><use href="#i-${ico}"/></svg>${kind}</div><div class="size">${big?"▮▮":"▮"} ${size} · ${p} ฿</div>
@@ -1167,6 +1182,26 @@ function renderSoapPad(){
     renderSoapPad();$("soapMsg").textContent="กำลังบันทึก…";clearTimeout(soapTimer);soapTimer=setTimeout(flushSoap,600);
   });
 }
+/* staff: free washes given outside the web redeem flow (paper cards etc.), stored on the day's soap record */
+const freeSOf=ds=>{const x=S.soap[ds];return Array.isArray(x&&x.freeS)?x.freeS:[]};
+function renderFreeS(){
+  const ds=sDate(), list=freeSOf(ds), tot=list.reduce((t,x)=>t+int(x.a),0);
+  $("t-fs").textContent=fmt(tot)+" ฿";
+  $("fsList").innerHTML=list.length?list.map((x,i)=>`<div class="l"><span>${hhmm(x.at)} · <span class="nt">${esc(x.n||"")}</span>${x.by?` <small>(${esc(x.by)})</small>`:""}</span><span>−${fmt(x.a)} ฿ <button class="del" data-fs="${i}" aria-label="ลบรายการ" style="padding:2px 8px;margin-left:6px">✕</button></span></div>`).join("")+`<div class="l big"><span>รวมวันนี้ ${list.length} ครั้ง</span><span>−${fmt(tot)} ฿</span></div>`
+    :'<p class="hint">ยังไม่มีการแลกนอกระบบของวันนี้</p>';
+  $("fsList").querySelectorAll("[data-fs]").forEach(b=>b.onclick=async()=>{
+    const ds=sDate(),l=freeSOf(ds).slice();l.splice(+b.dataset.fs,1);
+    try{await merge("soap",ds,{date:ds,freeS:l});renderFreeS();updateTotals()}catch(e){$("fsMsg").innerHTML='<span class="warn">ลบไม่สำเร็จ</span>'}});
+}
+$("fsAdd").onclick=async()=>{
+  const n=$("fsN").value.trim(),a=int($("fsA").value);
+  if(!a){$("fsMsg").innerHTML='<span class="warn">ใส่ยอดเหรียญที่หยอดให้</span>';$("fsA").focus();return}
+  const ds=sDate(),l=freeSOf(ds).concat([{n:n||"แลกซักฟรี",a,by:curStaff||"",at:new Date().toISOString()}]);
+  $("fsAdd").disabled=true;
+  try{await merge("soap",ds,{date:ds,freeS:l});$("fsN").value="";$("fsA").value="";$("fsMsg").textContent="บันทึกแล้ว ✓";renderFreeS();updateTotals()}
+  catch(e){$("fsMsg").innerHTML='<span class="warn">บันทึกไม่สำเร็จ ('+esc(e.code||"error")+')</span>'}
+  $("fsAdd").disabled=false;
+};
 async function flushSoap(){
   if(!soapLocal)return;if(soapBusy){clearTimeout(soapTimer);soapTimer=setTimeout(flushSoap,400);return}
   soapBusy=true;const snap=Object.assign({},soapLocal);
@@ -1498,7 +1533,7 @@ function buildWorkbook(scope){
   // summary
   const period=scope==="all"?L("ทั้งหมด","All time"):m;
   add(L("สรุป","Summary"),[[L("สมุดบัญชีร้านซักผ้า","Laundry Shop Ledger")],[L("ช่วงข้อมูล","Period"),period],[L("ดึงข้อมูลเมื่อ","Exported"),todayStr()+" "+hhmm(new Date().toISOString())],[],
-    [L("ลูกค้า (หัว)","Customers"),T.heads],[L("เหรียญ 10 บาท ตู้ซัก+อบ (เหรียญ)","10฿ coins (count)"),T.coins],[L("เงินเหรียญตู้ซัก+อบ","Coins from machines"),T.coin],[L("ยอดสแกนจ่าย (บันทึกไว้ดู ไม่นำไปคำนวณ)","Scan payments (record only, not in totals)"),T.scan],[L("ค่าน้ำยาซอง (ดูอย่างเดียว ไม่รวมรายรับ)","Soap packets (reference, not in income)"),T.soap],
+    [L("ลูกค้า (หัว)","Customers"),T.heads],[L("เหรียญ 10 บาท ตู้ซัก+อบ (เหรียญ)","10฿ coins (count)"),T.coins],[L("เงินเหรียญตู้ซัก+อบ","Coins from machines"),T.coin],[L("ยอดสแกนจ่าย (บันทึกไว้ดู ไม่นำไปคำนวณ)","Scan payments (record only, not in totals)"),T.scan],[L("ค่าน้ำยา (พนักงานคีย์)","Soap (keyed by staff)"),T.soap],
     [L("ตู้แลกเหรียญ","Changer")+(config.countChanger?"":L(" (ไม่นับเป็นรายรับ)"," (not in income)")),T.chg],[L("หักยอดแลกแต้มซักฟรี","Free-wash redemptions"),-dRows.reduce((t,x)=>t+x[3+2+SOAP.length+1+NOTES.length+4],0)],[L("รายรับรวม","Total income"),T.inc],[L("ค่าใช้จ่ายรวม","Total expenses"),T.exp],[L("คงเหลือ","Balance"),T.net],
     [],[L("ยอดขายที่คีย์รายคน","Sales entered per customer"),vRows.reduce((t,r)=>t+r[10],0)],[L("สมาชิกที่มาใช้บริการ","Members who visited"),mRows.filter(r=>r[3]>0).length],[L("จำนวนครั้งที่แลกรางวัล","Rewards redeemed"),rRows.length],[L("ส่วนลดจากแต้มรวม (บาท)","Points discount total"),rRows.reduce((t,r)=>t+(+r[7]||0),0)],[L("ลูกค้าจ่ายเพิ่มตอนแลกรวม (บาท)","Extra paid on rewards"),rRows.reduce((t,r)=>t+(+r[8]||0),0)]],[32,18]);
   add(L("รายวัน","Daily"),[dHead,...dRows,[L("รวม","Total"),T.heads,T.coins,T.coin,T.scan,...Array(SOAP.length).fill(""),T.soap,...Array(NOTES.length).fill(""),T.chg,dRows.reduce((t,x)=>t+x[3+2+SOAP.length+1+NOTES.length+1],0),dRows.reduce((t,x)=>t+x[3+2+SOAP.length+1+NOTES.length+2],0),dRows.reduce((t,x)=>t+x[3+2+SOAP.length+1+NOTES.length+3],0),dRows.reduce((t,x)=>t+x[3+2+SOAP.length+1+NOTES.length+4],0),T.inc,T.exp,T.net,"",...RES.map(()=>""),"",""]],[12,10,16,12,14,...Array(SOAP.length).fill(14),10,...Array(NOTES.length).fill(10),12,14,14,14,14,10,10,10,12,...RES.map(()=>12),14,28]);
@@ -1923,7 +1958,7 @@ const EN={
 "สมัครสมาชิกใหม่":"New member sign-up","ใส่ชื่อลูกค้า (จำเป็น)":"Customer name (required)","ใส่ชื่อแล้วกดบันทึก ระบบจะสมัครสมาชิกและสะสมแต้มครั้งนี้ให้เลย":"Enter a name and save: the member is created and earns points for this visit","เบอร์นี้ยังไม่เป็นสมาชิก":"This phone is not a member yet","เบอร์ใหม่ ใส่ชื่อลูกค้าเพื่อสมัครสมาชิกก่อน":"New phone: enter the customer's name first","พิมพ์เบอร์โทรลูกค้า (เว้นว่าง = ลูกค้าทั่วไป)":"Customer phone (empty = walk-in)","มาแล้ว":"visits:","แต้มครบ! แลกได้ถึง":"Points full! Redeem by","แต้ม แลกรางวัล":"pts to a reward","(ยังไม่มีชื่อ)":"(no name)","ชื่อ หรือชื่อเล่น (จำเป็น)":"Name (required)",
 "เงินใส่คืนตู้แลกเหรียญ":"Coins refilled into changer","เหรียญ 10 บาทที่เติมเข้าตู้":"10฿ coins refilled","เงินสดให้พนักงานแลก":"Change float for staff","เพิ่มรายการให้พนักงาน":"Add float","ให้ไป (บาท)":"Given (฿)","คืนมา (บาท)":"Returned (฿)","ให้ไปทั้งหมด":"Total given","คืนมาแล้ว":"Returned","ยังไม่คืน":"Not returned","คืนเกินมา":"Returned extra","คืนครบแล้ว":"All returned","ยังไม่มีรายการของวันนี้":"Nothing today","เติมเหรียญคืนตู้แลก":"Changer refill","พนักงาน":"Staff",
 "นับได้จริง":"Counted","เงินสำรองครั้งก่อน":"Last reserve","ยอดที่ควรเหลือ":"Should have","เงินตรง ✓":"Matches ✓","เงินขาด":"Short","เงินเกิน":"Over","ค่าใช้จ่ายเงินสด":"cash expenses","ให้พนักงานแลก (ยังไม่คืน)":"staff float not returned","เงินสดจากตู้":"Cash from box","โอนจ่าย":"Transfer","จ่ายโดย":"Paid by","เงินสด":"Cash","โอน":"Transfer",
-"ให้พนักงานแลกรวมวันนี้":"Float given today","ยอดขายหน้าร้านรวมทั้งวัน":"Counter sales today","หักยอดแลกแต้มซักฟรี":"Free washes from points (deduct)","วันนี้ไม่มีการแลกแต้มในระบบ":"No redemptions in the system today","แลกแต้มนอกระบบ":"Redemptions outside the system","เพิ่มรายการแลกนอกระบบ":"Add outside redemption","แลกในระบบ":"In system","แลกนอกระบบ":"Outside system","รวมหักวันนี้":"Total deducted today","ยอดที่หัก (บาท)":"Deduct (฿)","รายละเอียด":"Details","หักแลกแต้ม":"Redeemed","ยอดขายวันนี้ (พนักงานหน้าร้านลง)":"Sales today (entered by staff)","รวมยอดขาย":"Total sales","เงินที่นับได้จริง":"Money counted","ยังไม่ได้นับ":"Not counted yet","ยอดขายหน้าร้านรายวัน":"Counter sales by day","รวมเงินทั้งหมด":"Total money","รวมเงินทั้งเดือน":"Month total","น้ำยาซองทั้งเดือน":"Soap packets this month","น้ำยา (ลงในรายการลูกค้า)":"Soap (on customer rows)","ชิ้นรวม":"Pieces","ชิ้น":"pcs","QR พร้อมเพย์บนใบเสร็จ":"PromptPay QR on receipt","เบอร์พร้อมเพย์ / เลขบัตร 13 หลัก":"PromptPay phone / 13-digit ID","ชื่อบัญชี (ให้ลูกค้าตรวจก่อนโอน)":"Account name (for customers to check)","ใส่ยอดเงินใน QR":"Put the amount in the QR","เงินสดที่หยิบจากเงินสำรองให้พนักงานไว้แลกให้ลูกค้า ใส่ยอดที่ให้ไป · ระบบหักออกจากยอดที่ควรเหลือในตู้":"Cash taken from the reserve for staff to give change · enter the amount given · deducted from what the box should have","− เงินสดให้พนักงานแลก":"− staff float","เงินสดให้พนักงานแลก (บันทึกไว้ดู)":"Staff float (record only)",
+"ให้พนักงานแลกรวมวันนี้":"Float given today","ยอดขายหน้าร้านรวมทั้งวัน":"Counter sales today","แลกแต้มซักฟรี นอกระบบ":"Free wash outside the system","ยอดเหรียญที่หยอดให้ (บาท)":"Coins given (฿)","บันทึกการแลก":"Save","ยังไม่มีการแลกนอกระบบของวันนี้":"None today","รวมวันนี้":"Today total","หักยอดแลกแต้มซักฟรี":"Free washes from points (deduct)","วันนี้ไม่มีการแลกแต้มในระบบ":"No redemptions in the system today","แลกแต้มนอกระบบ":"Redemptions outside the system","เพิ่มรายการแลกนอกระบบ":"Add outside redemption","แลกในระบบ":"In system","แลกนอกระบบ":"Outside system","รวมหักวันนี้":"Total deducted today","ยอดที่หัก (บาท)":"Deduct (฿)","รายละเอียด":"Details","หักแลกแต้ม":"Redeemed","ยอดขายวันนี้ (พนักงานหน้าร้านลง)":"Sales today (entered by staff)","รวมยอดขาย":"Total sales","เงินที่นับได้จริง":"Money counted","ยังไม่ได้นับ":"Not counted yet","ยอดขายหน้าร้านรายวัน":"Counter sales by day","รวมเงินทั้งหมด":"Total money","รวมเงินทั้งเดือน":"Month total","น้ำยาซองทั้งเดือน":"Soap packets this month","น้ำยา (ลงในรายการลูกค้า)":"Soap (on customer rows)","ชิ้นรวม":"Pieces","ชิ้น":"pcs","QR พร้อมเพย์บนใบเสร็จ":"PromptPay QR on receipt","เบอร์พร้อมเพย์ / เลขบัตร 13 หลัก":"PromptPay phone / 13-digit ID","ชื่อบัญชี (ให้ลูกค้าตรวจก่อนโอน)":"Account name (for customers to check)","ใส่ยอดเงินใน QR":"Put the amount in the QR","เงินสดที่หยิบจากเงินสำรองให้พนักงานไว้แลกให้ลูกค้า ใส่ยอดที่ให้ไป · ระบบหักออกจากยอดที่ควรเหลือในตู้":"Cash taken from the reserve for staff to give change · enter the amount given · deducted from what the box should have","− เงินสดให้พนักงานแลก":"− staff float","เงินสดให้พนักงานแลก (บันทึกไว้ดู)":"Staff float (record only)",
 "บันทึก":"Save","เพิ่ม":"Add","ภาษา":"Language","แล้ว":"✓"
 };
 const EN_KEYS=Object.keys(EN).sort((a,b)=>b.length-a.length);
