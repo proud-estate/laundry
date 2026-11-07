@@ -37,6 +37,26 @@
   --good:#7cc96e; --bad:#f08a72; --bad-soft:#3e1d16; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+.carry-row{margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14px}
+.whobar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px 12px;margin:0 0 12px}
+.whobar>span{font-weight:700;display:flex;gap:6px;align-items:center}
+#whoChips{display:flex;gap:8px;flex-wrap:wrap}
+.who-chip{border:2px solid var(--line);background:var(--bg);border-radius:999px;padding:8px 18px;font-weight:700;font-size:16px;color:var(--fg)}
+.who-chip.on{background:var(--accent,#2f7d32);border-color:var(--accent,#2f7d32);color:#fff}
+.pricepad{background:var(--bg);border:1px dashed var(--line);border-radius:14px;padding:10px;display:grid;gap:8px}
+.pp-head{font-weight:700;display:flex;gap:6px;align-items:center}
+.pp-group>b{display:flex;gap:6px;align-items:center;margin-bottom:4px}
+.pp-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
+.pp-kg{min-width:56px;font-weight:700}
+.pp-btn{border:0;border-radius:12px;padding:8px 14px;min-width:84px;font-weight:800;font-size:18px;color:#1d2a1d;display:flex;flex-direction:column;align-items:center;line-height:1.15;box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.pp-btn small{font-size:12px;font-weight:600}
+.pp-btn.cold{background:#cfeaf8}.pp-btn.warm{background:#fde3a7}.pp-btn.hot{background:#f8c4c4}.pp-btn.dry{background:#e3d9f6}.pp-btn.extra{background:#f3e6cf}
+.pp-btn:active{transform:scale(.96)}
+.pp-btn{position:relative}.pp-n{position:absolute;top:-8px;right:-8px;background:var(--accent,#2f7d32);color:#fff;border-radius:999px;font-size:13px;padding:2px 7px}
+.pp-items{display:flex;gap:6px;flex-wrap:wrap}
+.pp-chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 6px 4px 12px;font-size:14px;display:inline-flex;gap:6px;align-items:center}
+.pp-chip button{border:0;background:transparent;color:var(--neg,#c62828);font-weight:700;padding:0 6px}
+.pp-edit input{padding:6px}
 .soapsum{width:100%}.soapsum td:first-child,.soapsum th:first-child{text-align:left}.soapsum .ic{width:18px;height:18px;vertical-align:-4px}.soapsum tr.zero td{opacity:.45}.soapday{width:100%;font-size:13px}.soapday th,.soapday td{padding:6px 4px}.soapday th small,.soapday td small{display:block;font-weight:400}
 body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.5}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
@@ -489,6 +509,7 @@ img{max-width:100%}
     <input type="date" id="sdate" aria-label="วันที่">
     <button class="icon-btn" id="snext" aria-label="วันถัดไป">›</button>
   </div>
+  <div class="whobar" id="whoBar" hidden><span><svg class="ic"><use href="#i-user"/></svg> ใครกำลังกรอก</span><div id="whoChips"></div></div>
   <section class="card alert" id="claimCard" hidden>
     <h2><span class="h-ic"><span class="icbox coin"><svg class="ic"><use href="#i-clock"/></svg></span>ลูกค้าสะสมแต้มจากหน้าบ้าน รอยืนยัน</span> <span class="tot coin" id="t-claims"></span></h2>
     <p class="hint">กด “ยืนยัน” แล้วใส่ยอดเงินที่ลูกค้าจ่าย ระบบจะบันทึกเป็นยอดของลูกค้าคนนั้นและให้แต้มตามจำนวนถัง</p>
@@ -505,7 +526,10 @@ img{max-width:100%}
       <div class="span" id="vRedeemHost"></div>
       <div class="field span signup" id="vNewBox" hidden><label for="vNewName"><svg class="ic"><use href="#i-plus"/></svg>สมัครสมาชิกใหม่ · เบอร์ <span class="num" id="vNewPhone"></span></label>
         <input id="vNewName" class="txt" placeholder="ใส่ชื่อลูกค้า (จำเป็น)" autocomplete="off">
-        <div class="who">ใส่ชื่อแล้วกดบันทึก ระบบจะสมัครสมาชิกและสะสมแต้มครั้งนี้ให้เลย</div></div>
+        <label for="vCarry" style="margin-top:8px"><svg class="ic"><use href="#i-star"/></svg>แต้มยกมาจากบัตร LINE (ถ้ามี)</label>
+        <input id="vCarry" class="mono" type="number" inputmode="numeric" min="0" max="99" placeholder="0" style="max-width:140px">
+        <div class="who">ใส่ชื่อแล้วกดบันทึก ระบบจะสมัครสมาชิกและสะสมแต้มครั้งนี้ให้เลย · ถ้าลูกค้ามีแต้มค้างในบัตร LINE ให้ลูกค้าเปิดบัตรให้ดู แล้วใส่จำนวนแต้ม</div></div>
+      <div class="span pricepad" id="pricePad"></div>
       <div class="field"><label for="vWL"><svg class="ic"><use href="#i-wash"/></svg>ซัก (ถัง)</label><input id="vWL" type="number" inputmode="numeric" min="0" placeholder="0"></div>
       <div class="field"><label for="vWA"><svg class="ic coin"><use href="#i-coin"/></svg>ค่าซัก (บาท)</label><input id="vWA" type="number" inputmode="numeric" min="0" placeholder="0"></div>
       <div class="field"><label for="vSA"><svg class="ic"><use href="#i-soap"/></svg>ค่าน้ำยา (บาท)</label><input id="vSA" type="number" inputmode="numeric" min="0" placeholder="0"></div>
@@ -679,6 +703,22 @@ img{max-width:100%}
       <span><b>ใส่ยอดเงินใน QR</b><br><span class="hint">ลูกค้าสแกนแล้วยอดเงินขึ้นในแอปธนาคารเอง ไม่ต้องพิมพ์ยอด</span></span></label>
     <p class="hint" id="sPPMsg"></p>
   </section>
+  <section class="card">
+    <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-wash"/></svg></span>ราคาซัก · อบ (ปุ่มกดราคาหน้าร้าน)</span></h2>
+    <p class="hint">พนักงานกดปุ่มราคาแทนการพิมพ์ ระบบเพิ่มจำนวนถังและยอดเงินให้เอง · กดต่อเวลาอบไม่นับเป็นถัง (ไม่ได้แต้ม) · ใส่ 0 = ไม่แสดงปุ่มนั้น</p>
+    <div class="tablewrap"><table class="pp-edit"><thead><tr><th>เครื่องซัก</th><th>น้ำเย็น</th><th>น้ำอุ่น</th><th>น้ำร้อน</th><th></th></tr></thead><tbody id="wpEdit"></tbody></table></div>
+    <button class="ghost" id="wpAdd" style="margin-top:6px"><svg class="ic"><use href="#i-plus"/></svg>เพิ่มขนาดเครื่องซัก</button>
+    <div class="vf" style="margin-top:12px">
+      <div class="field"><label for="dpKg">เครื่องอบ (กก.)</label><input id="dpKg" class="mono" type="number" inputmode="numeric" min="0"></div>
+      <div class="field"><label for="dpMin">อบ (นาที)</label><input id="dpMin" class="mono" type="number" inputmode="numeric" min="0"></div>
+      <div class="field"><label for="dpP">ราคาอบ (บาท)</label><input id="dpP" class="mono" type="number" inputmode="numeric" min="0"></div>
+      <div class="field"><label for="dxMin">ต่อเวลา (นาที)</label><input id="dxMin" class="mono" type="number" inputmode="numeric" min="0"></div>
+      <div class="field"><label for="dxP">ราคาต่อเวลา (บาท)</label><input id="dxP" class="mono" type="number" inputmode="numeric" min="0"></div>
+    </div>
+    <h3 style="margin:16px 0 4px;font-size:15px">ชื่อพนักงานที่ผลัดกันกรอก</h3>
+    <p class="hint">พนักงานหลายคนใช้เครื่องเดียวกัน ล็อกอินครั้งเดียว แล้วกดชื่อตัวเองก่อนกรอก ระบบจะบันทึกว่าใครเป็นคนลง · คั่นชื่อด้วยเครื่องหมาย ,</p>
+    <input id="sNames" class="txt" placeholder="เช่น Khin, Ma Aye">
+  </section>
   <section class="card" id="staffAcct">
     <h2>บัญชีพนักงาน</h2>
     <p class="hint">พนักงานล็อกอินด้วยชื่อผู้ใช้และรหัสผ่านของตัวเอง จะเห็นเฉพาะหน้าร้าน (คีย์ลูกค้า แลกแต้ม ขายน้ำยา) เข้าหลังบ้านไม่ได้</p>
@@ -842,7 +882,8 @@ const COLS=["days","soap","members","visits","claims","redeems"];
 const S={days:{},soap:{},members:{},visits:{},claims:{},redeems:{}};
 // one day = owner's cash record + staff sachet counts
 const D=ds=>(S.days[ds]||S.soap[ds])?Object.assign({date:ds},S.days[ds]||{},soapOf(S.soap[ds])):null;
-let config={countChanger:false,rewards:[{name:"ซัก 1 ถัง",kind:"wash",pts:10,value:50},{name:"อบ 1 ถัง",kind:"dry",pts:10,value:50}],shopName:"",shopLine:"@919ahdge",paper:"58",receiptFoot:"ขอบคุณที่ใช้บริการ",kioskPin:"",ppId:"",ppName:"",ppAmt:true};
+let config={countChanger:false,rewards:[{name:"ซัก 1 ถัง",kind:"wash",pts:10,value:50},{name:"อบ 1 ถัง",kind:"dry",pts:10,value:50}],shopName:"",shopLine:"@919ahdge",paper:"58",receiptFoot:"ขอบคุณที่ใช้บริการ",kioskPin:"",ppId:"",ppName:"",ppAmt:true,
+  washPrices:[{kg:9,p:[50,60,70]},{kg:14,p:[60,70,80]},{kg:18,p:[70,80,90]}],dryPrice:{kg:14,min:25,p:50},dryExtra:{min:6,p:10},staffNames:[]};
 // "ครบ 10 แต้ม แลกซัก 1 ถัง หรือ อบ 1 ถัง (ลดได้ 50 บาท)"
 function rwSummary(){const rs=rewards().filter(r=>+r.pts===minPts()), vals=[...new Set(rs.map(r=>+r.value||0))];
   return "แลก"+rs.map(r=>r.name).join(" หรือ ")+(vals.length===1&&vals[0]?" (ลดได้ "+vals[0]+" บาท)":"")}
@@ -888,7 +929,7 @@ function publicSummary(mid){
   return {shop:config.shopName||"",shopLine:config.shopLine||"",phone:maskPhone(mid),since:m.since||"",
     visits:vs.slice(-80).map(v=>({d:v.date,t:hhmm(v.at),w:int(v.washLoads),dr:int(v.dryLoads),a:vTotal(v),p:vPts(v)})),
     visitCount:vs.length,spent:vs.reduce((t,v)=>t+vTotal(v),0),
-    events:[...vs.map(v=>({d:v.date,t:v.at||"",p:vPts(v)})),...rs.map(r=>({d:r.date,t:r.at||"",p:-(+r.points||0),r:1,n:r.note||""}))],
+    events:[...vs.map(v=>({d:v.date,t:v.at||"",p:vPts(v)})),...rs.map(r=>({d:r.date,t:r.at||"",p:-(+r.points||0),r:1,n:r.note||""})),...(carryOf(mid)?[{d:carryOf(mid).date,t:carryOf(mid).at,p:carryOf(mid).p,c:1}]:[])],
     goal:minPts(),days:expiryDays(),rewards:rewards().map(r=>({name:r.name,pts:+r.pts,value:+r.value||0})),updatedAt:new Date().toISOString()};
 }
 async function publishMember(mid){
@@ -903,22 +944,25 @@ const checkUrl=token=>{const u=new URL("check.html",location.href);u.hash=token;
 /* ===== calculations ===== */
 const vTotal=v=>(+v.washAmt||0)+(+v.dryAmt||0)+(+v.soapAmt||0);
 const vPts=v=>v.memberId?(int(v.washLoads)+int(v.dryLoads)):0;
+// points carried over from the old LINE point card: entered once per member by the counter staff
+const carryOf=id=>{const c=S.members[id]&&S.members[id].carry;return c&&int(c.p)>0?{p:int(c.p),date:c.date||"",at:c.at||"",by:c.by||""}:null};
 function memberStats(id){
   const vs=Object.values(S.visits).filter(v=>v.memberId===id);
   const rs=Object.values(S.redeems).filter(r=>r.memberId===id);
-  const earned=vs.reduce((t,v)=>t+vPts(v),0), used=rs.reduce((t,r)=>t+(+r.points||0),0);
+  const cy=carryOf(id);
+  const earned=vs.reduce((t,v)=>t+vPts(v),0)+(cy?cy.p:0), used=rs.reduce((t,r)=>t+(+r.points||0),0);
   const pending=Object.values(S.claims).filter(c=>c.memberId===id).reduce((t,c)=>t+int(c.washLoads)+int(c.dryLoads),0);
   // Expiry: replay points in time order. When the balance reaches a full set (goal), a window of N days starts.
   // If no redemption by the last day of the window, one full set of points is cut on the next day.
   const goal=minPts(), days=expiryDays();
-  const ev=[...vs.map(v=>({d:v.date,t:v.at||"",p:vPts(v)})),...rs.map(r=>({d:r.date,t:r.at||"",p:-(+r.points||0),r:1}))].sort((a,b)=>(a.d+a.t).localeCompare(b.d+b.t));
+  const ev=[...vs.map(v=>({d:v.date,t:v.at||"",p:vPts(v)})),...rs.map(r=>({d:r.date,t:r.at||"",p:-(+r.points||0),r:1})),...(cy?[{d:cy.date,t:cy.at||"",p:cy.p}]:[])].sort((a,b)=>(a.d+a.t).localeCompare(b.d+b.t));
   let bal=0, since=null;const expired=[];
   const cutBefore=ds=>{while(days&&since&&bal>=goal&&shift(since,days)<ds){const last=shift(since,days);expired.push({date:shift(last,1),since,points:goal});bal-=goal;since=bal>=goal?shift(last,1):null}};
   for(const e of ev){cutBefore(e.d);bal+=e.p;if(bal>=goal){if(!since||e.r)since=e.d}else since=null}
   cutBefore(todayStr());
   const expiredPts=expired.reduce((t,x)=>t+x.points,0);
   return {vs,rs,earned,used,balance:bal,expired,expiredPts,deadline:days&&since&&bal>=goal?shift(since,days):null,
-    pending,spent:vs.reduce((t,v)=>t+vTotal(v),0),loads:earned};
+    pending,spent:vs.reduce((t,v)=>t+vTotal(v),0),loads:earned-(cy?cy.p:0),carry:cy};
 }
 const expiryDays=()=>config.expiryDays==null?30:int(config.expiryDays);
 const daysLeft=ds=>Math.round((new Date(ds+"T00:00:00")-new Date(todayStr()+"T00:00:00"))/864e5);
@@ -1283,9 +1327,20 @@ function vFormState(){
   else if(np){$("vWho").innerHTML='<span class="warn">เบอร์นี้ยังไม่เป็นสมาชิก</span>';$("vNewPhone").textContent=fmtPhone(np)}
   else if(id===undefined)$("vWho").innerHTML='<span class="warn">ไม่พบสมาชิกนี้ · พิมพ์เบอร์ให้ครบ 10 หลัก หรือเลือกจากรายการ</span>';
   else{const st=memberStats(id),m=S.members[id],g=minPts(),f=Math.min(g,st.balance);
-    $("vWho").innerHTML=`<div class="mcard"><div class="mc-top"><svg class="ic"><use href="#i-star"/></svg><div><b class="nt">${esc(m.name||"(ยังไม่มีชื่อ)")}</b><span>${fmtPhone(id)} · มาแล้ว ${st.vs.length} ครั้ง</span></div><div class="mc-pts"><b>${st.balance}</b>/${g}</div></div>`
+    $("vWho").innerHTML=`<div class="mcard"><div class="mc-top"><svg class="ic"><use href="#i-star"/></svg><div><b class="nt">${esc(m.name||"(ยังไม่มีชื่อ)")}</b><span>${fmtPhone(id)} · มาแล้ว ${st.vs.length} ครั้ง</span></div><div class="mc-pts"><b class="${st.balance<0?"neg":""}">${st.balance}</b>/${g}</div></div>`
       +(g<=30?`<div class="mc-drums">${Array.from({length:g},(_,i)=>`<i class="${i<f?"on":""}"></i>`).join("")}</div>`:"")
-      +`<div class="mc-note">${st.deadline?"แต้มครบ! แลกได้ถึง "+thaiDate(st.deadline):"อีก "+(g-st.balance)+" แต้ม แลกรางวัล"}</div></div>`}
+      +`<div class="mc-note">${st.balance<0?'<span class="warn">แต้มติดลบ: มีการแลกแต้มไว้ แต่รายการซัก/อบที่ได้แต้มถูกลบ · ให้เจ้าของลบการแลกที่ผิดในหลังบ้าน แท็บสมาชิก > ประวัติการแลกรางวัล หรือบันทึกรายการซัก/อบกลับเข้าไป</span>':st.deadline?"แต้มครบ! แลกได้ถึง "+thaiDate(st.deadline):"อีก "+(g-st.balance)+" แต้ม แลกรางวัล"}</div></div>`}
+  if(id&&id!==undefined&&!np){
+    const cy=carryOf(id),box=document.createElement("div");box.className="carry-row";
+    box.innerHTML=cy?`<svg class="ic"><use href="#i-star"/></svg> ยกมาจากบัตร LINE <b>${cy.p} แต้ม</b> · ${thaiDate(cy.date)}${cy.by?` · <span class="nt">${esc(cy.by)}</span>`:""}`
+      :`<button type="button" class="sbtn" id="vCarryOpen"><svg class="ic"><use href="#i-star"/></svg>ย้ายแต้มจากบัตร LINE</button><span id="vCarryForm" hidden><input id="vCarryX" class="mono" type="number" inputmode="numeric" min="1" max="99" placeholder="แต้ม" style="width:90px"> <button type="button" class="primary sm" id="vCarrySave">บันทึกแต้มยกมา</button></span>`;
+    $("vWho").append(box);
+    if(!cy){$("vCarryOpen").onclick=()=>{$("vCarryOpen").hidden=true;$("vCarryForm").hidden=false;$("vCarryX").focus()};
+      $("vCarrySave").onclick=async()=>{const p=Math.min(99,int($("vCarryX").value));if(!p){$("vCarryX").focus();return}
+        if(carryOf(id)){vFormState();return}
+        try{await merge("members",id,{carry:{p,date:sDate(),at:new Date().toISOString(),by:curStaff||""}});$("vMsg").textContent="ย้ายแต้มจาก LINE "+p+" แต้มแล้ว ✓";vFormState()}
+        catch(e){$("vMsg").innerHTML='<span class="warn">บันทึกไม่สำเร็จ ('+esc(e.code||"error")+')</span>'}}}
+  }
   const can=id&&id!==undefined&&memberStats(id).balance>=minPts();
   $("vRedeemBtn").hidden=!can;
   $("vRedeemHost").hidden=!(can&&staffRedeemOpen&&selMember===id);
@@ -1297,7 +1352,8 @@ $("vWL").oninput=vFormState;
 $("vDL").oninput=vFormState;
 ["vWA","vDA","vSA"].forEach(k=>$(k).oninput=()=>{$(k).dataset.manual=$(k).value?"1":"0";vFormState()});
 function resetVForm(){
-  ["vMem","vNewName","vWL","vWA","vDL","vDA","vSA"].forEach(k=>{$(k).value="";$(k).dataset.manual="0"});
+  ["vMem","vNewName","vWL","vWA","vDL","vDA","vSA","vCarry"].forEach(k=>{$(k).value="";$(k).dataset.manual="0"});
+  vItems=[];renderPadItems();
   editClaim=null;staffRedeemOpen=false;$("vCancel").hidden=true;$("vAddTxt").textContent="บันทึกลูกค้า";vFormState();
 }
 $("vCancel").onclick=()=>{resetVForm();$("vMsg").textContent=""};
@@ -1307,11 +1363,14 @@ $("vAdd").onclick=async()=>{
   if(id===undefined&&!np){$("vMsg").innerHTML='<span class="warn">ไม่พบสมาชิกนี้ พิมพ์เบอร์ให้ครบ หรือเว้นว่างถ้าเป็นลูกค้าทั่วไป</span>';return}
   if(np&&!nn){$("vMsg").innerHTML='<span class="warn">เบอร์ใหม่ ใส่ชื่อลูกค้าเพื่อสมัครสมาชิกก่อน</span>';$("vNewName").focus();return}
   const vw={washLoads:int($("vWL").value),dryLoads:int($("vDL").value),washAmt:int($("vWA").value),dryAmt:int($("vDA").value),soapAmt:int($("vSA").value)};
-  if(!vw.washLoads&&!vw.dryLoads&&!vTotal(vw)){$("vMsg").innerHTML='<span class="warn">ใส่จำนวนถังหรือยอดเงินอย่างน้อยหนึ่งช่อง</span>';return}
-  if(np){try{await put("members",np,{name:nn,phone:np,since:todayStr(),source:"staff"});renderDatalist();id=np}
-    catch(e){$("vMsg").innerHTML='<span class="warn">สมัครสมาชิกไม่สำเร็จ ('+esc(e.code||"error")+')</span>';return}}
+  const cp=np?Math.min(99,int($("vCarry").value)):0;
+  if(!vw.washLoads&&!vw.dryLoads&&!vTotal(vw)&&!cp){$("vMsg").innerHTML='<span class="warn">ใส่จำนวนถังหรือยอดเงินอย่างน้อยหนึ่งช่อง</span>';return}
+  if(np){const mrec={name:nn,phone:np,since:todayStr(),source:"staff"};if(cp)mrec.carry={p:cp,date:sDate(),at:new Date().toISOString(),by:curStaff||""};
+    try{await put("members",np,mrec);renderDatalist();id=np}
+    catch(e){$("vMsg").innerHTML='<span class="warn">สมัครสมาชิกไม่สำเร็จ ('+esc(e.code||"error")+')</span>';return}
+    if(!vw.washLoads&&!vw.dryLoads&&!vTotal(vw)){const keep=np;resetVForm();$("vMem").value=keep;vFormState();$("vMsg").textContent="สมัครสมาชิก "+nn+" และย้ายแต้มจาก LINE "+cp+" แต้มแล้ว ✓";return}}
   const v={date:editClaim?editClaim.date:sDate(),memberId:id||"",washLoads:int($("vWL").value),dryLoads:int($("vDL").value),
-    washAmt:int($("vWA").value),dryAmt:int($("vDA").value),soapAmt:int($("vSA").value),at:new Date().toISOString(),source:editClaim?"front":"staff",by:curStaff};
+    washAmt:int($("vWA").value),dryAmt:int($("vDA").value),soapAmt:int($("vSA").value),at:new Date().toISOString(),items:vItems.map(it=>({t:it.t,l:it.l,a:it.a})),source:editClaim?"front":"staff",by:curStaff};
   if(!v.washLoads&&!v.dryLoads&&!vTotal(v)){$("vMsg").innerHTML='<span class="warn">ใส่จำนวนถังหรือยอดเงินอย่างน้อยหนึ่งช่อง</span>';return}
   $("vAdd").disabled=true;
   try{
@@ -1340,6 +1399,9 @@ function renderVisits(){
   $("vFoot").innerHTML=`<tr><td>รวม ${list.length} คน</td><td>${fmt(W)}<small>${wl} ถัง</small></td><td>${fmt(D)}<small>${dl} ถัง</small></td><td>${fmt(P)}</td><td>${fmt(tot)}</td><td>+${pt}</td><td></td></tr>`;
   $("vBody").querySelectorAll("[data-rc]").forEach(b=>b.onclick=()=>openReceipt(b.dataset.rc));
   $("vBody").querySelectorAll("[data-v]").forEach(b=>b.onclick=async()=>{
+    const v=S.visits[b.dataset.v];
+    // don't let a delete leave a member with fewer points than they've already redeemed
+    if(v&&v.memberId&&vPts(v)>0){const st=memberStats(v.memberId);if(st.used>0&&st.earned-vPts(v)<st.used){$("vMsg").innerHTML='<span class="warn">ลบไม่ได้: ลูกค้าคนนี้ใช้แต้มจากรายการนี้แลกรางวัลไปแล้ว ถ้าจะลบ ให้เจ้าของลบการแลกแต้มในหลังบ้านก่อน (แท็บสมาชิก > ประวัติการแลกรางวัล)</span>';return}}
     if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="ลบ?";setTimeout(()=>{b.dataset.armed="";b.textContent="✕"},3000);return}
     try{await del("visits",b.dataset.v);renderVisits()}catch(e){$("vMsg").innerHTML='<span class="warn">ลบไม่สำเร็จ ลองอีกครั้ง</span>'}});
   updateTotals();
@@ -1419,10 +1481,12 @@ function renderDetail(){
     return `<button data-rw="${i}" ${ok?"":"disabled"} class="${rwArmed===i?"armed":""}"><b><svg class="ic"><use href="#i-${r.kind==="dry"?"dry":r.kind==="wash"?"wash":"gift"}"/></svg> ${esc(r.name)}</b><span>${ok?"ใช้ "+r.pts+" แต้ม"+(+r.value?" · ลดได้ "+r.value+" ฿":" · ฟรี"):"อีก "+(r.pts-st.balance)+" แต้ม"}</span></button>`}).join("");
   $("mdRewards").querySelectorAll("[data-rw]").forEach(b=>b.onclick=()=>openRedeem(+b.dataset.rw));
   if(rwArmed===null||!rewards()[rwArmed]||st.balance<rewards()[rwArmed].pts){$("rdPanel").hidden=true;rwArmed=null}
-  const hist=[...st.vs.map(v=>({d:v.date,at:v.at||"",v})),...st.rs.map(r=>({d:r.date,at:r.at||"",r})),...st.expired.map(x=>({d:x.date,at:"",x}))].sort((a,b)=>(b.d+b.at).localeCompare(a.d+a.at));
-  $("mdBody").innerHTML=hist.length?hist.map(h=>h.x?`<tr><td>${thaiDate(h.d)}</td><td colspan="4" class="t neg"><svg class="ic"><use href="#i-clock"/></svg> แต้มหมดอายุ<small>ครบตั้งแต่ ${thaiDate(h.x.since)} ไม่ได้แลกภายใน ${expiryDays()} วัน</small></td><td class="neg">−${h.x.points}</td></tr>`:h.v?`<tr><td>${thaiDate(h.d)}<small>${hhmm(h.at)} น.</small></td><td>${fmt(h.v.washAmt)}<small>${int(h.v.washLoads)} ถัง</small></td><td>${fmt(h.v.dryAmt)}<small>${int(h.v.dryLoads)} ถัง</small></td><td>${fmt(h.v.soapAmt)}</td><td>${fmt(vTotal(h.v))}</td><td class="pos">+${vPts(h.v)}</td></tr>`
+  const hist=[...(st.carry?[{d:st.carry.date,at:st.carry.at,c:st.carry}]:[]),...st.vs.map(v=>({d:v.date,at:v.at||"",v})),...st.rs.map(r=>({d:r.date,at:r.at||"",r})),...st.expired.map(x=>({d:x.date,at:"",x}))].sort((a,b)=>(b.d+b.at).localeCompare(a.d+a.at));
+  $("mdBody").innerHTML=hist.length?hist.map(h=>h.c?`<tr><td>${thaiDate(h.d)}<small>${hhmm(h.at)} น.</small></td><td colspan="4" class="t"><svg class="ic"><use href="#i-star"/></svg> แต้มยกมาจากบัตร LINE <b>+${h.c.p}</b>${h.c.by?`<small>โดย ${esc(h.c.by)}</small>`:""}</td><td>${isOwnerAcct?`<button class="del" id="mdCarryDel" aria-label="ลบแต้มยกมา">✕</button>`:""}</td></tr>`:h.x?`<tr><td>${thaiDate(h.d)}</td><td colspan="4" class="t neg"><svg class="ic"><use href="#i-clock"/></svg> แต้มหมดอายุ<small>ครบตั้งแต่ ${thaiDate(h.x.since)} ไม่ได้แลกภายใน ${expiryDays()} วัน</small></td><td class="neg">−${h.x.points}</td></tr>`:h.v?`<tr><td>${thaiDate(h.d)}<small>${hhmm(h.at)} น.</small></td><td>${fmt(h.v.washAmt)}<small>${int(h.v.washLoads)} ถัง</small></td><td>${fmt(h.v.dryAmt)}<small>${int(h.v.dryLoads)} ถัง</small></td><td>${fmt(h.v.soapAmt)}</td><td>${fmt(vTotal(h.v))}</td><td class="pos">+${vPts(h.v)}</td></tr>`
     :`<tr><td>${thaiDate(h.d)}<small>${hhmm(h.at)} น.</small></td><td colspan="3" class="t"><svg class="ic"><use href="#i-gift"/></svg> แลก ${esc(h.r.note||"รางวัล")}${h.r.price!=null?`<small>ราคา ${fmt(h.r.price)} · ลด ${fmt(h.r.disc)}</small>`:""}</td><td>${h.r.price!=null?fmt(h.r.extra)+"<small>จ่ายเพิ่ม</small>":"–"}</td><td class="neg">−${h.r.points}</td></tr>`).join("")
     :'<tr><td colspan="6"><div class="empty">ยังไม่มีประวัติการใช้บริการ</div></td></tr>';
+  {const b=$("mdCarryDel");if(b)b.onclick=async()=>{if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="ลบ?";setTimeout(()=>{b.dataset.armed="";b.textContent="✕"},3000);return}
+    try{await merge("members",id,{carry:null});renderDetail();renderMembers()}catch(e){}}}
   $("mdDelTxt").textContent=delArmed?"กดอีกครั้งเพื่อยืนยันการลบ (ประวัติยังเก็บไว้)":"ลบสมาชิกคนนี้";
 }
 // redeem: pick a reward → enter this service's price → see extra the customer pays → confirm
@@ -1775,12 +1839,72 @@ function renderRwEdit(){
   $("sRewards").querySelectorAll("[data-rwd]").forEach(b=>b.onclick=()=>{rwDraft.splice(+b.dataset.rwd,1);renderRwEdit()});
 }
 $("sAddRw").onclick=()=>{rwDraft.push({name:"",kind:"wash",pts:10,value:50});renderRwEdit();$("rwn"+(rwDraft.length-1)).focus()};
+/* ===== price buttons: staff tap the price of each machine run instead of typing ===== */
+let vItems=[], wpDraft=[];
+const TEMP=[["cold","น้ำเย็น","Cold"],["warm","น้ำอุ่น","Warm"],["hot","น้ำร้อน","Hot"]];
+function renderPricePad(){
+  const el=$("pricePad");if(!el)return;
+  const W=(config.washPrices||[]).filter(w=>(w.p||[]).some(x=>+x>0)), d=config.dryPrice||{}, x=config.dryExtra||{};
+  if(!W.length&&!(+d.p)&&!(+x.p)){el.innerHTML="";el.hidden=true;return}
+  el.hidden=false;
+  el.innerHTML=`<div class="pp-head"><svg class="ic"><use href="#i-coin"/></svg> กดราคาตามเครื่องที่ลูกค้าใช้ (กด 1 ครั้ง = 1 ถัง)</div>`
+    +(W.length?`<div class="pp-group"><b><svg class="ic"><use href="#i-wash"/></svg> ซัก</b>`+W.map(w=>`<div class="pp-row"><span class="pp-kg">${w.kg} กก.</span>${TEMP.map(([t,l],i)=>+w.p[i]?`<button type="button" class="pp-btn ${t}" data-pw="${w.kg}|${i}"><small>${l}</small>${w.p[i]} ฿</button>`:"").join("")}</div>`).join("")+`</div>`:"")
+    +(+d.p||+x.p?`<div class="pp-group"><b><svg class="ic"><use href="#i-dry"/></svg> อบ</b><div class="pp-row">`
+      +(+d.p?`<button type="button" class="pp-btn dry" data-pd="1"><small>อบ${d.kg?" "+d.kg+" กก.":""}${d.min?" · "+d.min+" นาที":""}</small>${d.p} ฿</button>`:"")
+      +(+x.p?`<button type="button" class="pp-btn extra" data-px="1"><small>ต่อเวลา${x.min?" "+x.min+" นาที":""} (กดได้หลายครั้ง)</small>+${x.p} ฿</button>`:"")+`</div></div>`:"")
+    +`<div class="pp-items" id="padItems"></div>`;
+  el.querySelectorAll(".pp-btn").forEach(b=>b.dataset.key=b.dataset.pw||(b.dataset.pd?"d":"x"));
+  el.querySelectorAll("[data-pw]").forEach(b=>b.onclick=()=>{const [kg,i]=b.dataset.pw.split("|"),w=W.find(q=>String(q.kg)===kg);addItem({t:"w",l:"ซัก "+kg+" กก. "+TEMP[+i][1],a:+w.p[+i],_b:b.dataset.key})});
+  el.querySelectorAll("[data-pd]").forEach(b=>b.onclick=()=>addItem({t:"d",l:"อบ"+(d.kg?" "+d.kg+" กก.":""),a:+d.p,_b:"d"}));
+  el.querySelectorAll("[data-px]").forEach(b=>b.onclick=()=>addItem({t:"x",l:"ต่อเวลาอบ"+(x.min?" "+x.min+" นาที":""),a:+x.p,_b:"x"}));
+  renderPadItems();
+}
+function applyItem(it,sign){
+  const add=(k,n)=>{$(k).value=Math.max(0,int($(k).value)+sign*n)||"";$(k).dataset.manual="1"};
+  if(it.t==="w"){add("vWL",1);add("vWA",it.a)}else if(it.t==="d"){add("vDL",1);add("vDA",it.a)}else add("vDA",it.a);
+  vFormState();
+}
+function addItem(it){vItems.push(it);applyItem(it,1);renderPadItems()}
+function renderPadItems(){
+  const el=$("padItems");if(!el)return;
+  // same item tapped several times (e.g. extra dry time) shows as one chip with a count; ✕ takes one off
+  const g=[];vItems.forEach(it=>{const k=it.t+"|"+it.l+"|"+it.a,f=g.find(x=>x.k===k);f?f.n++:g.push({k,it,n:1})});
+  el.innerHTML=g.map((x,i)=>`<span class="pp-chip">${x.it.l}${x.n>1?` <b>×${x.n}</b>`:""} ${fmt(x.it.a*x.n)} ฿<button type="button" data-pk="${i}" aria-label="เอาออก 1 ครั้ง">✕</button></span>`).join("");
+  el.querySelectorAll("[data-pk]").forEach(b=>b.onclick=()=>{const k=g[+b.dataset.pk].k,i=vItems.map(it=>it.t+"|"+it.l+"|"+it.a).lastIndexOf(k);if(i>=0){const it=vItems.splice(i,1)[0];applyItem(it,-1)}renderPadItems()});
+  // badge on the buttons: how many times each was tapped
+  document.querySelectorAll("#pricePad .pp-btn").forEach(b=>{const n=+(b.dataset.n=vItems.filter(it=>it._b===b.dataset.key).length);let s=b.querySelector(".pp-n");if(!n){s&&s.remove();return}if(!s){s=document.createElement("span");s.className="pp-n";b.append(s)}s.textContent="×"+n});
+}
+function renderWpEdit(){
+  const L=$("wpEdit");if(!L)return;
+  L.innerHTML=wpDraft.map((w,i)=>`<tr><td><input class="mono" type="number" inputmode="numeric" min="0" data-wk="${i}" value="${w.kg||""}" placeholder="กก." style="width:70px"> กก.</td>${[0,1,2].map(j=>`<td><input class="mono" type="number" inputmode="numeric" min="0" data-wp="${i}|${j}" value="${w.p[j]||""}" placeholder="0" style="width:70px"></td>`).join("")}<td><button class="del" data-wd="${i}" aria-label="ลบ">✕</button></td></tr>`).join("");
+  L.querySelectorAll("[data-wk]").forEach(x=>x.oninput=()=>{wpDraft[+x.dataset.wk].kg=int(x.value)});
+  L.querySelectorAll("[data-wp]").forEach(x=>x.oninput=()=>{const [i,j]=x.dataset.wp.split("|");wpDraft[+i].p[+j]=int(x.value)});
+  L.querySelectorAll("[data-wd]").forEach(x=>x.onclick=()=>{wpDraft.splice(+x.dataset.wd,1);renderWpEdit()});
+}
+$("wpAdd").onclick=()=>{wpDraft.push({kg:0,p:[0,0,0]});renderWpEdit()};
+
+/* ===== who is entering: two staff share one login and tap their own name ===== */
+let loginName="";
+const staffNames=()=>Array.isArray(config.staffNames)?config.staffNames.filter(Boolean):[];
+function renderWho(){
+  const names=staffNames(), bar=$("whoBar");if(!bar)return;
+  if(!loginName)loginName=curStaff;
+  bar.hidden=!names.length;if(!names.length)return;
+  let pick="";try{pick=localStorage.getItem("lw_who")||""}catch(e){}
+  if(pick&&names.includes(pick)&&curStaff!==pick)setStaff(pick);
+  $("whoChips").innerHTML=names.map(n=>`<button type="button" class="who-chip ${n===curStaff?"on":""}" data-who="${esc(n)}"><span class="nt">${esc(n)}</span></button>`).join("");
+  $("whoChips").querySelectorAll("[data-who]").forEach(b=>b.onclick=()=>{setStaff(b.dataset.who);try{localStorage.setItem("lw_who",b.dataset.who)}catch(e){}renderWho()});
+}
 function renderSettings(){
   $("sExp").value=expiryDays();
   rwDraft=rewards().map(r=>({name:r.name,kind:r.kind||"other",pts:+r.pts,value:+r.value||0}));renderRwEdit();
   $("countChg").checked=!!config.countChanger;$("sKioskPin").value=config.kioskPin||"";
   $("sShop").value=config.shopName||"";$("sLine").value=config.shopLine||"";$("sPaper").value=config.paper==="80"?"80":"58";$("sFoot").value=config.receiptFoot||"";$("sPP").value=config.ppId||"";$("sPPName").value=config.ppName||"";$("sPPAmt").checked=config.ppAmt!==false;
   renderStaffAccounts();
+  wpDraft=(config.washPrices||[]).map(w=>({kg:+w.kg||0,p:[0,1,2].map(i=>int((w.p||[])[i]))}));renderWpEdit();
+  {const d=config.dryPrice||{},x=config.dryExtra||{};$("dpKg").value=d.kg||"";$("dpMin").value=d.min||"";$("dpP").value=d.p||"";$("dxMin").value=x.min||"";$("dxP").value=x.p||"";}
+  $("sNames").value=staffNames().join(", ");
+  renderPricePad();renderWho();
   $("kReward").textContent="ครบ "+minPts()+" แต้ม "+rwSummary();
 }
 $("sSave").onclick=async()=>{
@@ -1791,7 +1915,10 @@ $("sSave").onclick=async()=>{
   if(kp&&(kp.length<4||kp.length>6)){$("sMsg").innerHTML='<span class="warn">รหัสออกจากหน้าบ้านต้องมี 4–6 หลัก</span>';return}
   config=Object.assign({},config,{rewards:rw,expiryDays:$("sExp").value===""?30:int($("sExp").value),
     kioskPin:kp,countChanger:$("countChg").checked,shopName:$("sShop").value.trim(),shopLine:$("sLine").value.trim(),
-    paper:$("sPaper").value,receiptFoot:$("sFoot").value.trim(),ppId:ppDigits($("sPP").value),ppName:$("sPPName").value.trim(),ppAmt:$("sPPAmt").checked});
+    paper:$("sPaper").value,receiptFoot:$("sFoot").value.trim(),ppId:ppDigits($("sPP").value),ppName:$("sPPName").value.trim(),ppAmt:$("sPPAmt").checked,
+    washPrices:wpDraft.filter(w=>w.kg||w.p.some(Boolean)).map(w=>({kg:int(w.kg),p:w.p.map(int)})),
+    dryPrice:{kg:int($("dpKg").value),min:int($("dpMin").value),p:int($("dpP").value)},dryExtra:{min:int($("dxMin").value),p:int($("dxP").value)},
+    staffNames:[...new Set($("sNames").value.split(/[,\n]/).map(x=>x.trim()).filter(Boolean))]});
   try{await saveConfig();$("sMsg").textContent="บันทึกการตั้งค่าแล้ว";renderSettings();updateTotals();applyMode();
     Object.keys(S.members).forEach(mid=>afterWrite("members",mid,S.members[mid]))} // refresh customers' QR pages with the new rules
   catch(e){$("sMsg").innerHTML='<span class="warn">บันทึกไม่สำเร็จ</span>'}
@@ -1979,7 +2106,7 @@ const EN={
 "สมัครสมาชิกใหม่":"New member sign-up","ใส่ชื่อลูกค้า (จำเป็น)":"Customer name (required)","ใส่ชื่อแล้วกดบันทึก ระบบจะสมัครสมาชิกและสะสมแต้มครั้งนี้ให้เลย":"Enter a name and save: the member is created and earns points for this visit","เบอร์นี้ยังไม่เป็นสมาชิก":"This phone is not a member yet","เบอร์ใหม่ ใส่ชื่อลูกค้าเพื่อสมัครสมาชิกก่อน":"New phone: enter the customer's name first","พิมพ์เบอร์โทรลูกค้า (เว้นว่าง = ลูกค้าทั่วไป)":"Customer phone (empty = walk-in)","มาแล้ว":"visits:","แต้มครบ! แลกได้ถึง":"Points full! Redeem by","แต้ม แลกรางวัล":"pts to a reward","(ยังไม่มีชื่อ)":"(no name)","ชื่อ หรือชื่อเล่น (จำเป็น)":"Name (required)",
 "เงินใส่คืนตู้แลกเหรียญ":"Coins refilled into changer","เหรียญ 10 บาทที่เติมเข้าตู้":"10฿ coins refilled","เงินสดให้พนักงานแลก":"Change float for staff","เพิ่มรายการให้พนักงาน":"Add float","ให้ไป (บาท)":"Given (฿)","คืนมา (บาท)":"Returned (฿)","ให้ไปทั้งหมด":"Total given","คืนมาแล้ว":"Returned","ยังไม่คืน":"Not returned","คืนเกินมา":"Returned extra","คืนครบแล้ว":"All returned","ยังไม่มีรายการของวันนี้":"Nothing today","เติมเหรียญคืนตู้แลก":"Changer refill","พนักงาน":"Staff",
 "นับได้จริง":"Counted","เงินสำรองครั้งก่อน":"Last reserve","ยอดที่ควรเหลือ":"Should have","เงินตรง ✓":"Matches ✓","เงินขาด":"Short","เงินเกิน":"Over","ค่าใช้จ่ายเงินสด":"cash expenses","ให้พนักงานแลก (ยังไม่คืน)":"staff float not returned","เงินสดจากตู้":"Cash from box","โอนจ่าย":"Transfer","จ่ายโดย":"Paid by","เงินสด":"Cash","โอน":"Transfer",
-"ให้พนักงานแลกรวมวันนี้":"Float given today","ยอดขายหน้าร้านรวมทั้งวัน":"Counter sales today","รายรับจริง":"Real income","เงินตู้แลกสุทธิ":"Changer net","คืนมารวม":"Returned total","ให้ไปรวม":"Given total","แลกแต้มซักฟรี นอกระบบ":"Free wash outside the system","ยอดเหรียญที่หยอดให้ (บาท)":"Coins given (฿)","บันทึกการแลก":"Save","ยังไม่มีการแลกนอกระบบของวันนี้":"None today","รวมวันนี้":"Today total","หักยอดแลกแต้มซักฟรี":"Free washes from points (deduct)","วันนี้ไม่มีการแลกแต้มในระบบ":"No redemptions in the system today","แลกแต้มนอกระบบ":"Redemptions outside the system","เพิ่มรายการแลกนอกระบบ":"Add outside redemption","แลกในระบบ":"In system","แลกนอกระบบ":"Outside system","รวมหักวันนี้":"Total deducted today","ยอดที่หัก (บาท)":"Deduct (฿)","รายละเอียด":"Details","หักแลกแต้ม":"Redeemed","ยอดขายวันนี้ (พนักงานหน้าร้านลง)":"Sales today (entered by staff)","รวมยอดขาย":"Total sales","เงินที่นับได้จริง":"Money counted","ยังไม่ได้นับ":"Not counted yet","ยอดขายหน้าร้านรายวัน":"Counter sales by day","รวมเงินทั้งหมด":"Total money","รวมเงินทั้งเดือน":"Month total","น้ำยาซองทั้งเดือน":"Soap packets this month","น้ำยา (ลงในรายการลูกค้า)":"Soap (on customer rows)","ชิ้นรวม":"Pieces","ชิ้น":"pcs","QR พร้อมเพย์บนใบเสร็จ":"PromptPay QR on receipt","เบอร์พร้อมเพย์ / เลขบัตร 13 หลัก":"PromptPay phone / 13-digit ID","ชื่อบัญชี (ให้ลูกค้าตรวจก่อนโอน)":"Account name (for customers to check)","ใส่ยอดเงินใน QR":"Put the amount in the QR","เงินสดที่หยิบจากเงินสำรองให้พนักงานไว้แลกให้ลูกค้า ใส่ยอดที่ให้ไป · ระบบหักออกจากยอดที่ควรเหลือในตู้":"Cash taken from the reserve for staff to give change · enter the amount given · deducted from what the box should have","− เงินสดให้พนักงานแลก":"− staff float","เงินสดให้พนักงานแลก (บันทึกไว้ดู)":"Staff float (record only)",
+"ให้พนักงานแลกรวมวันนี้":"Float given today","ยอดขายหน้าร้านรวมทั้งวัน":"Counter sales today","ย้ายแต้มจากบัตร LINE":"Move points from LINE card","บันทึกแต้มยกมา":"Save points","แต้มยกมาจากบัตร LINE (ถ้ามี)":"Points from LINE card (if any)","ยกมาจากบัตร LINE":"From LINE card","ใครกำลังกรอก":"Who is entering","กดราคาตามเครื่องที่ลูกค้าใช้ (กด 1 ครั้ง = 1 ถัง)":"Tap the machine price (1 tap = 1 load)","น้ำเย็น":"Cold","น้ำอุ่น":"Warm","น้ำร้อน":"Hot","ต่อเวลา":"Extra time","รายรับจริง":"Real income","เงินตู้แลกสุทธิ":"Changer net","คืนมารวม":"Returned total","ให้ไปรวม":"Given total","แลกแต้มซักฟรี นอกระบบ":"Free wash outside the system","ยอดเหรียญที่หยอดให้ (บาท)":"Coins given (฿)","บันทึกการแลก":"Save","ยังไม่มีการแลกนอกระบบของวันนี้":"None today","รวมวันนี้":"Today total","หักยอดแลกแต้มซักฟรี":"Free washes from points (deduct)","วันนี้ไม่มีการแลกแต้มในระบบ":"No redemptions in the system today","แลกแต้มนอกระบบ":"Redemptions outside the system","เพิ่มรายการแลกนอกระบบ":"Add outside redemption","แลกในระบบ":"In system","แลกนอกระบบ":"Outside system","รวมหักวันนี้":"Total deducted today","ยอดที่หัก (บาท)":"Deduct (฿)","รายละเอียด":"Details","หักแลกแต้ม":"Redeemed","ยอดขายวันนี้ (พนักงานหน้าร้านลง)":"Sales today (entered by staff)","รวมยอดขาย":"Total sales","เงินที่นับได้จริง":"Money counted","ยังไม่ได้นับ":"Not counted yet","ยอดขายหน้าร้านรายวัน":"Counter sales by day","รวมเงินทั้งหมด":"Total money","รวมเงินทั้งเดือน":"Month total","น้ำยาซองทั้งเดือน":"Soap packets this month","น้ำยา (ลงในรายการลูกค้า)":"Soap (on customer rows)","ชิ้นรวม":"Pieces","ชิ้น":"pcs","QR พร้อมเพย์บนใบเสร็จ":"PromptPay QR on receipt","เบอร์พร้อมเพย์ / เลขบัตร 13 หลัก":"PromptPay phone / 13-digit ID","ชื่อบัญชี (ให้ลูกค้าตรวจก่อนโอน)":"Account name (for customers to check)","ใส่ยอดเงินใน QR":"Put the amount in the QR","เงินสดที่หยิบจากเงินสำรองให้พนักงานไว้แลกให้ลูกค้า ใส่ยอดที่ให้ไป · ระบบหักออกจากยอดที่ควรเหลือในตู้":"Cash taken from the reserve for staff to give change · enter the amount given · deducted from what the box should have","− เงินสดให้พนักงานแลก":"− staff float","เงินสดให้พนักงานแลก (บันทึกไว้ดู)":"Staff float (record only)",
 "บันทึก":"Save","เพิ่ม":"Add","ภาษา":"Language","แล้ว":"✓"
 };
 const EN_KEYS=Object.keys(EN).sort((a,b)=>b.length-a.length);
