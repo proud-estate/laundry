@@ -484,6 +484,7 @@ img{max-width:100%}
   <section class="card">
     <h2><span class="h-ic"><span class="icbox coin"><svg class="ic"><use href="#i-safe"/></svg></span>เงินสำรองในตู้</span> <span class="tot coin num" id="t-res">0</span></h2>
     <p class="hint">นับ<b>เงินทั้งหมดในตู้</b> ทุกใบทุกเหรียญ หลังเติมตู้แลกเหรียญแล้ว (ยังไม่ต้องหยิบเงินให้พนักงานออก) · ระบบหักเงินที่แยกไว้ให้พนักงานให้เอง · ยอดนี้ไม่นับเป็นรายรับ</p>
+    <p class="hint"><b>ถ้าวันนี้ไม่ได้นับเงินทั้งหมดในตู้ ให้เว้นช่องนี้ว่างไว้</b> · อย่าใส่แค่เงินบางส่วนที่เก็บมา ระบบจะเข้าใจว่าในตู้มีเงินเท่านั้น <button type="button" class="sbtn" id="resClear" style="padding:4px 10px;margin-left:6px">ล้างช่องเงินสำรองของวันนี้</button></p>
     <div class="grid" id="g-res"></div>
     <div class="sum" id="resDiff"></div>
   </section>
@@ -1122,8 +1123,10 @@ function updateTotals(){
       +Lr("− ค่าใช้จ่ายที่จ่ายเงินสดจากตู้",fmt(flow.exp)+" ฿","sub")
       +Lr("ควรนับได้ทั้งหมดในตู้",fmt(all)+" ฿","top")
       +Lr("นับได้ทั้งหมดในตู้",fmt(res)+" ฿","big")
-      +(hasRes(cur)?Lr(diff===0?"เงินตรง ✓":diff<0?"เงินขาด":"เงินเกิน",`<span class="${diff===0?"pos":diff<0?"neg":"coin"}">${diff===0?"0":(diff>0?"+":"−")+fmt(Math.abs(diff))} ฿</span>`,"big"):"")
-      +tail;
+      +(hasRes(cur)?Lr(diff===0?"เงินตรง ✓":diff<0?"เงินขาด":"เงินเกิน",`<span class="${diff===0?"pos":diff<0?"neg":"coin"}">${diff===0?"0":(diff>0?"+":"−")+fmt(Math.abs(diff))} ฿</span>`,"big")+tail
+        // not counted today: show what the box should hold and carry on from the last real count
+        :'<p class="hint">วันนี้ยังไม่ได้นับเงินทั้งหมดในตู้ (ช่องด้านบนว่าง) · ไม่เป็นไร วันที่นับครั้งถัดไประบบจะรวมทุกวันตั้งแต่ '+thaiDate(prevDs)+' มาเทียบให้</p>'
+          +Lr("− ให้พนักงานแลกสำหรับวันถัดไป","−"+fmt(fl)+" ฿","sub")+Lr("เงินสำรองในตู้ที่ควรมี (ยังไม่ได้นับ)",fmt(all-fl)+" ฿","big"));
   } else resHtml+='<p class="hint">ยังไม่มีเงินสำรองที่นับไว้ก่อนหน้า · ยอดวันนี้จะเป็น<b>ยอดตั้งต้น</b> พรุ่งนี้ระบบจะเริ่มคำนวณและเทียบให้</p>';
   $("resDiff").innerHTML=resHtml;
   $("t-soap").textContent=fmt(c.packSoap)+" ฿";$("t-chg").textContent=fmt(c.chg)+" ฿";$("t-exp").textContent=fmt(c.exp)+" ฿";
@@ -1173,9 +1176,9 @@ function updateTotals(){
     L("ยอดสแกนจ่ายรายวัน (บันทึกไว้ดู ไม่นำไปคำนวณ)",fmt(c.scan)+" ฿","sub")+
     L("<b>4. เงินสดให้พนักงานแลก</b> <small>(ไม่นับเป็นรายรับ)</small>","","top")+
     L("ให้ไปเมื่อวาน",fmt(prevFloat(cur.date).g)+" ฿","sub")+L("พนักงานคืนมาวันนี้",fmt(ft.b)+" ฿")+L("ให้ไปสำหรับวันถัดไป",fmt(ft.g)+" ฿")+
-    L("เงินในตู้ที่นับได้ทั้งหมด",fmt(resTotal(cur))+" ฿","top")+
+    (hasRes(cur)?L("เงินในตู้ที่นับได้ทั้งหมด",fmt(resTotal(cur))+" ฿","top")+
     L("− ให้พนักงานแลกสำหรับวันถัดไป","−"+fmt(ft.g)+" ฿")+
-    L("เงินสำรองในตู้คงเหลือ",fmt(resNet(cur))+" ฿","big");
+    L("เงินสำรองในตู้คงเหลือ",fmt(resNet(cur))+" ฿","big"):L("เงินในตู้ทั้งหมด",'<span class="coin">วันนี้ไม่ได้นับ</span>',"top"));
 }
 function touch(){dirty=true;updateTotals();updFloat();$("save").disabled=false;$("saveSt").textContent="มีการแก้ไขที่ยังไม่บันทึก"}
 function confirmLeave(){
@@ -1776,6 +1779,7 @@ $("pBtn").onclick=async()=>{
 };
 $("tab-set").addEventListener("click",()=>{if(!$("pFrom").value){$("pFrom").value=todayStr();$("pTo").value=todayStr()}renderPart()});
 
+$("resClear").onclick=()=>{RES.forEach(([k])=>cur[k]=0);renderForm&&renderForm();touch()};
 /* ===== wipe all shop data (owner only): for clearing test entries before going live ===== */
 $("wipeTxt").addEventListener("input",()=>{$("wipeBtn").disabled=$("wipeTxt").value.trim()!=="ลบทั้งหมด"});
 $("wipeBtn").onclick=async()=>{
