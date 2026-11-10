@@ -547,6 +547,7 @@ img{max-width:100%}
   <section class="card">
     <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-soap"/></svg></span>ขายน้ำยา</span> <span class="tot num" id="t-ssoap">0 ฿</span></h2>
     <p class="hint">กด + ทุกครั้งที่ขายได้ 1 ซอง · บันทึกทันที</p>
+    <p class="hint"><b>ถ้ากดปุ่มน้ำยาตอนบันทึกลูกค้าแล้ว ระบบนับซองตรงนี้ให้เอง ไม่ต้องกด + ซ้ำ</b> · ยอดนี้ใช้เป็นรายรับค่าน้ำยา</p>
     <div class="soapgrid" id="soapPad"></div>
     <p class="hint" id="soapMsg"></p>
     <div id="soapSumStaff"></div>
@@ -664,7 +665,7 @@ img{max-width:100%}
   </section>
   <section class="card">
     <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-sum"/></svg></span>ยอดขายหน้าร้านรายวัน</span> <span class="tot num" id="t-front">0 ฿</span></h2>
-    <p class="hint">ยอดที่พนักงานลงรายลูกค้า (ซัก อบ น้ำยา) · คอลัมน์ "ซอง" คือจำนวนน้ำยาที่กด + แยกต่างหาก ไม่รวมในยอด · แตะแถวเพื่อเปิดวันนั้น</p>
+    <p class="hint">ยอดที่พนักงานลงรายลูกค้า (ซัก อบ น้ำยา) · คอลัมน์ "ซอง" คือน้ำยาที่นับซอง ใช้เป็นรายรับค่าน้ำยา · แตะแถวเพื่อเปิดวันนั้น</p>
     <div class="tablewrap"><table class="soapday">
       <thead id="sdHead"></thead><tbody id="sdBody"></tbody><tfoot id="sdFoot"></tfoot>
     </table></div>
@@ -974,7 +975,7 @@ function calcDay(r){
   const coins=coinCount(r), coin=coins*10;
   // what the counter staff recorded that day (customer rows + sachets)
   const f=r.date?frontSales(r.date,r):null, keyedWD=f?f.wa+f.da:0, keyedSoap=f?f.ka:0;
-  const packSoap=SOAP.reduce((t,[k,,p])=>t+(+r[k]||0)*p,0), soap=keyedSoap; // soap money = what the staff keyed on customer rows; packets are a count only
+  const packSoap=SOAP.reduce((t,[k,,p])=>t+(+r[k]||0)*p,0), soap=packSoap; // soap money = the packet tally (+ buttons); soap keyed on customer rows is a cross-check
   // machine money: the coin count once the owner has counted, otherwise the wash/dry the staff keyed in
   const est=false, machine=coin;
   // free washes from points: the shop drops its own coins into the machine, so they are counted above but are not customer money
@@ -1158,11 +1159,12 @@ function updateTotals(){
     L("ซัก "+fs.wl+" ถัง + อบ "+fs.dl+" ถัง",fmt(fs.wa+fs.da)+" ฿")+
     L("น้ำยา",fmt(fs.ka)+" ฿")+
     L("รวมยอดขาย",fmt(fs.total)+" ฿")+
-    L("ขายน้ำยา (นับซอง) "+fs.pn+" ชิ้น",fmt(fs.pa)+" ฿","sub")+
+    L("ขายน้ำยา (นับซอง) "+fs.pn+" ชิ้น · ใช้เป็นรายรับ",fmt(fs.pa)+" ฿","sub")+
     L("แลกแต้มซักฟรี ("+c.rdn+" ครั้ง) · แสดงไว้ดู ไม่หักในส่วนนี้",fmt(c.redeem)+" ฿","sub")+
     L("<b>2. เงินที่นับได้จริง</b>","","top")+
     L("เหรียญตู้ซัก+อบ ("+fmt(c.coins)+" เหรียญ)",c.coins?fmt(c.coin)+" ฿":'<span class="coin">ยังไม่ได้นับ</span>')+
-    L("+ น้ำยา (พนักงานคีย์)",fmt(c.soap)+" ฿")+
+    L("+ น้ำยา (นับซอง "+fs.pn+" ชิ้น)",fmt(c.soap)+" ฿")+
+    ((c.keyedSoap||c.soap)?L(c.keyedSoap===c.soap?"น้ำยาที่คีย์ในรายการลูกค้า: ตรงกับยอดนับซอง ✓":"น้ำยาที่คีย์ในรายการลูกค้า "+fmt(c.keyedSoap)+" ฿ ไม่ตรงกับยอดนับซอง",c.keyedSoap===c.soap?"":`<span class="coin">${c.keyedSoap>c.soap?"+":"−"}${fmt(Math.abs(c.keyedSoap-c.soap))} ฿</span>`,"sub"):"")+
     (config.countChanger?L("+ ตู้แลกเหรียญ",fmt(c.chg)+" ฿"):"")+
     L("รวมรายรับ",fmt(c.inc)+" ฿","big")+
     L("− ค่าใช้จ่าย","−"+fmt(c.exp)+" ฿")+
@@ -1224,7 +1226,7 @@ function frontSalesHtml(f,L){
   return L("ลูกค้า (สมาชิก / ทั่วไป)",f.heads+" คน ("+f.mem+" / "+(f.heads-f.mem)+")","sub")
     +L("ซัก "+f.wl+" ถัง",fmt(f.wa)+" ฿")+L("อบ "+f.dl+" ถัง",fmt(f.da)+" ฿")+L("น้ำยา",fmt(f.ka)+" ฿")
     +L("รวมยอดที่พนักงานลง",fmt(f.total)+" ฿","big")
-    +L("<b>ขายน้ำยา (นับซอง แยกต่างหาก)</b>","","top")
+    +L("<b>ขายน้ำยา (นับซอง · ใช้เป็นรายรับค่าน้ำยา)</b>","","top")
     +f.sp.map(x=>L(x.l+" "+x.n+" ชิ้น",fmt(x.a)+" ฿",x.n?"":"sub")).join("")
     +L("รวมน้ำยา "+f.pn+" ชิ้น",fmt(f.pa)+" ฿","big");
 }
@@ -1249,6 +1251,14 @@ function renderSoapPad(){
     soapLocal[b.dataset.sk]=Math.max(0,soapLocal[b.dataset.sk]+(+b.dataset.sd));
     renderSoapPad();$("soapMsg").textContent="กำลังบันทึก…";clearTimeout(soapTimer);soapTimer=setTimeout(flushSoap,600);
   });
+}
+/* soap buttons on a customer row also count the packets in the sachet tally (the tally is the soap income) */
+function bumpSoapFromItems(v,sign){
+  const d={};(v.items||[]).forEach(it=>{if(it.t==="s"&&it.k)d[it.k]=(d[it.k]||0)+sign});
+  if(!Object.keys(d).length)return;
+  const ds=v.date;if(!soapLocal||soapLocal.date!==ds)soapLocal=Object.assign({date:ds},soapOf(S.soap[ds]));
+  for(const k in d)soapLocal[k]=Math.max(0,int(soapLocal[k])+d[k]);
+  if(ds===sDate())renderSoapPad();clearTimeout(soapTimer);soapTimer=setTimeout(flushSoap,300);
 }
 /* staff: free washes given outside the web redeem flow (paper cards etc.), stored on the day's soap record */
 const freeSOf=ds=>{const x=S.soap[ds];return Array.isArray(x&&x.freeS)?x.freeS:[]};
@@ -1373,11 +1383,11 @@ $("vAdd").onclick=async()=>{
     catch(e){$("vMsg").innerHTML='<span class="warn">สมัครสมาชิกไม่สำเร็จ ('+esc(e.code||"error")+')</span>';return}
     if(!vw.washLoads&&!vw.dryLoads&&!vTotal(vw)){const keep=np;resetVForm();$("vMem").value=keep;vFormState();$("vMsg").textContent="สมัครสมาชิก "+nn+" และย้ายแต้มจาก LINE "+cp+" แต้มแล้ว ✓";return}}
   const v={date:editClaim?editClaim.date:sDate(),memberId:id||"",washLoads:int($("vWL").value),dryLoads:int($("vDL").value),
-    washAmt:int($("vWA").value),dryAmt:int($("vDA").value),soapAmt:int($("vSA").value),at:new Date().toISOString(),items:vItems.map(it=>({t:it.t,l:it.l,a:it.a})),source:editClaim?"front":"staff",by:curStaff};
+    washAmt:int($("vWA").value),dryAmt:int($("vDA").value),soapAmt:int($("vSA").value),at:new Date().toISOString(),items:vItems.map(it=>it.k?{t:it.t,k:it.k,l:it.l,a:it.a}:{t:it.t,l:it.l,a:it.a}),source:editClaim?"front":"staff",by:curStaff};
   if(!v.washLoads&&!v.dryLoads&&!vTotal(v)){$("vMsg").innerHTML='<span class="warn">ใส่จำนวนถังหรือยอดเงินอย่างน้อยหนึ่งช่อง</span>';return}
   $("vAdd").disabled=true;
   try{
-    const vid=newId();await put("visits",vid,v);
+    const vid=newId();await put("visits",vid,v);bumpSoapFromItems(v,1);
     if(editClaim)await del("claims",editClaim.id);
     const who=id?dn(id):"ลูกค้าทั่วไป";
     $("vMsg").textContent="บันทึก "+who+" "+fmt(vTotal(v))+" บาท"+(vPts(v)?" · +"+vPts(v)+" แต้ม":"")+" แล้ว"+(np?" · สมัครสมาชิกใหม่ให้แล้ว":"");
@@ -1406,7 +1416,7 @@ function renderVisits(){
     // don't let a delete leave a member with fewer points than they've already redeemed
     if(v&&v.memberId&&vPts(v)>0){const st=memberStats(v.memberId);if(st.used>0&&st.earned-vPts(v)<st.used){$("vMsg").innerHTML='<span class="warn">ลบไม่ได้: ลูกค้าคนนี้ใช้แต้มจากรายการนี้แลกรางวัลไปแล้ว ถ้าจะลบ ให้เจ้าของลบการแลกแต้มในหลังบ้านก่อน (แท็บสมาชิก > ประวัติการแลกรางวัล)</span>';return}}
     if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="ลบ?";setTimeout(()=>{b.dataset.armed="";b.textContent="✕"},3000);return}
-    try{await del("visits",b.dataset.v);renderVisits()}catch(e){$("vMsg").innerHTML='<span class="warn">ลบไม่สำเร็จ ลองอีกครั้ง</span>'}});
+    try{const dv=S.visits[b.dataset.v];await del("visits",b.dataset.v);if(dv)bumpSoapFromItems(dv,-1);renderVisits()}catch(e){$("vMsg").innerHTML='<span class="warn">ลบไม่สำเร็จ ลองอีกครั้ง</span>'}});
   updateTotals();
 }
 function renderClaims(){
@@ -1621,7 +1631,7 @@ function buildWorkbook(scope){
   // summary
   const period=scope==="all"?L("ทั้งหมด","All time"):m;
   add(L("สรุป","Summary"),[[L("สมุดบัญชีร้านซักผ้า","Laundry Shop Ledger")],[L("ช่วงข้อมูล","Period"),period],[L("ดึงข้อมูลเมื่อ","Exported"),todayStr()+" "+hhmm(new Date().toISOString())],[],
-    [L("ลูกค้า (หัว)","Customers"),T.heads],[L("เหรียญ 10 บาท ตู้ซัก+อบ (เหรียญ)","10฿ coins (count)"),T.coins],[L("เงินเหรียญตู้ซัก+อบ","Coins from machines"),T.coin],[L("ยอดสแกนจ่าย (บันทึกไว้ดู ไม่นำไปคำนวณ)","Scan payments (record only, not in totals)"),T.scan],[L("ค่าน้ำยา (พนักงานคีย์)","Soap (keyed by staff)"),T.soap],
+    [L("ลูกค้า (หัว)","Customers"),T.heads],[L("เหรียญ 10 บาท ตู้ซัก+อบ (เหรียญ)","10฿ coins (count)"),T.coins],[L("เงินเหรียญตู้ซัก+อบ","Coins from machines"),T.coin],[L("ยอดสแกนจ่าย (บันทึกไว้ดู ไม่นำไปคำนวณ)","Scan payments (record only, not in totals)"),T.scan],[L("ค่าน้ำยา (นับซอง)","Soap (packet count)"),T.soap],
     [L("ตู้แลกเหรียญ","Changer")+(config.countChanger?"":L(" (ไม่นับเป็นรายรับ)"," (not in income)")),T.chg],[L("หักยอดแลกแต้มซักฟรี","Free-wash redemptions"),-dRows.reduce((t,x)=>t+x[3+2+SOAP.length+1+NOTES.length+5],0)],[L("รายรับรวม","Total income"),T.inc],[L("ค่าใช้จ่ายรวม","Total expenses"),T.exp],[L("คงเหลือ","Balance"),T.net],
     [],[L("ยอดขายที่คีย์รายคน","Sales entered per customer"),vRows.reduce((t,r)=>t+r[10],0)],[L("สมาชิกที่มาใช้บริการ","Members who visited"),mRows.filter(r=>r[3]>0).length],[L("จำนวนครั้งที่แลกรางวัล","Rewards redeemed"),rRows.length],[L("ส่วนลดจากแต้มรวม (บาท)","Points discount total"),rRows.reduce((t,r)=>t+(+r[7]||0),0)],[L("ลูกค้าจ่ายเพิ่มตอนแลกรวม (บาท)","Extra paid on rewards"),rRows.reduce((t,r)=>t+(+r[8]||0),0)]],[32,18]);
   add(L("รายวัน","Daily"),[dHead,...dRows,[L("รวม","Total"),T.heads,T.coins,T.coin,T.scan,...Array(SOAP.length).fill(""),T.soap,...Array(NOTES.length).fill(""),T.chg,dRows.reduce((t,x)=>t+x[3+2+SOAP.length+1+NOTES.length+1],0),dRows.reduce((t,x)=>t+x[3+2+SOAP.length+1+NOTES.length+2],0),dRows.reduce((t,x)=>t+x[3+2+SOAP.length+1+NOTES.length+3],0),dRows.reduce((t,x)=>t+x[3+2+SOAP.length+1+NOTES.length+4],0),dRows.reduce((t,x)=>t+x[3+2+SOAP.length+1+NOTES.length+5],0),T.inc,T.exp,T.net,"",...RES.map(()=>""),"",""]],[12,10,16,12,14,...Array(SOAP.length).fill(14),10,...Array(NOTES.length).fill(10),12,14,14,14,14,14,10,10,10,12,...RES.map(()=>12),14,28]);
@@ -1862,7 +1872,7 @@ function renderPricePad(){
   el.querySelectorAll(".pp-btn").forEach(b=>b.dataset.key=b.dataset.pw||(b.dataset.ps?"s"+b.dataset.ps:b.dataset.pd?"d":"x"));
   el.querySelectorAll("[data-pw]").forEach(b=>b.onclick=()=>{const [kg,i]=b.dataset.pw.split("|"),w=W.find(q=>String(q.kg)===kg);addItem({t:"w",l:"ซัก "+kg+" กก. "+TEMP[+i][1],a:+w.p[+i],_b:b.dataset.key})});
   el.querySelectorAll("[data-pd]").forEach(b=>b.onclick=()=>addItem({t:"d",l:"อบ"+(d.kg?" "+d.kg+" กก.":""),a:+d.p,_b:"d"}));
-  el.querySelectorAll("[data-ps]").forEach(b=>b.onclick=()=>{const q=SOAP.find(([k])=>k===b.dataset.ps);addItem({t:"s",l:q[1],a:+q[2],_b:"s"+q[0]})});
+  el.querySelectorAll("[data-ps]").forEach(b=>b.onclick=()=>{const q=SOAP.find(([k])=>k===b.dataset.ps);addItem({t:"s",k:q[0],l:q[1],a:+q[2],_b:"s"+q[0]})});
   el.querySelectorAll("[data-px]").forEach(b=>b.onclick=()=>addItem({t:"x",l:"ต่อเวลาอบ"+(x.min?" "+x.min+" นาที":""),a:+x.p,_b:"x"}));
   renderPadItems();
 }
@@ -2099,7 +2109,7 @@ const EN={
 "รหัสเจ้าของ (เข้าหลังบ้าน)":"Owner PIN (back office)","รหัสเจ้าของ":"Owner PIN","เข้า":"Enter",
 "ใช้เมื่อเครื่องในร้านล็อกอินด้วยบัญชีเจ้าของ: จากโหมดพนักงานจะกลับเข้าหลังบ้านได้ด้วยรหัสนี้เท่านั้น · บัญชีของพนักงานเองเข้าหลังบ้านไม่ได้อยู่แล้ว":"For a shop device signed in with the owner's account: from staff mode, the back office opens only with this PIN. Staff accounts can never open the back office.",
 "รหัสเจ้าของต้องมี 4–6 หลัก":"Owner PIN must be 4–6 digits","รหัสเจ้าของซ้ำกับรหัสพนักงาน ตั้งให้ต่างกัน":"Owner PIN matches a staff PIN; make it different",
-"ขายน้ำยา":"Soap sales","กด + ทุกครั้งที่ขายได้ 1 ซอง · บันทึกทันที":"Tap + for every packet sold · saves right away",
+"ขายน้ำยา":"Soap sales","ถ้ากดปุ่มน้ำยาตอนบันทึกลูกค้าแล้ว ระบบนับซองตรงนี้ให้เอง ไม่ต้องกด + ซ้ำ":"If you tapped soap on the customer row, it is counted here already — don't tap + again","กด + ทุกครั้งที่ขายได้ 1 ซอง · บันทึกทันที":"Tap + for every packet sold · saves right away",
 "ยอดจากพนักงานหน้าร้าน":"From the front counter","พนักงานยังไม่ได้คีย์ลูกค้าของวันนี้":"No customers entered today yet","ลูกค้า (สมาชิก / ทั่วไป)":"Customers (members / walk-ins)",
 "น้ำยา (คีย์รายคน)":"Soap (per customer)","ยอดที่พนักงานคีย์รวม":"Total entered by staff","พนักงานหน้าร้านเป็นคนบันทึก · ซองเล็ก 5 บาท · ซองใหญ่ 20 บาท":"Entered by front-counter staff · small 5 ฿ · large 20 ฿",
 "แลกแต้ม":"Redeem","แลกได้ถึง":"redeem by","ซองเล็ก":"small","ซองใหญ่":"large",
