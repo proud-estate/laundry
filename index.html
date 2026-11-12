@@ -37,6 +37,7 @@
   --good:#7cc96e; --bad:#f08a72; --bad-soft:#3e1d16; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+.sndbtn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font-size:16px;line-height:1;margin-left:6px;cursor:pointer}
 .carry-row{margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14px}
 .whobar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px 12px;margin:0 0 12px}
 .whobar>span{font-weight:700;display:flex;gap:6px;align-items:center}
@@ -398,7 +399,7 @@ img{max-width:100%}
       <div class="hbrand"><img class="hlogo" src="img/logo.webp" alt="QUINN Wash &amp; Dry" width="1000" height="366"><h1><span id="hTitle">สมุดบัญชีร้านซักผ้า</span><small id="hSub">หลังบ้าน · ซัก 5 เครื่อง · อบ 4 เครื่อง</small></h1></div>
       <div class="hside">
         <div class="hbtns">
-          <div class="lang nt" role="group" aria-label="ภาษา / Language"><button id="lang-th" aria-pressed="true">ไทย</button><button id="lang-en" aria-pressed="false">EN</button></div>
+          <div class="lang nt" role="group" aria-label="ภาษา / Language"><button id="lang-th" aria-pressed="true">ไทย</button><button id="lang-en" aria-pressed="false">EN</button></div><button class="sndbtn nt" id="sndBtn" type="button" aria-label="เสียงกดปุ่ม" title="เปิด/ปิดเสียงกดปุ่ม">🔊</button>
           <a class="front-link" href="#kiosk"><svg class="ic"><use href="#i-store"/></svg> เปิดหน้าบ้าน</a>
           <button class="front-link" id="toStaff" hidden><svg class="ic"><use href="#i-user"/></svg> โหมดพนักงาน<span class="badge" id="claimBadge" hidden>0</span></button>
           <button class="front-link" id="toOwner" hidden><svg class="ic"><use href="#i-gear"/></svg> หลังบ้าน</button>
@@ -1816,6 +1817,22 @@ $("pBtn").onclick=async()=>{
 $("tab-set").addEventListener("click",()=>{if(!$("pFrom").value){$("pFrom").value=todayStr();$("pTo").value=todayStr()}renderPart()});
 
 $("resClear").onclick=()=>{RES.forEach(([k])=>cur[k]=0);renderForm&&renderForm();touch()};
+/* ===== click sound: a short soft "tick" on every button tap; on/off per device ===== */
+let sndOn=true, actx=null;try{sndOn=localStorage.getItem("lw_snd")!=="0"}catch(e){}
+function paintSnd(){const b=$("sndBtn");if(b){b.textContent=sndOn?"🔊":"🔇";b.setAttribute("aria-pressed",String(sndOn))}}
+function tick(strong){
+  if(!sndOn)return;
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();if(actx.state==="suspended")actx.resume();
+    const t=actx.currentTime,o=actx.createOscillator(),g=actx.createGain();
+    o.type="sine";o.frequency.setValueAtTime(strong?880:1200,t);o.frequency.exponentialRampToValueAtTime(strong?520:700,t+.07);
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(strong?.25:.16,t+.005);g.gain.exponentialRampToValueAtTime(.0001,t+.09);
+    o.connect(g).connect(actx.destination);o.start(t);o.stop(t+.1);
+  }catch(e){}
+}
+document.addEventListener("pointerdown",e=>{const b=e.target.closest("button,.pp-btn,[role=button]");if(!b||b.disabled||b.id==="sndBtn")return;tick(b.classList.contains("primary")||b.classList.contains("pp-btn")||b.classList.contains("plus"))},{passive:true});
+$("sndBtn").onclick=()=>{sndOn=!sndOn;try{localStorage.setItem("lw_snd",sndOn?"1":"0")}catch(e){}paintSnd();if(sndOn)tick(true)};
+paintSnd();
+
 /* ===== wipe all shop data (owner only): for clearing test entries before going live ===== */
 $("wipeTxt").addEventListener("input",()=>{$("wipeBtn").disabled=$("wipeTxt").value.trim()!=="ลบทั้งหมด"});
 $("wipeBtn").onclick=async()=>{
