@@ -399,7 +399,7 @@ img{max-width:100%}
       <div class="hbrand"><img class="hlogo" src="img/logo.webp" alt="QUINN Wash &amp; Dry" width="1000" height="366"><h1><span id="hTitle">สมุดบัญชีร้านซักผ้า</span><small id="hSub">หลังบ้าน · ซัก 5 เครื่อง · อบ 4 เครื่อง</small></h1></div>
       <div class="hside">
         <div class="hbtns">
-          <div class="lang nt" role="group" aria-label="ภาษา / Language"><button id="lang-th" aria-pressed="true">ไทย</button><button id="lang-en" aria-pressed="false">EN</button></div><button class="sndbtn nt" id="sndBtn" type="button" aria-label="เสียงกดปุ่ม" title="เปิด/ปิดเสียงกดปุ่ม">🔊</button>
+          <div class="lang nt" role="group" aria-label="ภาษา / Language"><button id="lang-th" aria-pressed="true">ไทย</button><button id="lang-en" aria-pressed="false">EN</button></div><button class="sndbtn nt" id="sndBtn" type="button" aria-label="เสียงกดปุ่ม" title="เปิด/ปิดเสียงกดปุ่ม">🔊</button><button class="sndbtn nt" id="vibBtn" type="button" aria-label="สั่นเวลากดปุ่ม" title="เปิด/ปิดการสั่นเวลากดปุ่ม" hidden>📳</button>
           <a class="front-link" href="#kiosk"><svg class="ic"><use href="#i-store"/></svg> เปิดหน้าบ้าน</a>
           <button class="front-link" id="toStaff" hidden><svg class="ic"><use href="#i-user"/></svg> โหมดพนักงาน<span class="badge" id="claimBadge" hidden>0</span></button>
           <button class="front-link" id="toOwner" hidden><svg class="ic"><use href="#i-gear"/></svg> หลังบ้าน</button>
@@ -1818,7 +1818,10 @@ $("tab-set").addEventListener("click",()=>{if(!$("pFrom").value){$("pFrom").valu
 
 $("resClear").onclick=()=>{RES.forEach(([k])=>cur[k]=0);renderForm&&renderForm();touch()};
 /* ===== click sound: a short soft "tick" on every button tap; on/off per device ===== */
-let sndOn=true, actx=null;try{sndOn=localStorage.getItem("lw_snd")!=="0"}catch(e){}
+let sndOn=true, vibOn=true, actx=null;try{sndOn=localStorage.getItem("lw_snd")!=="0";vibOn=localStorage.getItem("lw_vib")!=="0"}catch(e){}
+const canVib=typeof navigator.vibrate==="function"; // Android phones/tablets; iPhone/iPad browsers don't support vibration
+function buzz(strong){if(vibOn&&canVib){try{navigator.vibrate(strong?25:12)}catch(e){}}}
+function paintVib(){const b=$("vibBtn");if(!b)return;b.hidden=!canVib;b.textContent=vibOn?"📳":"📴";b.setAttribute("aria-pressed",String(vibOn))}
 function paintSnd(){const b=$("sndBtn");if(b){b.textContent=sndOn?"🔊":"🔇";b.setAttribute("aria-pressed",String(sndOn))}}
 function tick(strong){
   if(!sndOn)return;
@@ -1829,7 +1832,9 @@ function tick(strong){
     o.connect(g).connect(actx.destination);o.start(t);o.stop(t+.1);
   }catch(e){}
 }
-document.addEventListener("pointerdown",e=>{const b=e.target.closest("button,.pp-btn,[role=button]");if(!b||b.disabled||b.id==="sndBtn")return;tick(b.classList.contains("primary")||b.classList.contains("pp-btn")||b.classList.contains("plus"))},{passive:true});
+document.addEventListener("pointerdown",e=>{const b=e.target.closest("button,.pp-btn,[role=button]");if(!b||b.disabled||b.id==="sndBtn"||b.id==="vibBtn")return;const st=b.classList.contains("primary")||b.classList.contains("pp-btn")||b.classList.contains("plus");tick(st);buzz(st)},{passive:true});
+$("vibBtn").onclick=()=>{vibOn=!vibOn;try{localStorage.setItem("lw_vib",vibOn?"1":"0")}catch(e){}paintVib();if(vibOn)buzz(true)};
+paintVib();
 $("sndBtn").onclick=()=>{sndOn=!sndOn;try{localStorage.setItem("lw_snd",sndOn?"1":"0")}catch(e){}paintSnd();if(sndOn)tick(true)};
 paintSnd();
 
