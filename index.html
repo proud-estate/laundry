@@ -714,16 +714,10 @@ img{max-width:100%}
   </section>
   <section class="card">
     <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-wash"/></svg></span>ราคาซัก · อบ (ปุ่มกดราคาหน้าร้าน)</span></h2>
-    <p class="hint">พนักงานกดปุ่มราคาแทนการพิมพ์ ระบบเพิ่มจำนวนถังและยอดเงินให้เอง · กดต่อเวลาอบไม่นับเป็นถัง (ไม่ได้แต้ม) · ใส่ 0 = ไม่แสดงปุ่มนั้น</p>
+    <p class="hint">พนักงานกดปุ่มราคาแทนการพิมพ์ ระบบเพิ่มจำนวนถังและยอดเงินให้เอง · กด 1 ครั้ง = 1 ถัง · ใส่ 0 = ไม่แสดงปุ่มนั้น</p>
     <div class="tablewrap"><table class="pp-edit"><thead><tr><th>เครื่องซัก</th><th>น้ำเย็น</th><th>น้ำอุ่น</th><th>น้ำร้อน</th><th></th></tr></thead><tbody id="wpEdit"></tbody></table></div>
     <button class="ghost" id="wpAdd" style="margin-top:6px"><svg class="ic"><use href="#i-plus"/></svg>เพิ่มขนาดเครื่องซัก</button>
-    <div class="vf" style="margin-top:12px">
-      <div class="field"><label for="dpKg">เครื่องอบ (กก.)</label><input id="dpKg" class="mono" type="number" inputmode="numeric" min="0"></div>
-      <div class="field"><label for="dpMin">อบ (นาที)</label><input id="dpMin" class="mono" type="number" inputmode="numeric" min="0"></div>
-      <div class="field"><label for="dpP">ราคาอบ (บาท)</label><input id="dpP" class="mono" type="number" inputmode="numeric" min="0"></div>
-      <div class="field"><label for="dxMin">ต่อเวลา (นาที)</label><input id="dxMin" class="mono" type="number" inputmode="numeric" min="0"></div>
-      <div class="field"><label for="dxP">ราคาต่อเวลา (บาท)</label><input id="dxP" class="mono" type="number" inputmode="numeric" min="0"></div>
-    </div>
+    <div class="field" style="margin-top:12px"><label for="dpList">ราคาอบ (บาท) · คั่นแต่ละราคาด้วย ,</label><input id="dpList" class="mono" inputmode="numeric" placeholder="50, 60, 70, 80, 90"></div>
     <h3 style="margin:16px 0 4px;font-size:15px">ชื่อพนักงานที่ผลัดกันกรอก</h3>
     <p class="hint">พนักงานหลายคนใช้เครื่องเดียวกัน ล็อกอินครั้งเดียว แล้วกดชื่อตัวเองก่อนกรอก ระบบจะบันทึกว่าใครเป็นคนลง · คั่นชื่อด้วยเครื่องหมาย ,</p>
     <input id="sNames" class="txt" placeholder="เช่น Khin, Ma Aye">
@@ -893,7 +887,7 @@ const S={days:{},soap:{},members:{},visits:{},claims:{},redeems:{}};
 // one day = owner's cash record + staff sachet counts
 const D=ds=>(S.days[ds]||S.soap[ds])?Object.assign({date:ds},S.days[ds]||{},soapOf(S.soap[ds])):null;
 let config={countChanger:false,rewards:[{name:"ซัก 1 ถัง",kind:"wash",pts:10,value:50},{name:"อบ 1 ถัง",kind:"dry",pts:10,value:50}],shopName:"",shopLine:"@919ahdge",paper:"58",receiptFoot:"ขอบคุณที่ใช้บริการ",kioskPin:"",ppId:"",ppName:"",ppAmt:true,
-  washPrices:[{kg:9,p:[50,60,70]},{kg:14,p:[60,70,80]},{kg:18,p:[70,80,90]}],dryPrice:{kg:14,min:25,p:50},dryExtra:{min:6,p:10},staffNames:[]};
+  washPrices:[{kg:9,p:[50,60,70]},{kg:14,p:[60,70,80]},{kg:18,p:[70,80,90]}],dryPrices:[50,60,70,80,90],staffNames:[]};
 // "ครบ 10 แต้ม แลกซัก 1 ถัง หรือ อบ 1 ถัง (ลดได้ 50 บาท)"
 function rwSummary(){const rs=rewards().filter(r=>+r.pts===minPts()), vals=[...new Set(rs.map(r=>+r.value||0))];
   return "แลก"+rs.map(r=>r.name).join(" หรือ ")+(vals.length===1&&vals[0]?" (ลดได้ "+vals[0]+" บาท)":"")}
@@ -1358,12 +1352,19 @@ function findMember(q){
   return hits.length===1?hits[0][0]:undefined;
 }
 // a typed phone number (9–10 digits, nothing else) that is not a member yet
-function newPhone(){const raw=$("vMem").value.trim();if(!/^[\d\s-]+$/.test(raw))return null;const d=digits(raw);return d.length>=9&&d.length<=10&&!S.members[d]?d:null}
+function newPhone(){const raw=$("vMem").value.trim();if(!/^[\d\s-]+$/.test(raw))return null;const d=digits(raw);return okPhone(d)&&!S.members[d]?d:null}
+// a new member's phone must be a full 10-digit Thai number starting with 0
+const okPhone=d=>/^0\d{9}$/.test(d);
+// typed digits that are neither an existing member nor a full 10-digit number
+function badPhone(){const raw=$("vMem").value.trim();if(!raw||!/^[\d\s-]+$/.test(raw))return 0;const d=digits(raw);return S.members[d]||okPhone(d)?0:(d.length||0.5)}
 function vFormState(){
   const id=findMember($("vMem").value);
   const np=newPhone();
   $("vNewBox").hidden=!np;
-  if(id===null)$("vWho").textContent="ลูกค้าทั่วไป · ไม่สะสมแต้ม";
+  const bp=badPhone();
+  if(!bp&&$("vMsg").textContent.includes("เบอร์โทรต้องมี 10 หลัก"))$("vMsg").textContent="";
+  if(bp)$("vWho").innerHTML='<span class="warn">เบอร์โทรต้องมี 10 หลัก ขึ้นต้นด้วย 0 · ตอนนี้พิมพ์ไป '+Math.floor(bp)+' หลัก</span>';
+  else if(id===null)$("vWho").textContent="ลูกค้าทั่วไป · ไม่สะสมแต้ม";
   else if(np){$("vWho").innerHTML='<span class="warn">เบอร์นี้ยังไม่เป็นสมาชิก</span>';$("vNewPhone").textContent=fmtPhone(np)}
   else if(id===undefined)$("vWho").innerHTML='<span class="warn">ไม่พบสมาชิกนี้ · พิมพ์เบอร์ให้ครบ 10 หลัก หรือเลือกจากรายการ</span>';
   else{const st=memberStats(id),m=S.members[id],g=minPts(),f=Math.min(g,st.balance);
@@ -1400,6 +1401,7 @@ $("vCancel").onclick=()=>{resetVForm();$("vMsg").textContent=""};
 $("vAdd").onclick=async()=>{
   let id=findMember($("vMem").value);
   const np=newPhone(), nn=$("vNewName").value.trim();
+  if(badPhone()){$("vMsg").innerHTML='<span class="warn">บันทึกไม่ได้: เบอร์โทรต้องมี 10 หลัก ขึ้นต้นด้วย 0 ตรวจเบอร์อีกครั้ง</span>';$("vMem").focus();return}
   if(id===undefined&&!np){$("vMsg").innerHTML='<span class="warn">ไม่พบสมาชิกนี้ พิมพ์เบอร์ให้ครบ หรือเว้นว่างถ้าเป็นลูกค้าทั่วไป</span>';return}
   if(np&&!nn){$("vMsg").innerHTML='<span class="warn">เบอร์ใหม่ ใส่ชื่อลูกค้าเพื่อสมัครสมาชิกก่อน</span>';$("vNewName").focus();return}
   const vw={washLoads:int($("vWL").value),dryLoads:int($("vDL").value),washAmt:int($("vWA").value),dryAmt:int($("vDA").value),soapAmt:int($("vSA").value)};
@@ -1471,7 +1473,7 @@ function renderClaims(){
 let selMember=null, delArmed=false;
 $("mAdd").onclick=async()=>{
   const p=digits($("mPhone").value), n=$("mName").value.trim();
-  if(p.length<9||p.length>10){$("mMsg").innerHTML='<span class="warn">เบอร์โทรต้องมี 9–10 หลัก</span>';return}
+  if(!okPhone(p)){$("mMsg").innerHTML='<span class="warn">เบอร์โทรต้องมี 10 หลัก ขึ้นต้นด้วย 0</span>';return}
   if(S.members[p]){$("mMsg").innerHTML='<span class="warn">เบอร์นี้เป็นสมาชิกอยู่แล้ว ('+esc(dn(p))+')</span>';return}
   if(!n){$("mMsg").innerHTML='<span class="warn">ใส่ชื่อลูกค้า</span>';$("mName").focus();return}
   try{await put("members",p,{name:n,phone:p,since:todayStr(),source:"staff"});$("mMsg").textContent="เพิ่มสมาชิก "+(n||fmtPhone(p))+" แล้ว";$("mPhone").value="";$("mName").value="";renderDatalist();renderMembers()}
@@ -1904,24 +1906,24 @@ $("sAddRw").onclick=()=>{rwDraft.push({name:"",kind:"wash",pts:10,value:50});ren
 /* ===== price buttons: staff tap the price of each machine run instead of typing ===== */
 let vItems=[], wpDraft=[];
 const TEMP=[["cold","น้ำเย็น","Cold"],["warm","น้ำอุ่น","Warm"],["hot","น้ำร้อน","Hot"]];
+// dryer price buttons; shops saved before this change fall back to the price board 50–90
+const dryList=()=>Array.isArray(config.dryPrices)&&config.dryPrices.length?config.dryPrices.map(int).filter(x=>x>0):[50,60,70,80,90];
 function renderPricePad(){
   const el=$("pricePad");if(!el)return;
-  const W=(config.washPrices||[]).filter(w=>(w.p||[]).some(x=>+x>0)), d=config.dryPrice||{}, x=config.dryExtra||{};
+  const W=(config.washPrices||[]).filter(w=>(w.p||[]).some(x=>+x>0)), DP=dryList();
 
   el.hidden=false;
   el.innerHTML=`<div class="pp-head"><svg class="ic"><use href="#i-coin"/></svg> กดราคาตามที่ลูกค้าใช้ (ซัก/อบ กด 1 ครั้ง = 1 ถัง)</div>`
     +(W.length?`<div class="pp-group"><b><svg class="ic"><use href="#i-wash"/></svg> ซัก</b>`+W.map(w=>`<div class="pp-row"><span class="pp-kg">${w.kg} กก.</span>${TEMP.map(([t,l],i)=>+w.p[i]?`<button type="button" class="pp-btn ${t}" data-pw="${w.kg}|${i}"><small>${l}</small>${w.p[i]} ฿</button>`:"").join("")}</div>`).join("")+`</div>`:"")
-    +(+d.p||+x.p?`<div class="pp-group"><b><svg class="ic"><use href="#i-dry"/></svg> อบ</b><div class="pp-row">`
-      +(+d.p?`<button type="button" class="pp-btn dry" data-pd="1"><small>อบ${d.kg?" "+d.kg+" กก.":""}${d.min?" · "+d.min+" นาที":""}</small>${d.p} ฿</button>`:"")
-      +(+x.p?`<button type="button" class="pp-btn extra" data-px="1"><small>ต่อเวลา${x.min?" "+x.min+" นาที":""} (กดได้หลายครั้ง)</small>+${x.p} ฿</button>`:"")+`</div></div>`:"")
+    +(DP.length?`<div class="pp-group"><b><svg class="ic"><use href="#i-dry"/></svg> อบ</b><div class="pp-row">`
+      +DP.map(p=>`<button type="button" class="pp-btn dry" data-pd="${p}"><small>อบ</small>${p} ฿</button>`).join("")+`</div></div>`:"")
     +`<div class="pp-group"><b><svg class="ic"><use href="#i-soap"/></svg> น้ำยา</b><div class="pp-row">`
       +SOAP.filter(([,,p])=>+p>0).map(([k,l,p])=>`<button type="button" class="pp-btn ${k.startsWith("soft")?"soft":"soapb"}" data-ps="${k}"><small>${l}</small>${p} ฿</button>`).join("")+`</div></div>`
     +`<div class="pp-items" id="padItems"></div>`;
-  el.querySelectorAll(".pp-btn").forEach(b=>b.dataset.key=b.dataset.pw||(b.dataset.ps?"s"+b.dataset.ps:b.dataset.pd?"d":"x"));
+  el.querySelectorAll(".pp-btn").forEach(b=>b.dataset.key=b.dataset.pw||(b.dataset.ps?"s"+b.dataset.ps:"d"+b.dataset.pd));
   el.querySelectorAll("[data-pw]").forEach(b=>b.onclick=()=>{const [kg,i]=b.dataset.pw.split("|"),w=W.find(q=>String(q.kg)===kg);addItem({t:"w",l:"ซัก "+kg+" กก. "+TEMP[+i][1],a:+w.p[+i],_b:b.dataset.key})});
-  el.querySelectorAll("[data-pd]").forEach(b=>b.onclick=()=>addItem({t:"d",l:"อบ"+(d.kg?" "+d.kg+" กก.":""),a:+d.p,_b:"d"}));
+  el.querySelectorAll("[data-pd]").forEach(b=>b.onclick=()=>addItem({t:"d",l:"อบ",a:+b.dataset.pd,_b:"d"+b.dataset.pd}));
   el.querySelectorAll("[data-ps]").forEach(b=>b.onclick=()=>{const q=SOAP.find(([k])=>k===b.dataset.ps);addItem({t:"s",k:q[0],l:q[1],a:+q[2],_b:"s"+q[0]})});
-  el.querySelectorAll("[data-px]").forEach(b=>b.onclick=()=>addItem({t:"x",l:"ต่อเวลาอบ"+(x.min?" "+x.min+" นาที":""),a:+x.p,_b:"x"}));
   renderPadItems();
 }
 function applyItem(it,sign){
@@ -1967,7 +1969,7 @@ function renderSettings(){
   $("sShop").value=config.shopName||"";$("sLine").value=config.shopLine||"";$("sPaper").value=config.paper==="80"?"80":"58";$("sFoot").value=config.receiptFoot||"";$("sPP").value=config.ppId||"";$("sPPName").value=config.ppName||"";$("sPPAmt").checked=config.ppAmt!==false;
   renderStaffAccounts();
   wpDraft=(config.washPrices||[]).map(w=>({kg:+w.kg||0,p:[0,1,2].map(i=>int((w.p||[])[i]))}));renderWpEdit();
-  {const d=config.dryPrice||{},x=config.dryExtra||{};$("dpKg").value=d.kg||"";$("dpMin").value=d.min||"";$("dpP").value=d.p||"";$("dxMin").value=x.min||"";$("dxP").value=x.p||"";}
+  $("dpList").value=dryList().join(", ");
   $("sNames").value=staffNames().join(", ");
   renderPricePad();renderWho();
   $("kReward").textContent="ครบ "+minPts()+" แต้ม "+rwSummary();
@@ -1982,7 +1984,7 @@ $("sSave").onclick=async()=>{
     kioskPin:kp,countChanger:$("countChg").checked,shopName:$("sShop").value.trim(),shopLine:$("sLine").value.trim(),
     paper:$("sPaper").value,receiptFoot:$("sFoot").value.trim(),ppId:ppDigits($("sPP").value),ppName:$("sPPName").value.trim(),ppAmt:$("sPPAmt").checked,
     washPrices:wpDraft.filter(w=>w.kg||w.p.some(Boolean)).map(w=>({kg:int(w.kg),p:w.p.map(int)})),
-    dryPrice:{kg:int($("dpKg").value),min:int($("dpMin").value),p:int($("dpP").value)},dryExtra:{min:int($("dxMin").value),p:int($("dxP").value)},
+    dryPrices:[...new Set($("dpList").value.split(/[,\s]+/).map(int).filter(x=>x>0))],
     staffNames:[...new Set($("sNames").value.split(/[,\n]/).map(x=>x.trim()).filter(Boolean))]});
   try{await saveConfig();$("sMsg").textContent="บันทึกการตั้งค่าแล้ว";renderSettings();updateTotals();applyMode();
     Object.keys(S.members).forEach(mid=>afterWrite("members",mid,S.members[mid]))} // refresh customers' QR pages with the new rules
@@ -2001,7 +2003,7 @@ function kIdle(){clearTimeout(idle);idle=setTimeout(()=>{if(!$("kiosk").hidden)k
   $("kPad").innerHTML=keys.map(k=>`<button class="${isNaN(k)?"fn":""}" data-k="${k}">${k}</button>`).join("");
   $("kPad").onclick=e=>{const k=e.target.dataset&&e.target.dataset.k;if(!k)return;
     if(k==="ล้าง")kPhone="";else if(k==="ลบ")kPhone=kPhone.slice(0,-1);else if(kPhone.length<10)kPhone+=k;
-    $("kNum").textContent=fmtPhone(kPhone);$("kGo").disabled=kPhone.length<9};
+    $("kNum").textContent=fmtPhone(kPhone);$("kGo").disabled=!(okPhone(kPhone)||(kPhone.length>=9&&S.members[kPhone]))};
 })();
 // phone only: a known phone opens its points; a new phone becomes a member right away, no name asked
 $("kGo").onclick=()=>{
