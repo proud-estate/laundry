@@ -484,7 +484,7 @@ img{max-width:100%}
   </section>
   <section class="card">
     <h2><span class="h-ic"><span class="icbox coin"><svg class="ic"><use href="#i-safe"/></svg></span>เงินสำรองในตู้</span> <span class="tot coin num" id="t-res">0</span></h2>
-    <p class="hint">นับ<b>เงินทั้งหมดในตู้</b> ทุกใบทุกเหรียญ หลังเติมตู้แลกเหรียญแล้ว (ยังไม่ต้องหยิบเงินให้พนักงานออก) · ระบบหักเงินที่แยกไว้ให้พนักงานให้เอง · ยอดนี้ไม่นับเป็นรายรับ</p>
+    <p class="hint">นับ<b>เงินทั้งหมดในตู้</b> ทุกใบทุกเหรียญ หลังเติมตู้แลกเหรียญแล้ว (ยังไม่ต้องหยิบเงินให้พนักงาน เงินฝาก หรือเงินจ่ายค่าใช้จ่ายออก) · ระบบหักเงินที่แยกไว้ให้พนักงานให้เอง · ยอดนี้ไม่นับเป็นรายรับ</p>
     <p class="hint"><b>ถ้าวันนี้ไม่ได้นับเงินทั้งหมดในตู้ ให้เว้นช่องนี้ว่างไว้</b> · อย่าใส่แค่เงินบางส่วนที่เก็บมา ระบบจะเข้าใจว่าในตู้มีเงินเท่านั้น <button type="button" class="sbtn" id="resClear" style="padding:4px 10px;margin-left:6px">ล้างช่องเงินสำรองของวันนี้</button></p>
     <div class="grid" id="g-res"></div>
     <div class="sum" id="resDiff"></div>
@@ -854,7 +854,9 @@ const RES=[["r1000","แบงก์ 1,000",1000],["r500","แบงก์ 500",
 const resTotal=r=>RES.reduce((t,[k,,p])=>t+int(r&&r[k])*p,0);
 // what stays in the box after the float for the next day is taken out
 const depTot=r=>r&&Array.isArray(r.deposits)?r.deposits.reduce((t,d)=>t+int(d.a),0):0;
-const resNet=r=>resTotal(r)-(r&&Array.isArray(r.floats)?r.floats.reduce((t,f)=>t+int(f.g),0):0)-depTot(r);
+// cash expenses are paid out of the box after the evening count, like the float and bank deposits
+const cashExp=r=>r&&Array.isArray(r.expenses)?r.expenses.filter(e=>(e.p||"cash")==="cash").reduce((t,e)=>t+(+e.a||0),0):0;
+const resNet=r=>resTotal(r)-(r&&Array.isArray(r.floats)?r.floats.reduce((t,f)=>t+int(f.g),0):0)-depTot(r)-cashExp(r);
 // a day counts as a reserve count only when something was actually counted (saving a day writes zeros for every denomination)
 const hasRes=r=>!!r&&RES.some(([k])=>int(r[k])>0);
 const CATS=["ค่าไฟ","ค่าน้ำ","ค่าแก๊ส","ค่าถุง","ซื้อน้ำยา","ค่าแรง","ค่าเช่า","ซ่อมเครื่อง","อื่น ๆ (ระบุเอง)"];
@@ -1124,22 +1126,22 @@ function updateTotals(){
   const c=calcDay(live);
   $("t-coin").textContent=fmt(c.coin)+" ฿";$("t-scan").textContent=fmt(c.scan)+" ฿";
   // the owner counts ALL cash in the box, then takes out the float for tomorrow; what stays is the reserve
-  const dp=depTot(cur), res=resTotal(cur), fl=floatTot(cur).g, net=res-fl-dp;$("t-res").textContent=fmt(res)+" ฿";$("t-dep").textContent=fmt(dp)+" ฿";
+  const dp=depTot(cur), ex=cashExp(cur), res=resTotal(cur), fl=floatTot(cur).g, net=res-fl-dp-ex;$("t-res").textContent=fmt(res)+" ฿";$("t-dep").textContent=fmt(dp)+" ฿";
   const prevDs=Object.keys(S.days).filter(d=>d<cur.date&&hasRes(S.days[d])).sort().pop();
   const Lr=(a,b,cls="")=>`<div class="l ${cls}"><span>${a}</span><span>${b}</span></div>`;
-  const depL=dp?Lr("− ตัดเงินไปฝากธนาคาร","−"+fmt(dp)+" ฿","sub"):"";
+  const depL=(dp?Lr("− ตัดเงินไปฝากธนาคาร","−"+fmt(dp)+" ฿","sub"):"")+(ex?Lr("− จ่ายค่าใช้จ่ายเงินสดจากตู้วันนี้","−"+fmt(ex)+" ฿","sub"):"");
   const tail=Lr("− ให้พนักงานแลกสำหรับวันถัดไป","−"+fmt(fl)+" ฿","sub")+depL+Lr("เงินสำรองในตู้คงเหลือ",`<span class="${net<0?"neg":""}">${fmt(net)} ฿</span>`,"big");
   let resHtml=Lr("นับได้ทั้งหมดในตู้",fmt(res)+" ฿","big")+tail;
   if(prevDs){
     // every day from the day after the last count up to today: cash in, minus cash taken out of the box
     const days=[];for(let d=shift(prevDs,1);d<=cur.date;d=shift(d,1))days.push(d);
     const flow=days.map(d=>cashFlow(d===cur.date?live:(D(d)||{date:d}))).reduce((a,b)=>{for(const k in b)a[k]=(a[k]||0)+b[k];return a},{});
-    const prev=resNet(S.days[prevDs]), all=prev+flow.inn-flow.out+fl+dp, diff=res-all;
+    const prev=resNet(S.days[prevDs]), all=prev+flow.inn-flow.out+fl+dp+ex, diff=res-all;
     resHtml=Lr("เงินสำรองในตู้คงเหลือครั้งก่อน ("+thaiDate(prevDs)+")",fmt(prev)+" ฿","sub")
       +Lr("+ รวมรายรับ (เหรียญตู้ + น้ำยา)"+(days.length>1?" ("+days.length+" วัน)":""),fmt(flow.inc)+" ฿","sub")
       +Lr("+ เงินตู้แลกสุทธิ (แบงก์ "+fmt(flow.chg)+" − เติมคืน "+fmt(flow.refill)+")",fmt(flow.chg-flow.refill)+" ฿","sub")
       +Lr("+ เงินแลกที่พนักงานคืนมา",fmt(flow.back)+" ฿","sub")
-      +Lr("− ค่าใช้จ่ายที่จ่ายเงินสดจากตู้",fmt(flow.exp)+" ฿","sub")
+      +(flow.exp-ex?Lr("− ค่าใช้จ่ายเงินสดวันก่อน ๆ (ยังไม่ได้นับตอนนั้น)",fmt(flow.exp-ex)+" ฿","sub"):"")
       +(flow.dep-dp?Lr("− ฝากธนาคารวันก่อน ๆ (ยังไม่ได้นับตอนนั้น)",fmt(flow.dep-dp)+" ฿","sub"):"")
       +(flow.flt-fl?Lr("− ให้พนักงานแลกวันก่อน ๆ (ยังไม่ได้นับตอนนั้น)",fmt(flow.flt-fl)+" ฿","sub"):"")
       +Lr("ควรนับได้ทั้งหมดในตู้",fmt(all)+" ฿","top")
@@ -1147,7 +1149,7 @@ function updateTotals(){
       +(hasRes(cur)?Lr(diff===0?"เงินตรง ✓":diff<0?"เงินขาด":"เงินเกิน",`<span class="${diff===0?"pos":diff<0?"neg":"coin"}">${diff===0?"0":(diff>0?"+":"−")+fmt(Math.abs(diff))} ฿</span>`,"big")+tail
         // not counted today: show what the box should hold and carry on from the last real count
         :'<p class="hint">วันนี้ยังไม่ได้นับเงินทั้งหมดในตู้ (ช่องด้านบนว่าง) · ไม่เป็นไร วันที่นับครั้งถัดไประบบจะรวมทุกวันตั้งแต่ '+thaiDate(prevDs)+' มาเทียบให้</p>'
-          +Lr("− ให้พนักงานแลกสำหรับวันถัดไป","−"+fmt(fl)+" ฿","sub")+depL+Lr("เงินสำรองในตู้ที่ควรมี (ยังไม่ได้นับ)",fmt(all-fl-dp)+" ฿","big"));
+          +Lr("− ให้พนักงานแลกสำหรับวันถัดไป","−"+fmt(fl)+" ฿","sub")+depL+Lr("เงินสำรองในตู้ที่ควรมี (ยังไม่ได้นับ)",fmt(all-fl-dp-ex)+" ฿","big"));
   } else resHtml+='<p class="hint">ยังไม่มีเงินสำรองที่นับไว้ก่อนหน้า · ยอดวันนี้จะเป็น<b>ยอดตั้งต้น</b> พรุ่งนี้ระบบจะเริ่มคำนวณและเทียบให้</p>';
   $("resDiff").innerHTML=resHtml;
   $("t-soap").textContent=fmt(c.packSoap)+" ฿";$("t-chg").textContent=fmt(c.chg)+" ฿";$("t-exp").textContent=fmt(c.exp)+" ฿";
@@ -1201,6 +1203,7 @@ function updateTotals(){
     (hasRes(cur)?L("เงินในตู้ที่นับได้ทั้งหมด",fmt(resTotal(cur))+" ฿","top")+
     L("− ให้พนักงานแลกสำหรับวันถัดไป","−"+fmt(ft.g)+" ฿")+
     (depTot(cur)?L("− ตัดเงินไปฝากธนาคาร","−"+fmt(depTot(cur))+" ฿"):"")+
+    (cashExp(cur)?L("− จ่ายค่าใช้จ่ายเงินสดจากตู้","−"+fmt(cashExp(cur))+" ฿"):"")+
     L("เงินสำรองในตู้คงเหลือ",fmt(resNet(cur))+" ฿","big"):L("เงินในตู้ทั้งหมด",'<span class="coin">วันนี้ไม่ได้นับ</span>',"top"));
 }
 function touch(){dirty=true;updateTotals();updFloat();$("save").disabled=false;$("saveSt").textContent="มีการแก้ไขที่ยังไม่บันทึก"}
