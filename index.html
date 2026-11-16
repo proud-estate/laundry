@@ -37,7 +37,7 @@
   --good:#7cc96e; --bad:#f08a72; --bad-soft:#3e1d16; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-.pay-amt{font-size:40px;font-weight:800;margin:6px 0;font-family:"IBM Plex Mono",monospace}.pay-qr img,.pay-qr canvas{width:min(300px,80vw);height:auto;background:#fff;border-radius:12px;padding:8px}.pay-btns{display:grid;gap:8px;margin-top:10px}.pay-btns button{justify-content:center;font-size:17px;padding:12px}
+.pay-amt{font-size:40px;font-weight:800;margin:6px 0;font-family:"IBM Plex Mono",monospace}.pay-qr img,.pay-qr canvas{width:min(300px,80vw);height:auto;background:#fff;border-radius:12px;padding:8px}.bi{display:flex;flex-direction:column;align-items:center;line-height:1.2}.bi small{font-size:13px;font-weight:600;opacity:.85}.pay-btns{display:grid;gap:8px;margin-top:10px}.pay-btns button{justify-content:center;font-size:17px;padding:12px}
 .payqr-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px}#sPayQrPrev{width:140px;height:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
 .line-btn{background:#06c755!important;color:#fff!important;border-color:#06c755!important}
 .sndbtn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font-size:16px;line-height:1;margin-left:6px;cursor:pointer}
@@ -389,9 +389,9 @@ img{max-width:100%}
     <div id="payName" class="hint"></div>
     <p class="hint">ตรวจสลิป หรือดูแจ้งเตือนเงินเข้าก่อน แล้วค่อยกดยืนยัน ระบบจะบันทึกและสะสมแต้มหลังยืนยันเท่านั้น</p>
     <div class="pay-btns">
-      <button class="primary" id="payOk" type="button"><svg class="ic"><use href="#i-check"/></svg>ได้รับเงินโอนแล้ว · บันทึก</button>
-      <button class="sbtn" id="payCash" type="button">ลูกค้าจ่ายเงินสด · บันทึก</button>
-      <button class="sbtn" id="payCancel" type="button"><svg class="ic"><use href="#i-x"/></svg>ยกเลิก (ยังไม่บันทึก)</button>
+      <button class="primary" id="payOk" type="button"><svg class="ic"><use href="#i-check"/></svg><span class="nt bi">ได้รับเงินโอนแล้ว · บันทึก<small>Transfer received · Save</small></span></button>
+      <button class="sbtn" id="payCash" type="button"><span class="nt bi">ลูกค้าจ่ายเงินสด · บันทึก<small>Paid in cash · Save</small></span></button>
+      <button class="sbtn" id="payCancel" type="button"><svg class="ic"><use href="#i-x"/></svg><span class="nt bi">ยกเลิก (ยังไม่บันทึก)<small>Cancel (not saved)</small></span></button>
     </div>
   </div>
 </div>
