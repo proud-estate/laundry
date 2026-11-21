@@ -37,7 +37,6 @@
   --good:#7cc96e; --bad:#f08a72; --bad-soft:#3e1d16; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-.rdbox{background:#fff4e0;border:1px dashed var(--coin,#e8890c);border-radius:14px;padding:10px;display:grid;gap:6px}.rd-head{display:flex;gap:6px;align-items:center;font-weight:700}.pp-btn.rdb{background:#ffd9a8}.rdpick{cursor:pointer}.rdpick.on{background:var(--coin,#e8890c);color:#fff;border-color:var(--coin,#e8890c)}
 .pay-amt{font-size:40px;font-weight:800;margin:6px 0;font-family:"IBM Plex Mono",monospace}.pay-qr img,.pay-qr canvas{width:min(300px,80vw);height:auto;background:#fff;border-radius:12px;padding:8px}.bi{display:flex;flex-direction:column;align-items:center;line-height:1.2}.bi small{font-size:13px;font-weight:600;opacity:.85}.pay-btns{display:grid;gap:8px;margin-top:10px}.pay-btns button{justify-content:center;font-size:17px;padding:12px}
 .payqr-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px}#sPayQrPrev{width:140px;height:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
 .line-btn{background:#06c755!important;color:#fff!important;border-color:#06c755!important}
@@ -558,7 +557,6 @@ img{max-width:100%}
         <input id="vCarry" class="mono" type="number" inputmode="numeric" min="0" max="99" placeholder="0" style="max-width:140px">
         <div class="who">ใส่ชื่อแล้วกดบันทึก ระบบจะสมัครสมาชิกและสะสมแต้มครั้งนี้ให้เลย · ถ้าลูกค้ามีแต้มค้างในบัตร LINE ให้ลูกค้าเปิดบัตรให้ดู แล้วใส่จำนวนแต้ม</div></div>
       <div class="span pricepad" id="pricePad"></div>
-      <div class="span rdbox" id="vRdBox" hidden></div>
       <div class="field"><label for="vWL"><svg class="ic"><use href="#i-wash"/></svg>ซัก (ถัง)</label><input id="vWL" type="number" inputmode="numeric" min="0" placeholder="0"></div>
       <div class="field"><label for="vWA"><svg class="ic coin"><use href="#i-coin"/></svg>ค่าซัก (บาท)</label><input id="vWA" type="number" inputmode="numeric" min="0" placeholder="0"></div>
       <div class="field"><label for="vSA"><svg class="ic"><use href="#i-soap"/></svg>ค่าน้ำยา (บาท)</label><input id="vSA" type="number" inputmode="numeric" min="0" placeholder="0"></div>
@@ -977,9 +975,7 @@ const checkUrl=token=>{const u=new URL("check.html",location.href);u.hash=token;
 
 /* ===== calculations ===== */
 const vTotal=v=>(+v.washAmt||0)+(+v.dryAmt||0)+(+v.soapAmt||0);
-const vPts=v=>v.memberId?Math.max(0,int(v.washLoads)+int(v.dryLoads)-(v.rd?1:0)):0;
-// what the customer actually pays for a visit (a points redemption on the same bill lowers it)
-const vPay=v=>Math.max(0,vTotal(v)-(v.rd?int(v.rd.disc):0));
+const vPts=v=>v.memberId?(int(v.washLoads)+int(v.dryLoads)):0;
 // points carried over from the old LINE point card: entered once per member by the counter staff
 const carryOf=id=>{const c=S.members[id]&&S.members[id].carry;return c&&int(c.p)>0?{p:int(c.p),date:c.date||"",at:c.at||"",by:c.by||""}:null};
 function memberStats(id){
@@ -1391,7 +1387,6 @@ const okPhone=d=>/^0\d{9}$/.test(d);
 // typed digits that are neither an existing member nor a full 10-digit number
 function badPhone(){const raw=$("vMem").value.trim();if(!raw||!/^[\d\s-]+$/.test(raw))return 0;const d=digits(raw);return S.members[d]||okPhone(d)?0:(d.length||0.5)}
 function vFormState(){
-  setTimeout(renderVRd,0);
   const id=findMember($("vMem").value);
   const np=newPhone();
   $("vNewBox").hidden=!np;
@@ -1428,7 +1423,7 @@ $("vDL").oninput=vFormState;
 ["vWA","vDA","vSA"].forEach(k=>$(k).oninput=()=>{$(k).dataset.manual=$(k).value?"1":"0";vFormState()});
 function resetVForm(){
   ["vMem","vNewName","vWL","vWA","vDL","vDA","vSA","vCarry"].forEach(k=>{$(k).value="";$(k).dataset.manual="0"});
-  vItems=[];vRd=null;renderPadItems();
+  vItems=[];renderPadItems();
   editClaim=null;staffRedeemOpen=false;$("vCancel").hidden=true;$("vAddTxt").textContent="บันทึกลูกค้า";vFormState();
 }
 $("vCancel").onclick=()=>{resetVForm();$("vMsg").textContent=""};
@@ -1440,30 +1435,22 @@ $("vAdd").onclick=async()=>{
   if(np&&!nn){$("vMsg").innerHTML='<span class="warn">เบอร์ใหม่ ใส่ชื่อลูกค้าเพื่อสมัครสมาชิกก่อน</span>';$("vNewName").focus();return}
   const vw={washLoads:int($("vWL").value),dryLoads:int($("vDL").value),washAmt:int($("vWA").value),dryAmt:int($("vDA").value),soapAmt:int($("vSA").value)};
   const cp=np?Math.min(99,int($("vCarry").value)):0;
-  if(!vw.washLoads&&!vw.dryLoads&&!vTotal(vw)&&!cp&&!(vRd&&vRd.id===id)){$("vMsg").innerHTML='<span class="warn">ใส่จำนวนถังหรือยอดเงินอย่างน้อยหนึ่งช่อง</span>';return}
-  let rdx=null;
-  if(vRd&&id&&vRd.id===id){const r=rewards()[vRd.ri], st=memberStats(id);
-    if(!r||st.balance<r.pts){$("vMsg").innerHTML='<span class="warn">แต้มไม่พอแลก</span>';return}
-    const c=rwCalc(r,vRd.price);rdx={r,c,v:{n:r.name,kind:r.kind||"",pts:+r.pts,price:c.price,disc:c.disc,extra:c.extra}};
-    // the redeemed load goes on the bill at full price (keeps it matching the coins in the machine); the discount comes off the payment
-    if(r.kind==="dry"){vw.dryLoads+=1;vw.dryAmt+=c.price}else{vw.washLoads+=1;vw.washAmt+=c.price}}
-  const payable=Math.max(0,vTotal(vw)-(rdx?rdx.c.disc:0));
+  if(!vw.washLoads&&!vw.dryLoads&&!vTotal(vw)&&!cp){$("vMsg").innerHTML='<span class="warn">ใส่จำนวนถังหรือยอดเงินอย่างน้อยหนึ่งช่อง</span>';return}
   let pay="";
-  if(payable>0&&!editClaim){pay=await askPay(payable,np?nn:(id?dn(id):"ลูกค้าทั่วไป"));if(pay===null){$("vMsg").textContent="ยกเลิกแล้ว · ยังไม่ได้บันทึก";return}}
+  if(vTotal(vw)>0&&!editClaim){pay=await askPay(vTotal(vw),np?nn:(id?dn(id):"ลูกค้าทั่วไป"));if(pay===null){$("vMsg").textContent="ยกเลิกแล้ว · ยังไม่ได้บันทึก";return}}
   if(np){const mrec={name:nn,phone:np,since:todayStr(),source:"staff"};if(cp)mrec.carry={p:cp,date:sDate(),at:new Date().toISOString(),by:curStaff||""};
     try{await put("members",np,mrec);renderDatalist();id=np}
     catch(e){$("vMsg").innerHTML='<span class="warn">สมัครสมาชิกไม่สำเร็จ ('+esc(e.code||"error")+')</span>';return}
     if(!vw.washLoads&&!vw.dryLoads&&!vTotal(vw)){const keep=np;resetVForm();$("vMem").value=keep;vFormState();$("vMsg").textContent="สมัครสมาชิก "+nn+" และย้ายแต้มจาก LINE "+cp+" แต้มแล้ว ✓";return}}
-  const v={date:editClaim?editClaim.date:sDate(),memberId:id||"",washLoads:vw.washLoads,dryLoads:vw.dryLoads,
-    washAmt:vw.washAmt,dryAmt:vw.dryAmt,soapAmt:vw.soapAmt,at:new Date().toISOString(),items:vItems.map(it=>it.k?{t:it.t,k:it.k,l:it.l,a:it.a}:{t:it.t,l:it.l,a:it.a}),pay,...(rdx?{rd:rdx.v}:{}),source:editClaim?"front":"staff",by:curStaff};
+  const v={date:editClaim?editClaim.date:sDate(),memberId:id||"",washLoads:int($("vWL").value),dryLoads:int($("vDL").value),
+    washAmt:int($("vWA").value),dryAmt:int($("vDA").value),soapAmt:int($("vSA").value),at:new Date().toISOString(),items:vItems.map(it=>it.k?{t:it.t,k:it.k,l:it.l,a:it.a}:{t:it.t,l:it.l,a:it.a}),pay,source:editClaim?"front":"staff",by:curStaff};
   if(!v.washLoads&&!v.dryLoads&&!vTotal(v)){$("vMsg").innerHTML='<span class="warn">ใส่จำนวนถังหรือยอดเงินอย่างน้อยหนึ่งช่อง</span>';return}
   $("vAdd").disabled=true;
   try{
     const vid=newId();await put("visits",vid,v);bumpSoapFromItems(v,1);
-    if(rdx)await put("redeems",newId(),{memberId:id,points:rdx.v.pts,note:rdx.r.name,kind:rdx.v.kind,value:+rdx.r.value||0,price:rdx.c.price,disc:rdx.c.disc,extra:rdx.c.extra,date:v.date,at:v.at,by:curStaff,visitId:vid});
     if(editClaim)await del("claims",editClaim.id);
     const who=id?dn(id):"ลูกค้าทั่วไป";
-    $("vMsg").textContent="บันทึก "+who+" "+fmt(vPay(v))+" บาท"+(v.rd?" (แลกแต้ม ลด "+fmt(v.rd.disc)+")":"")+(vPts(v)?" · +"+vPts(v)+" แต้ม":"")+" แล้ว"+(np?" · สมัครสมาชิกใหม่ให้แล้ว":"");
+    $("vMsg").textContent="บันทึก "+who+" "+fmt(vTotal(v))+" บาท"+(vPts(v)?" · +"+vPts(v)+" แต้ม":"")+" แล้ว"+(np?" · สมัครสมาชิกใหม่ให้แล้ว":"");
     resetVForm();renderVisits();renderClaims();openReceipt(vid);
   }catch(e){$("vMsg").innerHTML='<span class="warn">บันทึกไม่สำเร็จ ('+esc(e.code||"error")+')</span>'}
   $("vAdd").disabled=false;
@@ -1487,10 +1474,9 @@ function renderVisits(){
   $("vBody").querySelectorAll("[data-v]").forEach(b=>b.onclick=async()=>{
     const v=S.visits[b.dataset.v];
     // don't let a delete leave a member with fewer points than they've already redeemed
-    const lr=Object.entries(S.redeems).filter(([,r])=>r.visitId===b.dataset.v);
-    if(v&&v.memberId&&vPts(v)>0){const st=memberStats(v.memberId),u=st.used-lr.reduce((t,[,r])=>t+(+r.points||0),0);if(u>0&&st.earned-vPts(v)<u){$("vMsg").innerHTML='<span class="warn">ลบไม่ได้: ลูกค้าคนนี้ใช้แต้มจากรายการนี้แลกรางวัลไปแล้ว ถ้าจะลบ ให้เจ้าของลบการแลกแต้มในหลังบ้านก่อน (แท็บสมาชิก > ประวัติการแลกรางวัล)</span>';return}}
+    if(v&&v.memberId&&vPts(v)>0){const st=memberStats(v.memberId);if(st.used>0&&st.earned-vPts(v)<st.used){$("vMsg").innerHTML='<span class="warn">ลบไม่ได้: ลูกค้าคนนี้ใช้แต้มจากรายการนี้แลกรางวัลไปแล้ว ถ้าจะลบ ให้เจ้าของลบการแลกแต้มในหลังบ้านก่อน (แท็บสมาชิก > ประวัติการแลกรางวัล)</span>';return}}
     if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="ลบ?";setTimeout(()=>{b.dataset.armed="";b.textContent="✕"},3000);return}
-    try{const dv=S.visits[b.dataset.v];for(const [rid] of lr)await del("redeems",rid);await del("visits",b.dataset.v);if(dv)bumpSoapFromItems(dv,-1);renderVisits()}catch(e){$("vMsg").innerHTML='<span class="warn">ลบไม่สำเร็จ ลองอีกครั้ง</span>'}});
+    try{const dv=S.visits[b.dataset.v];await del("visits",b.dataset.v);if(dv)bumpSoapFromItems(dv,-1);renderVisits()}catch(e){$("vMsg").innerHTML='<span class="warn">ลบไม่สำเร็จ ลองอีกครั้ง</span>'}});
   updateTotals();
 }
 function renderClaims(){
@@ -1593,9 +1579,6 @@ $("rdOk").onclick=async()=>{
   const r=rewards()[rwArmed], st=memberStats(selMember);if(!r||st.balance<r.pts)return;
   if(!int($("rdPrice").value)){$("mdRedeemMsg").innerHTML='<span class="warn">ใส่ราคาบริการครั้งนี้ก่อน</span>';$("rdPrice").focus();return}
   const c=rwCalc(r,$("rdPrice").value), now=new Date().toISOString();
-  if(staffRedeemOpen&&$("vRedeemHost").contains($("rdOk"))){ // from the counter: add to this customer's bill, saved together with บันทึกลูกค้า
-    vRd={id:selMember,ri:rwArmed,price:c.price};rwArmed=null;$("rdPanel").hidden=true;staffRedeemOpen=false;
-    $("mdRedeemMsg").textContent="";$("vMsg").textContent="เพิ่มการแลกแต้มในบิลแล้ว · ส่วนต่าง "+fmt(c.extra)+" บาท · กดราคาถังอื่น (ถ้ามี) แล้วกดบันทึกลูกค้า";vFormState();return}
   $("rdOk").disabled=true;
   try{await put("redeems",newId(),{memberId:selMember,points:+r.pts,note:r.name,kind:r.kind||"",value:+r.value||0,price:c.price,disc:c.disc,extra:c.extra,date:todayStr(),at:now,by:curStaff});
     rwArmed=null;$("rdPanel").hidden=true;
@@ -1799,19 +1782,18 @@ async function drawReceipt(vid,col){
   if(int(v.dryLoads)||+v.dryAmt)row("อบ "+int(v.dryLoads)+" ถัง",fmt(v.dryAmt));
   if(+v.soapAmt)row("น้ำยา",fmt(v.soapAmt));
   rule();
-  if(v.rd){row("แลกแต้ม "+v.rd.n+" (−"+v.rd.pts+" แต้ม)","−"+fmt(v.rd.disc),{size:18,color:O});row("รวมค่าบริการ",fmt(vTotal(v)),{size:18})}
-  row(v.rd?"ยอดชำระ":"รวม",fmt(vPay(v))+" บาท",{size:24,weight:700,color:G});
+  row("รวม",fmt(vTotal(v))+" บาท",{size:24,weight:700,color:G});
   if(v.pay){row("ชำระโดย",v.pay==="transfer"?"โอน / สแกนจ่าย ✓":"เงินสด ✓",{size:18,color:G})}
-  const pp=promptPayPayload(config.ppId,config.ppAmt!==false?vPay(v):0), pq=v.pay?null:(pp&&qrModules(pp));
+  const pp=promptPayPayload(config.ppId,config.ppAmt!==false?vTotal(v):0), pq=v.pay?null:(pp&&qrModules(pp));
   if(!v.pay&&payQrImg&&payQrImg.complete&&payQrImg.naturalWidth){
     rule();txt("สแกนชำระเงิน",{size:19,weight:700,align:"center",color:O});line(30);
     const qw=Math.min(W-2*pad,Math.round(250*big)),qh=Math.round(qw*payQrImg.naturalHeight/payQrImg.naturalWidth);
     c.drawImage(payQrImg,Math.round((W-qw)/2),y,qw,qh);y+=qh;line(8);
-    if(vPay(v)){txt("ยอดชำระ "+fmt(vPay(v))+" บาท",{size:20,weight:700,align:"center",color:G});line(30)}
+    if(vTotal(v)){txt("ยอดชำระ "+fmt(vTotal(v))+" บาท",{size:20,weight:700,align:"center",color:G});line(30)}
     if(config.ppName){txt(config.ppName,{size:17,align:"center"});line(26)}
   }else if(pq){rule();txt("สแกนจ่ายผ่านพร้อมเพย์",{size:19,weight:700,align:"center"});line(30);
     drawQr(pq,Math.round(230*big));
-    if(config.ppAmt!==false&&vPay(v)){txt("ยอด "+fmt(vPay(v))+" บาท",{size:20,weight:700,align:"center"});line(30)}
+    if(config.ppAmt!==false&&vTotal(v)){txt("ยอด "+fmt(vTotal(v))+" บาท",{size:20,weight:700,align:"center"});line(30)}
     if(config.ppName){txt(config.ppName,{size:17,align:"center"});line(26)}
     txt("พร้อมเพย์ "+ppMask(config.ppId),{size:16,align:"center"});line(28)}
   let token=null;
@@ -2007,24 +1989,7 @@ function applyItem(it,sign){
   vFormState();
 }
 function addItem(it){vItems.push(it);applyItem(it,1);renderPadItems()}
-/* ===== redeem points on the same bill: pick the reward and which tapped item it covers; customer pays the rest together ===== */
-let vRd=null; // {ri, price}
-function renderVRd(){
-  const box=$("vRdBox");if(!box)return;
-  const id=findMember($("vMem").value);
-  if(!vRd||!id||id!==vRd.id){box.hidden=true;box.innerHTML="";if(vRd&&id!==vRd.id)vRd=null;return}
-  const r=rewards()[vRd.ri], c=rwCalc(r,vRd.price), base=vTotal({washAmt:int($("vWA").value),dryAmt:int($("vDA").value),soapAmt:int($("vSA").value)});
-  box.hidden=false;
-  box.innerHTML=`<div class="rd-head"><svg class="ic"><use href="#i-gift"/></svg> แลก${esc(r.name)} (−${r.pts} แต้ม) <button type="button" class="sbtn" id="vRdOff" style="padding:2px 10px;margin-left:auto">✕ ยกเลิกการแลก</button></div>`
-    +`<div class="sum"><div class="l sub"><span>ราคาถังที่แลก</span><span>${fmt(c.price)} ฿</span></div><div class="l sub"><span>ลดจากแต้ม</span><span class="pos">−${fmt(c.disc)} ฿</span></div>`
-    +`<div class="l"><span>ส่วนต่างที่ลูกค้าจ่าย</span><span>${fmt(c.extra)} ฿</span></div>`
-    +`<div class="l sub"><span>+ ซัก/อบ/น้ำยาอื่นในบิลนี้</span><span>${fmt(base)} ฿</span></div>`
-    +`<div class="l big"><span>ลูกค้าต้องชำระทั้งหมด</span><span>${fmt(base+c.extra)} ฿</span></div></div>`;
-  $("vTot").textContent=fmt(base+c.extra)+" ฿";
-  $("vRdOff").onclick=()=>{vRd=null;vFormState()};
-}
 function renderPadItems(){
-  setTimeout(renderVRd,0);
   const el=$("padItems");if(!el)return;
   // same item tapped several times (e.g. extra dry time) shows as one chip with a count; ✕ takes one off
   const g=[];vItems.forEach(it=>{const k=it.t+"|"+it.l+"|"+it.a,f=g.find(x=>x.k===k);f?f.n++:g.push({k,it,n:1})});
