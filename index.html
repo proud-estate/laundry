@@ -511,7 +511,7 @@ img{max-width:100%}
   </section>
   <section class="card">
     <h2><span class="h-ic"><span class="icbox"><svg class="ic"><use href="#i-users"/></svg></span>เงินสดให้พนักงานแลก</span> <span class="tot num" id="t-float">0</span></h2>
-    <p class="hint">ทุกเย็น: ใส่ <b>เงินแลกที่เหลือที่พนักงานคืนมา</b> (นับรวมในเงินทั้งหมดในตู้) และ <b>เงินที่ให้ไปสำหรับวันถัดไป</b> (ระบบหักออกจากเงินในตู้) · ไม่นับเป็นรายรับ</p>
+    <p class="hint">ถ้าระหว่างวันเงินแลกไม่พอ พนักงานมาเอาเพิ่มจากตู้ ใส่ในช่อง <b>เอาเพิ่มระหว่างวัน</b> · ทุกเย็น: ใส่ <b>เงินแลกที่เหลือที่พนักงานคืนมา</b> (นับรวมในเงินทั้งหมดในตู้) และ <b>เงินที่ให้ไปสำหรับวันถัดไป</b> (ระบบหักออกจากเงินในตู้) · ไม่นับเป็นรายรับ</p>
     <div class="flt-list" id="fltList"></div>
     <button class="ghost" id="addFlt"><svg class="ic"><use href="#i-plus"/></svg>เพิ่มรายการให้พนักงาน</button>
     <div class="sum" id="fltSum"></div>
@@ -1063,12 +1063,14 @@ function renderFloats(){
   cur.floats.forEach((f,i)=>{
     const row=document.createElement("div");row.className="flt";
     row.innerHTML=`<div class="field who-f"><label for="fn${i}">พนักงาน</label><input id="fn${i}" class="txt" list="staffNames" placeholder="ชื่อ" value="${esc(f.n||"")}"></div>
+      <div class="field"><label for="fx${i}">เอาเพิ่มระหว่างวัน (บาท)</label><input id="fx${i}" class="mono" type="number" inputmode="numeric" min="0" placeholder="0" value="${f.x||""}"></div>
       <div class="field"><label for="fb${i}">คืนมาวันนี้ (บาท)</label><input id="fb${i}" class="mono" type="number" inputmode="numeric" min="0" placeholder="0" value="${f.b||""}"></div>
       <div class="field"><label for="fg${i}">ให้ไปวันถัดไป (บาท)</label><input id="fg${i}" class="mono" type="number" inputmode="numeric" min="0" placeholder="0" value="${f.g||""}"></div>
       <button class="del" aria-label="ลบรายการ">✕</button>`;
     row.querySelector("#fn"+i).oninput=e=>{f.n=e.target.value;touch()};
     row.querySelector("#fg"+i).oninput=e=>{f.g=int(e.target.value);touch()};
     row.querySelector("#fb"+i).oninput=e=>{f.b=int(e.target.value);touch()};
+    row.querySelector("#fx"+i).oninput=e=>{f.x=int(e.target.value);touch()};
     row.querySelector(".del").onclick=()=>{cur.floats.splice(i,1);renderFloats();touch()};
     L.append(row);
   });
@@ -1104,12 +1106,13 @@ $("addDep").onclick=()=>{cur.deposits.push({n:"",a:0});renderDep();touch();const
 $("addFx").onclick=()=>{cur.freeX.push({n:"",a:0});renderFx();touch();const x=$("xn"+(cur.freeX.length-1));x&&x.focus()};
 // the float handed out on the last earlier day that has one recorded; it comes back into today's count
 function prevFloat(ds){const d=Object.keys(S.days).filter(x=>x<ds&&floatTot(S.days[x]).g>0).sort().pop();return {d:d||"",g:d?floatTot(S.days[d]).g:0}}
-const floatTot=r=>{const fs=Array.isArray(r.floats)?r.floats:[];return {g:fs.reduce((t,f)=>t+int(f.g),0),b:fs.reduce((t,f)=>t+int(f.b),0)}};
+const floatTot=r=>{const fs=Array.isArray(r.floats)?r.floats:[];return {g:fs.reduce((t,f)=>t+int(f.g),0),b:fs.reduce((t,f)=>t+int(f.b),0),x:fs.reduce((t,f)=>t+int(f.x),0)}};
 function updFloat(){
   const t=floatTot(cur);$("t-float").textContent=fmt(t.g)+" ฿";$("t-refill").textContent=fmt(int(cur.refill)*10)+" ฿";
   const L=(a,b,cls="")=>`<div class="l ${cls}"><span>${a}</span><span>${b}</span></div>`;
   const pv=prevFloat(cur.date);
   $("fltSum").innerHTML=L("ให้ไปเมื่อวาน"+(pv.d?" ("+thaiDate(pv.d)+")":""),fmt(pv.g)+" ฿","sub")
+    +(t.x?L("เอาเพิ่มจากตู้ระหว่างวัน",fmt(t.x)+" ฿"):"")
     +L("พนักงานคืนมาวันนี้ (เงินแลกที่เหลือ)",fmt(t.b)+" ฿")
     +L("ให้ไปสำหรับวันถัดไป",fmt(t.g)+" ฿","big");
 }
@@ -1147,7 +1150,7 @@ function cashFlow(r){
   const ft=floatTot(r);
   // cash box: income (coins + soap) + changer notes + float change returned − coins refilled − float given − expenses paid in cash (transfers don't touch the box)
   const back=ft.b; // leftover float the staff actually handed back today
-  return {inc:c.machine+c.soap,chg:c.chg,inn:c.machine+c.soap+c.chg+back,out:refill+ft.g+exp+depTot(r),refill,exp,flt:ft.g,back,dep:depTot(r)};
+  return {inc:c.machine+c.soap,chg:c.chg,inn:c.machine+c.soap+c.chg+back,out:refill+ft.g+ft.x+exp+depTot(r),refill,exp,flt:ft.g,back,dep:depTot(r),fx:ft.x};
 }
 const soapOf=r=>{const o={};SOAP.forEach(([k])=>o[k]=int(r&&r[k]));return o};
 const L0=(a,b,cls="")=>`<div class="l ${cls}"><span>${a}</span><span>${b}</span></div>`;
@@ -1171,6 +1174,7 @@ function updateTotals(){
       +Lr("+ รวมรายรับ (เหรียญตู้ + น้ำยา)"+(days.length>1?" ("+days.length+" วัน)":""),fmt(flow.inc)+" ฿","sub")
       +Lr("+ เงินตู้แลกสุทธิ (แบงก์ "+fmt(flow.chg)+" − เติมคืน "+fmt(flow.refill)+")",fmt(flow.chg-flow.refill)+" ฿","sub")
       +Lr("+ เงินแลกที่พนักงานคืนมา",fmt(flow.back)+" ฿","sub")
+      +(flow.fx?Lr("− พนักงานเอาเงินเพิ่มจากตู้ระหว่างวัน",fmt(flow.fx)+" ฿","sub"):"")
       +(flow.exp-ex?Lr("− ค่าใช้จ่ายเงินสดวันก่อน ๆ (ยังไม่ได้นับตอนนั้น)",fmt(flow.exp-ex)+" ฿","sub"):"")
       +(flow.dep-dp?Lr("− ฝากธนาคารวันก่อน ๆ (ยังไม่ได้นับตอนนั้น)",fmt(flow.dep-dp)+" ฿","sub"):"")
       +(flow.flt-fl?Lr("− ให้พนักงานแลกวันก่อน ๆ (ยังไม่ได้นับตอนนั้น)",fmt(flow.flt-fl)+" ฿","sub"):"")
@@ -1229,7 +1233,7 @@ function updateTotals(){
     L("เงินตู้แลกสุทธิ",fmt(c.chg-rf)+" ฿","big")+
     L("ยอดสแกนจ่ายรายวัน (บันทึกไว้ดู ไม่นำไปคำนวณ)",fmt(c.scan)+" ฿","sub")+
     L("<b>4. เงินสดให้พนักงานแลก</b> <small>(ไม่นับเป็นรายรับ)</small>","","top")+
-    L("ให้ไปเมื่อวาน",fmt(prevFloat(cur.date).g)+" ฿","sub")+L("พนักงานคืนมาวันนี้",fmt(ft.b)+" ฿")+L("ให้ไปสำหรับวันถัดไป",fmt(ft.g)+" ฿")+
+    L("ให้ไปเมื่อวาน",fmt(prevFloat(cur.date).g)+" ฿","sub")+(ft.x?L("เอาเพิ่มจากตู้ระหว่างวัน",fmt(ft.x)+" ฿"):"")+L("พนักงานคืนมาวันนี้",fmt(ft.b)+" ฿")+L("ให้ไปสำหรับวันถัดไป",fmt(ft.g)+" ฿")+
     (hasRes(cur)?L("เงินในตู้ที่นับได้ทั้งหมด",fmt(resTotal(cur))+" ฿","top")+
     L("− ให้พนักงานแลกสำหรับวันถัดไป","−"+fmt(ft.g)+" ฿")+
     (depTot(cur)?L("− ตัดเงินไปฝากธนาคาร","−"+fmt(depTot(cur))+" ฿"):"")+
@@ -1256,7 +1260,7 @@ async function saveDay(){
   const rec=JSON.parse(JSON.stringify(cur));
   rec.expenses=rec.expenses.filter(e=>e.a>0).map(e=>Object.assign({},e,{p:e.p==="transfer"?"transfer":"cash"}));rec.updatedAt=new Date().toISOString();
   $("save").disabled=true;$("saveSt").textContent="กำลังบันทึก…";
-  const own={date:rec.date,coins:int(rec.coins),scan:Math.max(0,+rec.scan||0),...Object.fromEntries(RES.map(([k])=>[k,int(rec[k])])),b100:int(rec.b100),b50:int(rec.b50),b20:int(rec.b20),refill:int(rec.refill),floats:(rec.floats||[]).filter(f=>int(f.g)||int(f.b)||String(f.n||"").trim()).map(f=>({n:String(f.n||"").trim(),g:int(f.g),b:int(f.b)})),deposits:(rec.deposits||[]).filter(d=>int(d.a)>0).map(d=>({n:String(d.n||"").trim(),a:int(d.a)})),freeX:(rec.freeX||[]).filter(f=>int(f.a)>0).map(f=>({n:String(f.n||"").trim(),a:int(f.a)})),expenses:rec.expenses,note:rec.note||"",updatedAt:rec.updatedAt,cashBy:curStaff||"owner"};
+  const own={date:rec.date,coins:int(rec.coins),scan:Math.max(0,+rec.scan||0),...Object.fromEntries(RES.map(([k])=>[k,int(rec[k])])),b100:int(rec.b100),b50:int(rec.b50),b20:int(rec.b20),refill:int(rec.refill),floats:(rec.floats||[]).filter(f=>int(f.g)||int(f.b)||int(f.x)||String(f.n||"").trim()).map(f=>({n:String(f.n||"").trim(),g:int(f.g),b:int(f.b),x:int(f.x)})),deposits:(rec.deposits||[]).filter(d=>int(d.a)>0).map(d=>({n:String(d.n||"").trim(),a:int(d.a)})),freeX:(rec.freeX||[]).filter(f=>int(f.a)>0).map(f=>({n:String(f.n||"").trim(),a:int(f.a)})),expenses:rec.expenses,note:rec.note||"",updatedAt:rec.updatedAt,cashBy:curStaff||"owner"};
   try{await merge("days",rec.date,own);dirty=false;cur.expenses=rec.expenses;renderExp();
     $("saveSt").textContent="บันทึกแล้ว · "+thaiDate(rec.date);renderMonth()}
   catch(e){$("save").disabled=false;$("saveSt").innerHTML='<span class="neg">บันทึกไม่สำเร็จ ('+esc(e.code||"error")+') ลองกดอีกครั้ง</span>'}
