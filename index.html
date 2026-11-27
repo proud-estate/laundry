@@ -232,6 +232,7 @@ button.front-link{background:transparent;font:inherit;font-size:13px;font-weight
 .flt .field{padding:6px 8px}
 .flt input{width:100%}
 .flt .mono{text-align:right;font-family:var(--mono)}
+.flt.f4{grid-template-columns:repeat(3,minmax(0,1fr)) 34px}.flt.f4 .who-f{grid-column:1/-1}.flt.f4 label{white-space:normal;line-height:1.25;font-size:12.5px}
 
 .coin-in{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .coin-in .field{flex:1;min-width:200px}
@@ -506,6 +507,8 @@ img{max-width:100%}
     <h2><span class="h-ic"><span class="icbox coin"><svg class="ic"><use href="#i-safe"/></svg></span>เงินสำรองในตู้</span> <span class="tot coin num" id="t-res">0</span></h2>
     <p class="hint">นับ<b>เงินทั้งหมดในตู้</b> ทุกใบทุกเหรียญ หลังเติมตู้แลกเหรียญแล้ว (ยังไม่ต้องหยิบเงินให้พนักงาน เงินฝาก หรือเงินจ่ายค่าใช้จ่ายออก) · ระบบหักเงินที่แยกไว้ให้พนักงานให้เอง · ยอดนี้ไม่นับเป็นรายรับ</p>
     <p class="hint"><b>ถ้าวันนี้ไม่ได้นับเงินทั้งหมดในตู้ ให้เว้นช่องนี้ว่างไว้</b> · อย่าใส่แค่เงินบางส่วนที่เก็บมา ระบบจะเข้าใจว่าในตู้มีเงินเท่านั้น <button type="button" class="sbtn" id="resClear" style="padding:4px 10px;margin-left:6px">ล้างช่องเงินสำรองของวันนี้</button></p>
+    <label class="toggle" style="margin:6px 0 10px"><input type="checkbox" id="fResetBase">
+      <span><b>ใช้ยอดวันนี้เป็นยอดตั้งต้นใหม่</b><br><span class="hint">ใช้เมื่อยอดวันก่อน ๆ กรอกไม่ครบจนเทียบไม่ได้ · ระบบจะไม่เทียบกับวันก่อน และเริ่มนับต่อจากยอดวันนี้</span></span></label>
     <div class="grid" id="g-res"></div>
     <div class="sum" id="resDiff"></div>
   </section>
@@ -1046,6 +1049,7 @@ function renderForm(){
   if(!Array.isArray(r.floats))r.floats=[];renderFloats();
   if(!Array.isArray(r.freeX))r.freeX=[];renderFx();
   if(!Array.isArray(r.deposits))r.deposits=[];renderDep();
+  $("fResetBase").checked=!!r.resetBase;
   fill("g-res",RES.map(([k,l,p])=>{const coin=k.startsWith("rc");return numField(I(coin?"coin":"note",coin?"coin":"")+l,r[k],x=>r[k]=x,coin?"เหรียญ":"ใบ",false,x=>x*p)}));
   renderExp();$("note").value=r.note||"";updateTotals();
 }
@@ -1061,7 +1065,7 @@ function renderFloats(){
   $("staffNames").innerHTML=Object.values(staffRoles||{}).filter(r=>r.role==="staff").map(r=>`<option value="${esc(r.name||"")}"></option>`).join("");
   if(!cur.floats.length){L.innerHTML='<p class="hint">ยังไม่มีรายการของวันนี้</p>';updFloat();return}
   cur.floats.forEach((f,i)=>{
-    const row=document.createElement("div");row.className="flt";
+    const row=document.createElement("div");row.className="flt f4";
     row.innerHTML=`<div class="field who-f"><label for="fn${i}">พนักงาน</label><input id="fn${i}" class="txt" list="staffNames" placeholder="ชื่อ" value="${esc(f.n||"")}"></div>
       <div class="field"><label for="fx${i}">เอาเพิ่มระหว่างวัน (บาท)</label><input id="fx${i}" class="mono" type="number" inputmode="numeric" min="0" placeholder="0" value="${f.x||""}"></div>
       <div class="field"><label for="fb${i}">คืนมาวันนี้ (บาท)</label><input id="fb${i}" class="mono" type="number" inputmode="numeric" min="0" placeholder="0" value="${f.b||""}"></div>
@@ -1160,7 +1164,8 @@ function updateTotals(){
   $("t-coin").textContent=fmt(c.coin)+" ฿";$("t-scan").textContent=fmt(c.scan)+" ฿";
   // the owner counts ALL cash in the box, then takes out the float for tomorrow; what stays is the reserve
   const dp=depTot(cur), ex=cashExp(cur), res=resTotal(cur), fl=floatTot(cur).g, net=res-fl-dp-ex;$("t-res").textContent=fmt(res)+" ฿";$("t-dep").textContent=fmt(dp)+" ฿";
-  const prevDs=Object.keys(S.days).filter(d=>d<cur.date&&hasRes(S.days[d])).sort().pop();
+  // "start fresh" on this day: today's count becomes the new starting balance, earlier days are not compared
+  const prevDs=cur.resetBase?null:Object.keys(S.days).filter(d=>d<cur.date&&hasRes(S.days[d])).sort().pop();
   const Lr=(a,b,cls="")=>`<div class="l ${cls}"><span>${a}</span><span>${b}</span></div>`;
   const depL=(dp?Lr("− ตัดเงินไปฝากธนาคาร","−"+fmt(dp)+" ฿","sub"):"")+(ex?Lr("− จ่ายค่าใช้จ่ายเงินสดจากตู้วันนี้","−"+fmt(ex)+" ฿","sub"):"");
   const tail=Lr("− ให้พนักงานแลกสำหรับวันถัดไป","−"+fmt(fl)+" ฿","sub")+depL+Lr("เงินสำรองในตู้คงเหลือ",`<span class="${net<0?"neg":""}">${fmt(net)} ฿</span>`,"big");
@@ -1184,7 +1189,7 @@ function updateTotals(){
         // not counted today: show what the box should hold and carry on from the last real count
         :'<p class="hint">วันนี้ยังไม่ได้นับเงินทั้งหมดในตู้ (ช่องด้านบนว่าง) · ไม่เป็นไร วันที่นับครั้งถัดไประบบจะรวมทุกวันตั้งแต่ '+thaiDate(prevDs)+' มาเทียบให้</p>'
           +Lr("− ให้พนักงานแลกสำหรับวันถัดไป","−"+fmt(fl)+" ฿","sub")+depL+Lr("เงินสำรองในตู้ที่ควรมี (ยังไม่ได้นับ)",fmt(all-fl-dp-ex)+" ฿","big"));
-  } else resHtml+='<p class="hint">ยังไม่มีเงินสำรองที่นับไว้ก่อนหน้า · ยอดวันนี้จะเป็น<b>ยอดตั้งต้น</b> พรุ่งนี้ระบบจะเริ่มคำนวณและเทียบให้</p>';
+  } else resHtml+=(cur.resetBase?'<p class="hint">ตั้งยอดวันนี้เป็น<b>ยอดตั้งต้นใหม่</b>แล้ว · ไม่เทียบกับวันก่อน · พรุ่งนี้ระบบเริ่มเทียบต่อจากยอดนี้</p>':'<p class="hint">ยังไม่มีเงินสำรองที่นับไว้ก่อนหน้า · ยอดวันนี้จะเป็น<b>ยอดตั้งต้น</b> พรุ่งนี้ระบบจะเริ่มคำนวณและเทียบให้</p>');
   $("resDiff").innerHTML=resHtml;
   $("t-soap").textContent=fmt(c.packSoap)+" ฿";$("t-chg").textContent=fmt(c.chg)+" ฿";$("t-exp").textContent=fmt(c.exp)+" ฿";
   const expT=(cur.expenses||[]).filter(e=>e.p==="transfer").reduce((t,e)=>t+(+e.a||0),0);
@@ -1260,7 +1265,7 @@ async function saveDay(){
   const rec=JSON.parse(JSON.stringify(cur));
   rec.expenses=rec.expenses.filter(e=>e.a>0).map(e=>Object.assign({},e,{p:e.p==="transfer"?"transfer":"cash"}));rec.updatedAt=new Date().toISOString();
   $("save").disabled=true;$("saveSt").textContent="กำลังบันทึก…";
-  const own={date:rec.date,coins:int(rec.coins),scan:Math.max(0,+rec.scan||0),...Object.fromEntries(RES.map(([k])=>[k,int(rec[k])])),b100:int(rec.b100),b50:int(rec.b50),b20:int(rec.b20),refill:int(rec.refill),floats:(rec.floats||[]).filter(f=>int(f.g)||int(f.b)||int(f.x)||String(f.n||"").trim()).map(f=>({n:String(f.n||"").trim(),g:int(f.g),b:int(f.b),x:int(f.x)})),deposits:(rec.deposits||[]).filter(d=>int(d.a)>0).map(d=>({n:String(d.n||"").trim(),a:int(d.a)})),freeX:(rec.freeX||[]).filter(f=>int(f.a)>0).map(f=>({n:String(f.n||"").trim(),a:int(f.a)})),expenses:rec.expenses,note:rec.note||"",updatedAt:rec.updatedAt,cashBy:curStaff||"owner"};
+  const own={date:rec.date,coins:int(rec.coins),scan:Math.max(0,+rec.scan||0),...Object.fromEntries(RES.map(([k])=>[k,int(rec[k])])),b100:int(rec.b100),b50:int(rec.b50),b20:int(rec.b20),refill:int(rec.refill),floats:(rec.floats||[]).filter(f=>int(f.g)||int(f.b)||int(f.x)||String(f.n||"").trim()).map(f=>({n:String(f.n||"").trim(),g:int(f.g),b:int(f.b),x:int(f.x)})),resetBase:!!rec.resetBase,deposits:(rec.deposits||[]).filter(d=>int(d.a)>0).map(d=>({n:String(d.n||"").trim(),a:int(d.a)})),freeX:(rec.freeX||[]).filter(f=>int(f.a)>0).map(f=>({n:String(f.n||"").trim(),a:int(f.a)})),expenses:rec.expenses,note:rec.note||"",updatedAt:rec.updatedAt,cashBy:curStaff||"owner"};
   try{await merge("days",rec.date,own);dirty=false;cur.expenses=rec.expenses;renderExp();
     $("saveSt").textContent="บันทึกแล้ว · "+thaiDate(rec.date);renderMonth()}
   catch(e){$("save").disabled=false;$("saveSt").innerHTML='<span class="neg">บันทึกไม่สำเร็จ ('+esc(e.code||"error")+') ลองกดอีกครั้ง</span>'}
@@ -1897,6 +1902,7 @@ $("pBtn").onclick=async()=>{
 };
 $("tab-set").addEventListener("click",()=>{if(!$("pFrom").value){$("pFrom").value=todayStr();$("pTo").value=todayStr()}renderPart()});
 
+$("fResetBase").onchange=e=>{cur.resetBase=e.target.checked;touch()};
 $("resClear").onclick=()=>{RES.forEach(([k])=>cur[k]=0);renderForm&&renderForm();touch()};
 /* ===== click sound: a short soft "tick" on every button tap; on/off per device ===== */
 let sndOn=true, vibOn=true, actx=null;try{sndOn=localStorage.getItem("lw_snd")!=="0";vibOn=localStorage.getItem("lw_vib")!=="0"}catch(e){}
